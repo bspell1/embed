@@ -37,7 +37,7 @@ namespace Lab
 
       public void Run ()
       {
-#if true
+#if false
          var tx = Encoding.ASCII.GetBytes("0123456789ABCDEF");
          var rx = new Byte[tx.Length];
          using (var spi = new SpiDevice("/dev/spidev0.0"))
@@ -57,7 +57,7 @@ namespace Lab
          }
 #endif
 
-#if false
+#if true
          for (; ; )
          {
             try

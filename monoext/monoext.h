@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  monoext.h
-// Purpose: mono (mono-project.com) extensions library common declarations
+// Purpose: mono (mono-project.com) extensions library
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -30,4 +30,4 @@
 #include <errno.h>
 //-------------------[      Project Include Files      ]-------------------//
 //-------------------[       Module Definitions        ]-------------------//
-#endif
+#endif // __MONOEXT_H

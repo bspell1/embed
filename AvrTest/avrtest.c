@@ -26,7 +26,7 @@
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 //-------------------[       Module Definitions        ]-------------------//
-#define USART_BAUDRATE 57600
+#define USART_BAUDRATE 9600ULL
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -47,11 +47,6 @@ uint8_t uart_read ()
    while (!(UCSR0A & (1<<RXC0)));   // wait until data register full
    return (uint8_t)UDR0;
 }
-ISR(USART_RX_vect)
-{
-   uint8_t data = uart_read();
-   uart_write(data);
-}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -60,26 +55,28 @@ ISR(USART_RX_vect)
 //---------------------------------------------------------------------------
 int  main ()
 {
+   DDRB |= (1 << PB5);
+   DDRD |= (1 << PD6);
+   //DDRB = 0;
+
+   TCCR0A |= (1 << WGM01) | (1 << WGM00) | (1 << COM0A0);                           // toggle to channel A
+   TCCR0B |= (1 << WGM02);                            // set CTC mode
+   TCCR0B |= (1 << CS02) | (1 << CS01) | (0 << CS00);                             // prescale = 1
+   TIMSK0 |= (1 << OCIE0A);                           // enable compare event
+   OCR0A = 2;                                        // compare at 39 cycles
+ 
    uart_init();
-
-   DDRB |= 1 << PB5;
-
-   TCCR1A = (1 << WGM01);                             // toggle to COM1A0
-   TCCR1B |= (1 << WGM12);                            // set CTC mode
-   TCCR1B |= (1 << CS11);                             // prescale = 64
-   TIMSK1 |= (1 << TOIE1);                            // enable overflow event
-   OCR1A = 25599;                                     // compare at 25599
-   TCNT1 = 65536 - 4096;                              // overflow in 4096 ticks
 
    sei();
 
    for ( ; ; )
    {
-
    }
    return 0;
 }
-ISR(TIMER0_OVF_vect) {
-   PORTB ^= (1 << PB5);
-   TCNT1 = 65536 - 4096;
+ISR(USART_RX_vect)
+{
+   uart_write(uart_read());
+}
+ISR(TIMER0_COMPA_vect) {
 }
