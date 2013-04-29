@@ -14,7 +14,8 @@ clean: ; rm -fr bin
 
 rebuild: clean all
 
-flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
+#flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
+flash: all ; avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
 
 bin: ; mkdir bin
 

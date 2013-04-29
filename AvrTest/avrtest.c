@@ -21,32 +21,44 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 #include <stdint.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 //-------------------[       Module Definitions        ]-------------------//
-#define USART_BAUDRATE 9600ULL
-#define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
+#define TLC5940_FLAG_UPDATE 0x01
+struct 
+{
+   uint8_t flags;
+   union
+   {
+      uint8_t bytes[24];
+      struct __attribute__((__packed__))
+      {
+         uint16_t ch15 : 12;
+         uint16_t ch14 : 12;
+         uint16_t ch13 : 12;
+         uint16_t ch12 : 12;
+         uint16_t ch11 : 12;
+         uint16_t ch10 : 12;
+         uint16_t ch09 : 12;
+         uint16_t ch08 : 12;
+         uint16_t ch07 : 12;
+         uint16_t ch06 : 12;
+         uint16_t ch05 : 12;
+         uint16_t ch04 : 12;
+         uint16_t ch03 : 12;
+         uint16_t ch02 : 12;
+         uint16_t ch01 : 12;
+         uint16_t ch00 : 12;
+      };
+   } data;   
+} tlc5940;
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-void uart_init ()
-{
-   UBRR0H = BAUD_PRESCALE >> 8;                       // set baud rate
-   UBRR0L = BAUD_PRESCALE;
-   UCSR0B = (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);    // enable TX/RX
-}
-void uart_write (uint8_t c)
-{
-   while (!(UCSR0A & (1<<UDRE0)));  // wait until data register empty
-   UDR0 = c;
-}
-uint8_t uart_read ()
-{
-   while (!(UCSR0A & (1<<RXC0)));   // wait until data register full
-   return (uint8_t)UDR0;
-}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -55,28 +67,79 @@ uint8_t uart_read ()
 //---------------------------------------------------------------------------
 int  main ()
 {
-   DDRB |= (1 << PB5);
-   DDRD |= (1 << PD6);
-   //DDRB = 0;
+   cli();
 
-   TCCR0A |= (1 << WGM01) | (1 << WGM00) | (1 << COM0A0);                           // toggle to channel A
-   TCCR0B |= (1 << WGM02);                            // set CTC mode
-   TCCR0B |= (1 << CS02) | (1 << CS01) | (0 << CS00);                             // prescale = 1
-   TIMSK0 |= (1 << OCIE0A);                           // enable compare event
-   OCR0A = 2;                                        // compare at 39 cycles
+   memset(&tlc5940, 0, sizeof(tlc5940));
+
+   // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
+   TCCR0A |= (1 << COM0A0);                                 // toggle OC0A on tick
+   TCCR0A |= (1 << WGM01);                                  // CTC value at OCR0A
+   TCCR0B |= (0 << CS02) | (0 << CS01) | (1 << CS00);       // prescale = 1 (16Mhz)
+   OCR0A = 38;                                              // reset at 39 ticks
  
-   uart_init();
-
+   // 8-bit Clock 2, software, 1000 ticks/sec
+   TCCR2A |= (1 << WGM21);                                  // CTC value at OCR2A
+   TCCR2B |= (1 << CS22) | (0 << CS21) | (0 << CS20);       // prescale = 64 (250kHz)
+   TIMSK2 |= (1 << OCIE2A);                                 // enable compare event
+   OCR2A = 249;                                             // reset at 250 ticks
+ 
    sei();
+
+   // digital pin setup
+   DDRB |= (1 << PB5);                                      // Arduino 13/LED
+
+   DDRD |= (1 << PD2);                                      // Arduino 2, TLC5940 BLANK
+   DDRD |= (1 << PD3);                                      // Arduino 3, TLC5940 SCLK
+   DDRD |= (1 << PD4);                                      // Arduino 4, TLC5940 SIN
+   DDRD |= (1 << PD5);                                      // Arduino 5, TLC5940 XLAT
+   DDRD |= (1 << PD6);                                      // Arduino 6, TLC5940 GSCLK, ATmega328 OC0A
+
+   PORTD |= (1 << PD2);                                     // set BLANK high
+
+   // set channel 0 to duty cycle of 1.5ms
+   tlc5940.data.ch00 = 308;
+   tlc5940.flags |= TLC5940_FLAG_UPDATE;
 
    for ( ; ; )
    {
+      sleep_cpu();
    }
    return 0;
 }
-ISR(USART_RX_vect)
+ISR(TIMER2_COMPA_vect)
 {
-   uart_write(uart_read());
-}
-ISR(TIMER0_COMPA_vect) {
+   static uint16_t ms = 0;
+   if (ms % 20 == 0)
+   {
+      // pulse BLANK to restart cycle
+      PORTD &= ~(1 << PD2);
+      PORTD |= (1 << PD2);
+      // update the greyscale values
+      if (tlc5940.flags & TLC5940_FLAG_UPDATE)
+      {
+         tlc5940.flags &= ~TLC5940_FLAG_UPDATE;
+         // shift in all greyscale bytes
+         for (uint8_t i = 0; i < sizeof(tlc5940.data.bytes); i++)
+         {
+            // shift in the current greyscale byte, MSB first
+            for (int8_t j = 7; j >= 0; j--)
+            {
+               // set SIN to the greyscale bit value
+               if (tlc5940.data.bytes[i] & (1 << j))
+                  PORTD |= (1 << PD4);
+               else
+                  PORTD &= ~(1 << PD4);
+               // pulse SCLK to shift in the greyscale bit
+               PORTD |= (1 << PD3);
+               PORTD &= ~(1 << PD3);
+            }
+         }
+         // pulse XLAT to latch in the greyscale data
+         PORTD |= (1 << PD5);
+         PORTD &= ~(1 << PD5);
+      }
+   }
+   ms++;
+   if (ms >= 65500)
+      ms = 0;
 }
