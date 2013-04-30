@@ -36,22 +36,22 @@ struct
       uint8_t bytes[24];
       struct __attribute__((__packed__))
       {
-         uint16_t ch15 : 12;
-         uint16_t ch14 : 12;
-         uint16_t ch13 : 12;
-         uint16_t ch12 : 12;
-         uint16_t ch11 : 12;
-         uint16_t ch10 : 12;
-         uint16_t ch09 : 12;
-         uint16_t ch08 : 12;
-         uint16_t ch07 : 12;
-         uint16_t ch06 : 12;
-         uint16_t ch05 : 12;
-         uint16_t ch04 : 12;
-         uint16_t ch03 : 12;
-         uint16_t ch02 : 12;
-         uint16_t ch01 : 12;
          uint16_t ch00 : 12;
+         uint16_t ch01 : 12;
+         uint16_t ch02 : 12;
+         uint16_t ch03 : 12;
+         uint16_t ch04 : 12;
+         uint16_t ch05 : 12;
+         uint16_t ch06 : 12;
+         uint16_t ch07 : 12;
+         uint16_t ch08 : 12;
+         uint16_t ch09 : 12;
+         uint16_t ch10 : 12;
+         uint16_t ch11 : 12;
+         uint16_t ch12 : 12;
+         uint16_t ch13 : 12;
+         uint16_t ch14 : 12;
+         uint16_t ch15 : 12;
       };
    } data;   
 } tlc5940;
@@ -72,13 +72,13 @@ void tlc5940_init ()
    REGSETBITHI(TCCR0A, WGM01);                              // CTC value at OCR0A
    REGSETBITHI(TCCR0B, CS00);                               // prescale = 1 (16mHz)
    OCR0A = 38;                                              // reset at 39 ticks
- 
-   // 8-bit Clock 2, software, 1000 ticks/sec
+
+   // 8-bit Clock 2, software, 1kHz
    REGSETBITHI(TCCR2A, WGM21);                              // CTC value at OCR2A
    REGSETBITHI(TCCR2B, CS22);                               // prescale = 64 (250kHz)
    REGSETBITHI(TIMSK2, OCIE2A);                             // enable compare interrupt
    OCR2A = 249;                                             // reset at 250 ticks
- 
+
    // digital pin setup
    PINSETOUTPUT(PD2);                                       // Arduino 2, TLC5940 23 (BLANK)
    PINSETOUTPUT(PD3);                                       // Arduino 3, TLC5940 25 (SCLK)
@@ -143,7 +143,7 @@ ISR(TIMER2_COMPA_vect)
             {
                // set SIN to the greyscale bit value and
                // pulse SCLK to shift in the greyscale bit
-               PINSET(PD4, tlc5940.data.bytes[i] & (1 << j));
+               PINSET(PD4, tlc5940.data.bytes[sizeof(tlc5940.data.bytes) - i - 1] & (1 << j));
                PINPULSE(PD3);
             }
          }

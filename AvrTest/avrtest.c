@@ -39,22 +39,33 @@
 //---------------------------------------------------------------------------
 int  main ()
 {
-   #if 0
    cli();
 
    tlc5940_init();
 
    sei();
 
+   PINSETOUTPUT(PB5);
+
+   uint16_t min = 4095 - 410;
+   uint16_t max = 4095 - 205;
+   uint16_t mul = 1;
+   uint16_t duty = min;
+   int8_t dir = 1;
    for ( ; ; )
    {
-      _delay_ms(2000);
-      tlc5940_set_duty(0, 205);
-      _delay_ms(2000);
-      tlc5940_set_duty(0, 307);
-      _delay_ms(2000);
-      tlc5940_set_duty(0, 409);
+      tlc5940_set_duty(0, duty);
+      duty += dir * mul;
+      if (duty < min)
+         duty = min;
+      else if (duty > max)
+         duty = max;
+      if (duty == min || duty == max)
+      {
+         dir *= -1;
+         _delay_ms(2000);
+      }
+      _delay_ms(1);
    }
-   #endif
    return 0;
 }
