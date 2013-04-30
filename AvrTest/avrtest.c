@@ -31,8 +31,8 @@
 #define TLC5940_FLAG_UPDATE 0x01
 struct 
 {
-   uint8_t flags;
-   union
+   volatile uint8_t flags;
+   volatile union
    {
       uint8_t bytes[24];
       struct __attribute__((__packed__))
@@ -88,21 +88,31 @@ int  main ()
    // digital pin setup
    DDRB |= (1 << PB5);                                      // Arduino 13/LED
 
-   DDRD |= (1 << PD2);                                      // Arduino 2, TLC5940 BLANK
-   DDRD |= (1 << PD3);                                      // Arduino 3, TLC5940 SCLK
-   DDRD |= (1 << PD4);                                      // Arduino 4, TLC5940 SIN
-   DDRD |= (1 << PD5);                                      // Arduino 5, TLC5940 XLAT
-   DDRD |= (1 << PD6);                                      // Arduino 6, TLC5940 GSCLK, ATmega328 OC0A
+   DDRD |= (1 << PD2);                                      // Arduino 2, TLC5940 23 (BLANK)
+   DDRD |= (1 << PD3);                                      // Arduino 3, TLC5940 25 (SCLK)
+   DDRD |= (1 << PD4);                                      // Arduino 4, TLC5940 26 (SIN)
+   DDRD |= (1 << PD5);                                      // Arduino 5, TLC5940 24 (XLAT)
+   DDRD |= (1 << PD6);                                      // Arduino 6, TLC5940 18 (GSCLK), ATmega328 OC0A
 
    PORTD |= (1 << PD2);                                     // set BLANK high
 
-   // set channel 0 to duty cycle of 1.5ms
-   tlc5940.data.ch00 = 308;
+   //tlc5940.data.ch00 = 205;
+   //tlc5940.data.ch00 = 307;
+   //tlc5940.data.ch00 = 409;
+
    tlc5940.flags |= TLC5940_FLAG_UPDATE;
 
    for ( ; ; )
    {
-      sleep_cpu();
+      _delay_ms(2000);
+      tlc5940.data.ch00 = 205;
+      tlc5940.flags |= TLC5940_FLAG_UPDATE;
+      _delay_ms(2000);
+      tlc5940.data.ch00 = 307;
+      tlc5940.flags |= TLC5940_FLAG_UPDATE;
+      _delay_ms(2000);
+      tlc5940.data.ch00 = 409;
+      tlc5940.flags |= TLC5940_FLAG_UPDATE;
    }
    return 0;
 }
@@ -112,11 +122,13 @@ ISR(TIMER2_COMPA_vect)
    if (ms % 20 == 0)
    {
       // pulse BLANK to restart cycle
-      PORTD &= ~(1 << PD2);
+      TCNT0 = 0;
       PORTD |= (1 << PD2);
+      PORTD &= ~(1 << PD2);
       // update the greyscale values
       if (tlc5940.flags & TLC5940_FLAG_UPDATE)
       {
+         PORTB ^= (1 << PB5);
          tlc5940.flags &= ~TLC5940_FLAG_UPDATE;
          // shift in all greyscale bytes
          for (uint8_t i = 0; i < sizeof(tlc5940.data.bytes); i++)
