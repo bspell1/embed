@@ -106,8 +106,9 @@
 #define PIN_HI                1
 #define PIN_LO                0
 // register manipulation
-#define BITMASK(b)            (1 << b)
-#define REGBIT(r, b)          ((r & BITMASK(b)) ? 1 : 0)
+#define BITMASK(b)            (1 << (b))
+#define BITTEST(v, b)         (((v) & BITMASK(b)) ? 1 : 0)
+#define REGBIT(r, b)          BITTEST(r, b)
 #define REGSETBIT(r, b, v)    if ((v)) r |= BITMASK(b); else r &= ~BITMASK(b)
 #define REGSETBITHI(r, b)     r |= BITMASK(b)
 #define REGSETBITLO(r, b)     r &= ~BITMASK(b)

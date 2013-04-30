@@ -30,30 +30,8 @@
 //-------------------[        Module Variables         ]-------------------//
 struct 
 {
-   volatile uint8_t flags;
-   volatile union
-   {
-      uint8_t bytes[24];
-      struct __attribute__((__packed__))
-      {
-         uint16_t ch00 : 12;
-         uint16_t ch01 : 12;
-         uint16_t ch02 : 12;
-         uint16_t ch03 : 12;
-         uint16_t ch04 : 12;
-         uint16_t ch05 : 12;
-         uint16_t ch06 : 12;
-         uint16_t ch07 : 12;
-         uint16_t ch08 : 12;
-         uint16_t ch09 : 12;
-         uint16_t ch10 : 12;
-         uint16_t ch11 : 12;
-         uint16_t ch12 : 12;
-         uint16_t ch13 : 12;
-         uint16_t ch14 : 12;
-         uint16_t ch15 : 12;
-      };
-   } data;   
+   volatile uint8_t  flags;
+   uint8_t           data[24];
 } tlc5940;
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
@@ -89,6 +67,22 @@ void tlc5940_init ()
    // set BLANK high
    PINSETHI(PD2);
 }
+//-----------< FUNCTION: tlc5940_get_duty >----------------------------------
+// Purpose:    gets the duty cycle for a PWM channel
+// Parameters: channel - TLC5940 output channel (1-16)
+// Returns:    the current duty cycle control value for the channel
+//---------------------------------------------------------------------------
+uint16_t tlc5940_get_duty (uint8_t channel)
+{
+   // decode the control value from the data buffer
+   // . each control value is 12 bits wide, stored big endian
+   // . channel values are stored in reverse order (channel 15 first)
+   uint8_t offset = 23 - channel * 3 / 2 - 1;
+   uint8_t* pb = tlc5940.data + offset;
+   return (channel % 2 == 0) ? 
+      ((uint16_t)(pb[0] & 0x0F) << 8) | pb[1] : 
+      ((uint16_t)pb[0] << 4) | (pb[1] >> 4);
+}
 //-----------< FUNCTION: tlc5940_set_duty >----------------------------------
 // Purpose:    sets the duty cycle for a PWM channel
 // Parameters: channel - TLC5940 output channel (1-16)
@@ -97,29 +91,25 @@ void tlc5940_init ()
 //---------------------------------------------------------------------------
 void tlc5940_set_duty (uint8_t channel, uint16_t duty)
 {
-   switch (channel)
+   // decode the control value from the data buffer
+   // . each control value is 12 bits wide, stored big endian
+   // . channel values are stored in reverse order (channel 15 first)
+   uint8_t offset = 23 - channel * 3 / 2 - 1;
+   uint8_t* pb = tlc5940.data + offset;
+   if (channel % 2 == 0)
    {
-      case  0: tlc5940.data.ch00 = duty; break;
-      case  1: tlc5940.data.ch01 = duty; break;
-      case  2: tlc5940.data.ch02 = duty; break;
-      case  3: tlc5940.data.ch03 = duty; break;
-      case  4: tlc5940.data.ch04 = duty; break;
-      case  5: tlc5940.data.ch05 = duty; break;
-      case  6: tlc5940.data.ch06 = duty; break;
-      case  7: tlc5940.data.ch07 = duty; break;
-      case  8: tlc5940.data.ch08 = duty; break;
-      case  9: tlc5940.data.ch09 = duty; break;
-      case 10: tlc5940.data.ch10 = duty; break;
-      case 11: tlc5940.data.ch11 = duty; break;
-      case 12: tlc5940.data.ch12 = duty; break;
-      case 13: tlc5940.data.ch13 = duty; break;
-      case 14: tlc5940.data.ch14 = duty; break;
-      case 15: tlc5940.data.ch15 = duty; break;
+      pb[0] = (pb[0] & 0xF0) | (duty >> 8);     // store high nibble at offset low nibble
+      pb[1] = duty;                             // store low byte at next offset
+   }
+   else
+   {
+      pb[0] = duty >> 4;                        // store high byte at offset
+      pb[1] = (pb[1] & 0x0F) | (duty << 4);     // store low nibble at next offset high nibble
    }
    tlc5940.flags |= TLC5940_FLAG_UPDATE;
 }
 //-----------< INTERRUPT: TIMER2_COMPA_vect >--------------------------------
-// Purpose:    responds to the1kHz timer events
+// Purpose:    responds to 1kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
@@ -128,22 +118,22 @@ ISR(TIMER2_COMPA_vect)
    static uint16_t ms = 0;
    if (ms % 20 == 0)
    {
-      // resync GSCLK and pulse BLANK to restart the cycle
+      // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
       PINPULSE(PD2);
-      // update the 5940's greyscale register
+      // update the 5940's greyscale register if requested
       if (tlc5940.flags & TLC5940_FLAG_UPDATE)
       {
          tlc5940.flags &= ~TLC5940_FLAG_UPDATE;
-         // shift in all greyscale bytes
-         for (uint8_t i = 0; i < sizeof(tlc5940.data.bytes); i++)
+         // shift in greyscale bytes, MSB first
+         for (uint8_t i = 0; i < sizeof(tlc5940.data); i++)
          {
             // shift in the current greyscale byte, MSB first
             for (int8_t j = 7; j >= 0; j--)
             {
                // set SIN to the greyscale bit value and
                // pulse SCLK to shift in the greyscale bit
-               PINSET(PD4, tlc5940.data.bytes[sizeof(tlc5940.data.bytes) - i - 1] & (1 << j));
+               PINSET(PD4, BITTEST(tlc5940.data[i], j));
                PINPULSE(PD3);
             }
          }

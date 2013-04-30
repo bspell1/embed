@@ -14,12 +14,16 @@ clean: ; rm -fr bin
 
 rebuild: clean all
 
+asm: bin $(MODULES:%=bin\\%.S)
+
 #flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
 flash: all ; avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
 
 bin: ; mkdir bin
 
 bin\\%.o: %.c makefile $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -c -o $@ $<
+
+bin\\%.S: %.c makefile $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -S -o $@ $<
 
 bin\$(TARGETNAME).elf: $(MODULES:%=bin\\%.o) ; $(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
