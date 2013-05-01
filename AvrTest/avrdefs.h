@@ -1,0 +1,214 @@
+//===========================================================================
+// Module:  avrdefs.h
+// Purpose: AVR microprocessor definitions
+//
+// Copyright © 2013
+// Brent M. Spell. All rights reserved.
+//
+// This library is free software; you can redistribute it and/or modify it 
+// under the terms of the GNU Lesser General Public License as published 
+// by the Free Software Foundation; either version 3 of the License, or 
+// (at your option) any later version. This library is distributed in the 
+// hope that it will be useful, but WITHOUT ANY WARRANTY; without even the 
+// implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+// See the GNU Lesser General Public License for more details. You should 
+// have received a copy of the GNU Lesser General Public License along with 
+// this library; if not, write to 
+//    Free Software Foundation, Inc. 
+//    51 Franklin Street, Fifth Floor 
+//    Boston, MA 02110-1301 USA
+//===========================================================================
+#ifndef __AVRDEFS_H
+#define __AVRDEFS_H
+//-------------------[       Pre Include Defines       ]-------------------//
+//-------------------[      Library Include Files      ]-------------------//
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <avr/io.h>
+//-------------------[      Project Include Files      ]-------------------//
+//-------------------[       Module Definitions        ]-------------------//
+//===========================================================================
+// VOID TYPES
+//===========================================================================
+typedef void                  VOID;
+typedef VOID*                 PVOID;
+typedef uint8_t               BYTE;
+typedef BYTE*                 PBYTE;
+typedef size_t                BSIZE;
+#define BYTE_MIN              UINT8_MIN
+#define BYTE_MAX              UINT8_MAX
+#define BSIZE_MIN             0
+#define BSIZE_MAX             SIZE_MAX
+//===========================================================================
+// INTEGER TYPES
+//===========================================================================
+typedef int8_t                I8;
+typedef uint8_t               UI8;
+typedef int16_t               I16;
+typedef uint16_t              UI16;
+typedef int32_t               I32;
+typedef uint32_t              UI32;
+#define I8_MIN                INT8_MIN
+#define I8_MAX                INT8_MAX
+#define UI8_MIN               UINT8_MIN
+#define UI8_MAX               UINT8_MAX
+#define I16_MIN               INT16_MIN
+#define I16_MAX               INT16_MAX
+#define UI16_MIN              UINT16_MIN
+#define UI16_MAX              UINT16_MAX
+#define I32_MIN               INT32_MIN
+#define I32_MAX               INT32_MAX
+#define UI32_MIN              UINT32_MIN
+#define UI32_MAX              UINT32_MAX
+//===========================================================================
+// BOOLEAN TYPES
+//===========================================================================
+typedef uint8_t               BOOL;
+#define FALSE                 ((BOOL)0)
+#define TRUE                  ((BOOL)1)
+//===========================================================================
+// AVR PINS
+//===========================================================================
+// pin direction, input, output register vectors
+static __attribute__((unused)) volatile uint8_t* __ppbAvrDR[] = { &DDRB,  &DDRC,  &DDRD  };
+static __attribute__((unused)) volatile uint8_t* __ppbAvrDI[] = { &PINB,  &PINC,  &PIND  };
+static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC, &PORTD };
+// bit manipulation
+#define BIT_LO                0
+#define BIT_HI                1
+#define BIT_MASK(b)           (1 << (b))
+#define BIT_TEST(v, b)        (((v) & BIT_MASK(b)) ? BIT_HI : BIT_LO)
+// AVR pin definitions
+#define PIN_B0                0
+#define PIN_B1                1
+#define PIN_B2                2
+#define PIN_B3                3
+#define PIN_B4                4
+#define PIN_B5                5
+#define PIN_B6                6
+#define PIN_B7                7
+#define PIN_C0                8
+#define PIN_C1                9
+#define PIN_C2                10
+#define PIN_C3                11
+#define PIN_C4                12
+#define PIN_C5                13
+#define PIN_C6                14
+#define PIN_D0                16
+#define PIN_D1                17
+#define PIN_D2                18
+#define PIN_D3                19
+#define PIN_D4                20
+#define PIN_D5                21
+#define PIN_D6                22
+#define PIN_D7                23
+// AVR 328P pin aliases
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#  define PIN_RESET           PIN_C6
+#  define PIN_T0              PIN_D4
+#  define PIN_T1              PIN_D5
+#  define PIN_TOSC1           PIN_B6
+#  define PIN_TOSC2           PIN_B7
+#  define PIN_XTAL1           PIN_B6
+#  define PIN_XTAL2           PIN_B7
+#  define PIN_ICP1            PIN_B0
+#  define PIN_CLKO            PIN_B0
+#  define PIN_OC0A            PIN_D6
+#  define PIN_OC0B            PIN_D5
+#  define PIN_OC1A            PIN_B1
+#  define PIN_OC1B            PIN_B2
+#  define PIN_OC2A            PIN_B3
+#  define PIN_OC2B            PIN_D3
+#  define PIN_INT0            PIN_D2
+#  define PIN_INT1            PIN_D3
+#  define PIN_PCINT0          PIN_B0
+#  define PIN_PCINT1          PIN_B1
+#  define PIN_PCINT2          PIN_B2
+#  define PIN_PCINT3          PIN_B3
+#  define PIN_PCINT4          PIN_B4
+#  define PIN_PCINT5          PIN_B5
+#  define PIN_PCINT6          PIN_B6
+#  define PIN_PCINT7          PIN_B7
+#  define PIN_PCINT8          PIN_C0
+#  define PIN_PCINT9          PIN_C1
+#  define PIN_PCINT10         PIN_C2
+#  define PIN_PCINT11         PIN_C3
+#  define PIN_PCINT12         PIN_C4
+#  define PIN_PCINT13         PIN_C5
+#  define PIN_PCINT14         PIN_C6
+#  define PIN_PCINT16         PIN_D0
+#  define PIN_PCINT17         PIN_D1
+#  define PIN_PCINT18         PIN_D2
+#  define PIN_PCINT19         PIN_D3
+#  define PIN_PCINT20         PIN_D4
+#  define PIN_PCINT21         PIN_D5
+#  define PIN_PCINT22         PIN_D6
+#  define PIN_PCINT23         PIN_D7
+#  define PIN_ADC0            PIN_C0
+#  define PIN_ADC1            PIN_C1
+#  define PIN_ADC2            PIN_C2
+#  define PIN_ADC3            PIN_C3
+#  define PIN_ADC4            PIN_C4
+#  define PIN_ADC5            PIN_C5
+#  define PIN_AIN0            PIN_D6
+#  define PIN_AIN1            PIN_D7
+#  define PIN_XCK             PIN_D4
+#  define PIN_TXD             PIN_D1
+#  define PIN_RXD             PIN_D0
+#  define PIN_SCK             PIN_B5
+#  define PIN_MOSI            PIN_B3
+#  define PIN_MISO            PIN_B4
+#  define PIN_SS              PIN_B2
+#  define PIN_SCL             PIN_C5
+#  define PIN_SDA             PIN_C4
+#endif // defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+// arduino pins
+#define PIN_ARDUINO_LED       PIN_B5
+#define PIN_ARDUINO_D0        PIN_D0
+#define PIN_ARDUINO_D1        PIN_D1
+#define PIN_ARDUINO_D2        PIN_D2
+#define PIN_ARDUINO_D3        PIN_D3
+#define PIN_ARDUINO_D4        PIN_D4
+#define PIN_ARDUINO_D5        PIN_D5
+#define PIN_ARDUINO_D6        PIN_D6
+#define PIN_ARDUINO_D7        PIN_D7
+#define PIN_ARDUINO_D8        PIN_B0
+#define PIN_ARDUINO_D9        PIN_B1
+#define PIN_ARDUINO_D10       PIN_B2
+#define PIN_ARDUINO_D11       PIN_B3
+#define PIN_ARDUINO_D12       PIN_B4
+#define PIN_ARDUINO_D13       PIN_B5
+#define PIN_ARDUINO_A0        PIN_C0
+#define PIN_ARDUINO_A1        PIN_C1
+#define PIN_ARDUINO_A2        PIN_C2
+#define PIN_ARDUINO_A3        PIN_C3
+#define PIN_ARDUINO_A4        PIN_C4
+#define PIN_ARDUINO_A5        PIN_C5
+// register manipulation
+#define REG_GET(r, b)         BIT_TEST(r, b)
+#define REG_SET_LO(r, b)      (r) &= ~BIT_MASK(b)
+#define REG_SET_HI(r, b)      (r) |= BIT_MASK(b)
+#define REG_SET(r, b, v)      if ((v)) REG_SET_HI(r, b); else REG_SET_LO(r, b)
+#define REG_TOGGLE(r, b)      (r) ^= BIT_MASK(b)
+// pin configuration
+#define PIN_MODE_INPUT        0
+#define PIN_MODE_OUTPUT       1
+// pin register access
+#define __PIN_DREG(p)         (*__ppbAvrDR[(p) / 8])
+#define __PIN_IREG(p)         (*__ppbAvrDI[(p) / 8])
+#define __PIN_OREG(p)         (*__ppbAvrDO[(p) / 8])
+#define __PIN_BIT(p)          ((p) % 8)
+#define PIN_SET_MODE(p, m)    REG_SET(__PIN_DREG(p), __PIN_BIT(p), m)
+#define PIN_SET_INPUT(p)      REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_INPUT)
+#define PIN_SET_OUTPUT(p)     REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_OUTPUT)
+#define PIN_READ(p)           REG_GET(__PIN_IREG(p), __PIN_BIT(p))
+#define PIN_GET(p)            REG_GET(__PIN_OREG(p), __PIN_BIT(p))
+#define PIN_SET_LO(p)         REG_SET_LO(__PIN_OREG(p), __PIN_BIT(p))
+#define PIN_SET_HI(p)         REG_SET_HI(__PIN_OREG(p), __PIN_BIT(p))
+#define PIN_SET(p, v)         REG_SET(__PIN_OREG(p), __PIN_BIT(p), v)
+#define PIN_TOGGLE(p)         REG_TOGGLE(__PIN_OREG(p), __PIN_BIT(p))
+#define PIN_PULSE_HILO(p)     PIN_SET_HI(p); PIN_SET_LO(p)
+#define PIN_PULSE_LOHI(p)     PIN_SET_LO(p); PIN_SET_HI(p)
+#define PIN_PULSE(p)          PIN_PULSE_HILO(p)
+#endif // __AVRDEFS_H

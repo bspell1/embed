@@ -1,5 +1,5 @@
 TARGETNAME = avrtest
-MODULES    = avrtest tlc5940
+MODULES    = avrtest tlc5940 i2cmast
 DEVICE     = atmega328p
 CLOCK      = 16000000
 

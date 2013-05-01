@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  avrtest.c
-// Purpose: AVR microprocessor test laboratory
+// Module:  i2cmast.h
+// Purpose: AVR I2C master driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,55 +18,27 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
+#ifndef __I2CMAST_H
+#define __I2CMAST_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
-#include "avrtest.h"
-#include "tlc5940.h"
-#include "i2cmast.h"
+#ifndef __AVRDEFS_H
+#include "avrdefs.h"
+#endif
 //-------------------[       Module Definitions        ]-------------------//
-//-------------------[        Module Variables         ]-------------------//
-//-------------------[        Module Prototypes        ]-------------------//
-//-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
-//---------------------------------------------------------------------------
-int main ()
-{
-   cli();
-
-   PIN_SET_OUTPUT(PIN_ARDUINO_LED);
-
-   tlc5940_init();
-   I2cInit(NULL);
-
-   sei();
-
-   uint16_t min = 90;
-   uint16_t max = 440;
-   uint16_t mul = 1;
-   uint16_t duty = min;
-   int8_t dir = 1;
-   for ( ; ; )
-   {
-      tlc5940_set_duty(0, duty);
-      duty += dir * mul;
-      if (duty < min)
-         duty = min;
-      else if (duty > max)
-         duty = max;
-      if (duty == min || duty == max)
-      {
-         dir *= -1;
-         _delay_ms(2000);
-      }
-      _delay_ms(1);
-   }
-   return 0;
-}
+//===========================================================================
+// I2C INTERFACE
+//===========================================================================
+// send/receive completion callback
+typedef  VOID (*I2C_CALLBACK) (BOOL bXferOk, UI8 nSlaveAddr, BSIZE cbMessage);
+// I2C API
+VOID     I2cInit              (I2C_CALLBACK pCallback);
+BOOL     I2cIsBusy            ();
+VOID     I2cSend              (UI8   nSlaveAddr, 
+                               PVOID pvMessage, 
+                               BSIZE cbMessage);
+VOID     I2cReceive           (UI8   nSlaveAddr, 
+                               PVOID pvMessage, 
+                               BSIZE cbBuffer);
+#endif // __I2CMAST_H

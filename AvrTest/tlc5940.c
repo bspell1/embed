@@ -20,13 +20,18 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/io.h>
 #include <avr/interrupt.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "tlc5940.h"
 //-------------------[       Module Definitions        ]-------------------//
 // driver flags
 #define TLC5940_FLAG_UPDATE         0x01
+// output pins
+#define PIN_D2_BLANK                PIN_D2               // Arduino 2, TLC5940 23 (BLANK)
+#define PIN_D3_SCLK                 PIN_D3               // Arduino 3, TLC5940 25 (SCLK)
+#define PIN_D4_SIN                  PIN_D4               // Arduino 4, TLC5940 26 (SIN)
+#define PIN_D5_XLAT                 PIN_D5               // Arduino 5, TLC5940 24 (XLAT)
+#define PIN_OC0A_GSCLK              PIN_OC0A             // Arduino 6, TLC5940 18 (GSCLK), ATmega328 OC0A
 //-------------------[        Module Variables         ]-------------------//
 struct 
 {
@@ -46,26 +51,26 @@ void tlc5940_init ()
    memset(&tlc5940, 0, sizeof(tlc5940));
 
    // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
-   REGSETBITHI(TCCR0A, COM0A0);                             // toggle OC0A on tick
-   REGSETBITHI(TCCR0A, WGM01);                              // CTC value at OCR0A
-   REGSETBITHI(TCCR0B, CS00);                               // prescale = 1 (16mHz)
-   OCR0A = 38;                                              // reset at 39 ticks
+   REG_SET_HI(TCCR0A, COM0A0);                             // toggle OC0A on tick
+   REG_SET_HI(TCCR0A, WGM01);                              // CTC value at OCR0A
+   REG_SET_HI(TCCR0B, CS00);                               // prescale = 1 (16mHz)
+   OCR0A = F_CPU / 204800 / 2 - 1;                         // reset at 39 ticks
 
    // 8-bit Clock 2, software, 1kHz
-   REGSETBITHI(TCCR2A, WGM21);                              // CTC value at OCR2A
-   REGSETBITHI(TCCR2B, CS22);                               // prescale = 64 (250kHz)
-   REGSETBITHI(TIMSK2, OCIE2A);                             // enable compare interrupt
-   OCR2A = 249;                                             // reset at 250 ticks
+   REG_SET_HI(TCCR2A, WGM21);                              // CTC value at OCR2A
+   REG_SET_HI(TCCR2B, CS22);                               // prescale = 64 (250kHz)
+   REG_SET_HI(TIMSK2, OCIE2A);                             // enable compare interrupt
+   OCR2A = F_CPU / 64 / 1000 - 1;                          // reset at 250 ticks
 
    // digital pin setup
-   PINSETOUTPUT(PD2);                                       // Arduino 2, TLC5940 23 (BLANK)
-   PINSETOUTPUT(PD3);                                       // Arduino 3, TLC5940 25 (SCLK)
-   PINSETOUTPUT(PD4);                                       // Arduino 4, TLC5940 26 (SIN)
-   PINSETOUTPUT(PD5);                                       // Arduino 5, TLC5940 24 (XLAT)
-   PINSETOUTPUT(PD6);                                       // Arduino 6, TLC5940 18 (GSCLK), ATmega328 OC0A
+   PIN_SET_OUTPUT(PIN_D2_BLANK);                           
+   PIN_SET_OUTPUT(PIN_D3_SCLK);                            
+   PIN_SET_OUTPUT(PIN_D4_SIN);                             
+   PIN_SET_OUTPUT(PIN_D5_XLAT);                            
+   PIN_SET_OUTPUT(PIN_OC0A_GSCLK);                         
 
    // set BLANK high
-   PINSETHI(PD2);
+   PIN_SET_HI(PIN_D2_BLANK);
 }
 //-----------< FUNCTION: tlc5940_get_duty >----------------------------------
 // Purpose:    gets the duty cycle for a PWM channel
@@ -77,11 +82,13 @@ uint16_t tlc5940_get_duty (uint8_t channel)
    // decode the control value from the data buffer
    // . each control value is 12 bits wide, stored big endian
    // . channel values are stored in reverse order (channel 15 first)
+   // . output channels are active low, so subtract from 4095
    uint8_t offset = 23 - channel * 3 / 2 - 1;
    uint8_t* pb = tlc5940.data + offset;
-   return (channel % 2 == 0) ? 
+   uint16_t lowDuty = (channel % 2 == 0) ? 
       ((uint16_t)(pb[0] & 0x0F) << 8) | pb[1] : 
       ((uint16_t)pb[0] << 4) | (pb[1] >> 4);
+   return 4095 - lowDuty;
 }
 //-----------< FUNCTION: tlc5940_set_duty >----------------------------------
 // Purpose:    sets the duty cycle for a PWM channel
@@ -94,17 +101,19 @@ void tlc5940_set_duty (uint8_t channel, uint16_t duty)
    // decode the control value from the data buffer
    // . each control value is 12 bits wide, stored big endian
    // . channel values are stored in reverse order (channel 15 first)
+   // . output channels are active low, so subtract from 4095
    uint8_t offset = 23 - channel * 3 / 2 - 1;
    uint8_t* pb = tlc5940.data + offset;
+   uint16_t highDuty = 4095 - duty;
    if (channel % 2 == 0)
    {
-      pb[0] = (pb[0] & 0xF0) | (duty >> 8);     // store high nibble at offset low nibble
-      pb[1] = duty;                             // store low byte at next offset
+      pb[0] = (pb[0] & 0xF0) | (highDuty >> 8);    // high nibble at offset low nibble
+      pb[1] = highDuty;                            // low byte at next offset
    }
    else
    {
-      pb[0] = duty >> 4;                        // store high byte at offset
-      pb[1] = (pb[1] & 0x0F) | (duty << 4);     // store low nibble at next offset high nibble
+      pb[0] = highDuty >> 4;                       // high byte at offset
+      pb[1] = (pb[1] & 0x0F) | (highDuty << 4);    // low nibble at next offset high nibble
    }
    tlc5940.flags |= TLC5940_FLAG_UPDATE;
 }
@@ -120,7 +129,7 @@ ISR(TIMER2_COMPA_vect)
    {
       // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
-      PINPULSE(PD2);
+      PIN_PULSE(PIN_D2_BLANK);
       // update the 5940's greyscale register if requested
       if (tlc5940.flags & TLC5940_FLAG_UPDATE)
       {
@@ -133,12 +142,12 @@ ISR(TIMER2_COMPA_vect)
             {
                // set SIN to the greyscale bit value and
                // pulse SCLK to shift in the greyscale bit
-               PINSET(PD4, BITTEST(tlc5940.data[i], j));
-               PINPULSE(PD3);
+               PIN_SET(PIN_D4_SIN, BIT_TEST(tlc5940.data[i], j));
+               PIN_PULSE(PIN_D3_SCLK);
             }
          }
          // pulse XLAT to latch in the greyscale data
-         PINPULSE(PD5);
+         PIN_PULSE(PIN_D5_XLAT);
       }
    }
    ms++;
