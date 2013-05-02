@@ -93,7 +93,7 @@ BOOL I2cIsBusy ()
 VOID I2cSend (BYTE nSlaveAddr, PVOID pvMessage, BSIZE cbMessage)
 {
    while (I2cIsBusy()) ;
-   g_bAddrByte = nSlaveAddr & (1<<ADDR_READ_BIT);
+   g_bAddrByte = nSlaveAddr & ~(1<<ADDR_READ_BIT);
    g_pbMessage = (PBYTE)pvMessage;
    g_cbMessage = cbMessage;
    g_bXferOk    = FALSE;
@@ -146,6 +146,7 @@ ISR(TWI_vect)
          break;
       case STATUS_MTX_ADR_ACK:                     // address byte transmitted
       case STATUS_MTX_DATA_ACK:                    // data byte transmitted
+         PIN_SET_HI(PIN_ARDUINO_LED); //TODO: remove
          if (nMsgIdx < g_cbMessage)
          {
             TWDR = g_pbMessage[nMsgIdx++];            // transmit the current data byte
