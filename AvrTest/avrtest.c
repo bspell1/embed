@@ -45,7 +45,7 @@ int main ()
 
    PIN_SET_LO(PIN_ARDUINO_LED);
 
-   tlc5940_init();
+   Tlc5940Init();
    I2cInit(NULL);
 
    //PIN_SET_HI(PIN_SDA);
@@ -69,14 +69,14 @@ int main ()
    }
 
    #if 0
-   uint16_t min = 90;
-   uint16_t max = 440;
-   uint16_t mul = 1;
-   uint16_t duty = min;
-   int8_t dir = 1;
+   UI16 min = 90;
+   UI16 max = 440;
+   UI16 mul = 1;
+   UI16 duty = min;
+   UI8 dir = 1;
    for ( ; ; )
    {
-      tlc5940_set_duty(0, duty);
+      Tlc5940SetDuty(0, duty);
       duty += dir * mul;
       if (duty < min)
          duty = min;

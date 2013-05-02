@@ -27,7 +27,7 @@
 #include "avrtest.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-void        tlc5940_init         ();
-uint16_t    tlc5940_get_duty     (uint8_t channel);
-void        tlc5940_set_duty     (uint8_t channel, uint16_t duty);
+VOID     Tlc5940Init       ();
+UI16     Tlc5940GetDuty    (UI8 nChannel);
+VOID     Tlc5940SetDuty    (UI8 nChannel, UI16 nDuty);
 #endif // __TLC5940_H

@@ -28,17 +28,29 @@
 #endif
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
+// I2C CONFIGURATION
+//===========================================================================
+#ifndef I2C_FREQUENCY
+#  define I2C_FREQUENCY 400000
+#endif
+//===========================================================================
 // I2C INTERFACE
 //===========================================================================
 // send/receive completion callback
-typedef  VOID (*I2C_CALLBACK) (BOOL bXferOk, UI8 nSlaveAddr, BSIZE cbMessage);
+typedef  VOID (*I2C_CALLBACK) (
+   BOOL bXferOk, 
+   UI8 nSlaveAddr, 
+   PVOID pvRecv, 
+   BSIZE cbRecv
+);
 // I2C API
-VOID     I2cInit              (I2C_CALLBACK pCallback);
-BOOL     I2cIsBusy            ();
-VOID     I2cSend              (UI8   nSlaveAddr, 
-                               PVOID pvMessage, 
-                               BSIZE cbMessage);
-VOID     I2cReceive           (UI8   nSlaveAddr, 
-                               PVOID pvMessage, 
-                               BSIZE cbBuffer);
+VOID     I2cInit        (I2C_CALLBACK pCallback);
+BOOL     I2cIsBusy      ();
+VOID     I2cSend        (UI8 nSlaveAddr, PVOID pvSend, BSIZE cbSend);
+VOID     I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
+VOID     I2cSendRecv    (UI8   nSlaveAddr, 
+                         PVOID pvSend, 
+                         BSIZE cbSend,
+                         PVOID pvRecv, 
+                         BSIZE cbRecv);
 #endif // __I2CMAST_H

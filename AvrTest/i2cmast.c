@@ -67,7 +67,7 @@
    (0<<TWEA)|(0<<TWSTA)|(1<<TWSTO)
 #define CONTROL_ABORT \
    CONTROL_BASE| \
-   (0<<TWIE)|(1<<TWINT)| \
+   (0<<TWIE)|(0<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 #define CONTROL_SEND_DATA \
    CONTROL_BASE| \
@@ -82,11 +82,12 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static I2C_CALLBACK  g_pCallback = NULL;
-static BYTE          g_bAddrByte = 0;
-static PBYTE         g_pbMessage = NULL;
-static BSIZE         g_cbMessage = 0;
-static BOOL          g_bXferOk   = FALSE;
+static I2C_CALLBACK  g_pCallback = NULL;     // I/O completion callback
+static BYTE          g_bAddr     = 0;        // slave address/read bit
+static PBYTE         g_pbSend    = NULL;     // send buffer
+static BSIZE         g_cbSend    = 0;        // send buffer length
+static PBYTE         g_pbRecv    = NULL;     // receive buffer
+static BSIZE         g_cbRecv    = 0;        // receive buffer size
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -99,9 +100,9 @@ VOID I2cInit (I2C_CALLBACK pCallback)
    g_pCallback = pCallback;
    // initialize I2C registers
    TWSR = 0;                                 // prescale the I2C clock at 0, clear status
-   TWBR = (F_CPU / 100000 - 16) / 2;         // set to 100kHz bit rate
+   TWBR = (F_CPU / I2C_FREQUENCY - 16) / 2;  // set to 400kHz bit rate
    TWDR = 0xFF;                              // initialize data to SDA clear
-   TWCR = CONTROL_INIT;
+   TWCR = CONTROL_INIT;                      // initialize control register
 }
 //-----------< FUNCTION: I2cIsBusy >-----------------------------------------
 // Purpose:    polls the I2C busy state
@@ -117,36 +118,67 @@ BOOL I2cIsBusy ()
 //-----------< FUNCTION: I2cSend >-------------------------------------------
 // Purpose:    sends a message on the I2C interface
 // Parameters: nSlaveAddr - address of the slave to send to
-//             pvMessage  - message buffer
-//             cbMessage  - number of bytes to send
+//             pvSend     - send message buffer
+//             cbSend     - number of bytes to send
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cSend (BYTE nSlaveAddr, PVOID pvMessage, BSIZE cbMessage)
+VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
 {
-   while (I2cIsBusy()) ;
+   while (I2cIsBusy())
+      ;
    // set up I2C state
-   g_bAddrByte = nSlaveAddr & ~BIT_MASK(ADDR_READ_BIT);
-   g_pbMessage = (PBYTE)pvMessage;
-   g_cbMessage = cbMessage;
-   g_bXferOk    = FALSE;
+   g_bAddr   = nSlaveAddr & ~BIT_MASK(ADDR_READ_BIT);
+   g_pbSend  = (PBYTE)pvSend;
+   g_cbSend  = cbSend;
+   g_pbRecv  = NULL;
+   g_cbRecv  = 0;
    // start the data transfer
    TWCR = CONTROL_START;
 }
-//-----------< FUNCTION: I2cReceive >----------------------------------------
+//-----------< FUNCTION: I2cRecv >-------------------------------------------
 // Purpose:    receives a message on the I2C interface
 // Parameters: nSlaveAddr - address of the slave to receive from
-//             pvMessage  - message buffer
-//             cbBuffer   - maximum number of bytes to receive
+//             pvRecv     - receive message buffer
+//             cbRecv     - maximum number of bytes to receive
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cReceive (UI8 nSlaveAddr, PVOID pvMessage, BSIZE cbBuffer)
+VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
 {
-   while (I2cIsBusy()) ;
+   while (I2cIsBusy())
+      ;
    // set up I2C state
-   g_bAddrByte = nSlaveAddr | BIT_MASK(ADDR_READ_BIT);
-   g_pbMessage = (PBYTE)pvMessage;
-   g_cbMessage = cbBuffer;
-   g_bXferOk    = FALSE;
+   g_bAddr   = nSlaveAddr | BIT_MASK(ADDR_READ_BIT);
+   g_pbSend  = NULL;
+   g_cbSend  = 0;
+   g_pbRecv  = (PBYTE)pvBuffer;
+   g_cbRecv  = cbBuffer;
+   // start the data transfer
+   TWCR = CONTROL_START;
+}
+//-----------< FUNCTION: I2cSendRecv >---------------------------------------
+// Purpose:    executes a combined send/receive transaction on the I2C bus
+// Parameters: nSlaveAddr - address of the slave to receive from
+//             pvSend     - send message buffer
+//             cbSend     - number of bytes to send
+//             pvRecv     - receive message buffer
+//             cbRecv     - maximum number of bytes to receive
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID I2cSendRecv (
+   UI8   nSlaveAddr, 
+   PVOID pvSend, 
+   BSIZE cbSend,
+   PVOID pvRecv, 
+   BSIZE cbRecv)
+{
+   while (I2cIsBusy())
+      ;
+   // set up I2C state
+   g_bAddr   = nSlaveAddr & ~BIT_MASK(ADDR_READ_BIT);
+   g_pbSend  = (PBYTE)pvSend;
+   g_cbSend  = cbSend;
+   g_pbRecv  = (PBYTE)pvRecv;
+   g_cbRecv  = cbRecv;
    // start the data transfer
    TWCR = CONTROL_START;
 }
@@ -163,23 +195,37 @@ ISR(TWI_vect)
       case STATUS_START:                           // START transmitted
       case STATUS_REP_START:                       // re-START transmitted
          nMsgIdx = 0;
-         TWDR = g_bAddrByte;
+         TWDR = g_bAddr;
          TWCR = CONTROL_SEND_DATA;
          break;
       case STATUS_ARB_LOST:                        // arbitration lost, restart
-PIN_TOGGLE(PIN_ARDUINO_LED); //TODO: remove
+         // combination send/receive transaction,
+         // so clear the read bit to restart
+         if (g_pbSend != NULL)
+            g_bAddr &= ~BIT_MASK(ADDR_READ_BIT);
          TWCR = CONTROL_START;
          break;
       case STATUS_MTX_ADR_ACK:                     // address byte transmitted
       case STATUS_MTX_DATA_ACK:                    // data byte transmitted
-         if (nMsgIdx < g_cbMessage)
+         if (nMsgIdx < g_cbSend)
          {
-            TWDR = g_pbMessage[nMsgIdx++];
+            // keep on sending
+            TWDR = g_pbSend[nMsgIdx++];
             TWCR = CONTROL_SEND_DATA;
+         }
+         else if (g_pbRecv != NULL)
+         {
+            // send complete, but combination
+            // transaction, so restart in read mode
+            nMsgIdx = 0;
+            g_bAddr |= BIT_MASK(ADDR_READ_BIT);
+            TWCR = CONTROL_START;
          }
          else
          {
-            g_bXferOk = TRUE;
+            // send complete, so stop
+            if (g_pCallback != NULL)
+               g_pCallback(TRUE, g_bAddr, NULL, 0);
             TWCR = CONTROL_STOP;
          }
          break;
@@ -187,16 +233,17 @@ PIN_TOGGLE(PIN_ARDUINO_LED); //TODO: remove
          TWCR = CONTROL_SEND_ACK;
          break;
       case STATUS_MRX_DATA_ACK:                    // data byte received
-         g_pbMessage[nMsgIdx++] = TWDR;
-         if (nMsgIdx < g_cbMessage - 1)
+         g_pbRecv[nMsgIdx++] = TWDR;
+         if (nMsgIdx < g_cbRecv - 1)
             TWCR = CONTROL_SEND_ACK;
          else
             TWCR = CONTROL_SEND_NACK;
          break;
       case STATUS_MRX_DATA_NACK:                   // NACK transmitted
-         g_pbMessage[nMsgIdx++] = TWDR;
-         g_cbMessage = nMsgIdx;
-         g_bXferOk = TRUE;
+         g_pbRecv[nMsgIdx++] = TWDR;
+         g_cbRecv = nMsgIdx;
+         if (g_pCallback != NULL)
+            g_pCallback(TRUE, g_bAddr & ~BIT_MASK(ADDR_READ_BIT), g_pbRecv, g_cbRecv);
          TWCR = CONTROL_STOP;
          break;
       case STATUS_MTX_ADR_NACK:                    // error - NACK was received after address
@@ -204,7 +251,8 @@ PIN_TOGGLE(PIN_ARDUINO_LED); //TODO: remove
       case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_BUS_ERROR:                       // general error
       default:                                     // unknown error
-         g_cbMessage = nMsgIdx;
+         if (g_pCallback != NULL)
+            g_pCallback(FALSE, g_bAddr & ~BIT_MASK(ADDR_READ_BIT), g_pbRecv, g_cbRecv);
          TWCR = CONTROL_ABORT;
          break;
    }

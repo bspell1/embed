@@ -202,6 +202,7 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define PIN_SET_MODE(p, m)    REG_SET(__PIN_DREG(p), __PIN_BIT(p), m)
 #define PIN_SET_INPUT(p)      REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_INPUT)
 #define PIN_SET_OUTPUT(p)     REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_OUTPUT)
+#define PIN_SET_PULLUP(p)     PIN_SET_INPUT(p); REG_SET(__PIN_OREG(p), __PIN_BIT(p))
 #define PIN_READ(p)           REG_GET(__PIN_IREG(p), __PIN_BIT(p))
 #define PIN_GET(p)            REG_GET(__PIN_OREG(p), __PIN_BIT(p))
 #define PIN_SET_LO(p)         REG_SET_LO(__PIN_OREG(p), __PIN_BIT(p))

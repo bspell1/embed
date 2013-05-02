@@ -21,9 +21,9 @@ flash: all ; avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME)
 
 bin: ; mkdir bin
 
-bin\\%.o: %.c makefile $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -c -o $@ $<
+bin\\%.o: %.c makefile avrdefs.h $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -c -o $@ $<
 
-bin\\%.S: %.c makefile $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -S -o $@ $<
+bin\\%.S: %.c makefile avrdefs.h $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -S -o $@ $<
 
 bin\$(TARGETNAME).elf: $(MODULES:%=bin\\%.o) ; $(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
