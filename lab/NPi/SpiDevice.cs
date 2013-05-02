@@ -11,40 +11,22 @@ namespace NPi
    public class SpiDevice : IDisposable
    {
       private Int32 fd = -1;
-      private Gpio cs = null;
-
-      public enum Access
-      {
-         Read = OpenFlags.O_RDONLY,
-         Write = OpenFlags.O_WRONLY,
-         ReadWrite = OpenFlags.O_RDWR
-      }
+      private Gpio ss = null;
 
       public SpiDevice (String path) 
-         : this(path, Access.ReadWrite, -1)
+         : this(path, -1)
       {
       }
-      public SpiDevice (String path, Int32 csPin)
-         : this(path, Access.ReadWrite, csPin)
-      {
-      }
-      public SpiDevice (String path, Access access)
-         : this(path, access, -1)
-      {
-      }
-      public SpiDevice (
-         String path, 
-         Access access,
-         Int32 csPin)
+      public SpiDevice (String path, Int32 ssPin)
       {
          try
          {
-            this.fd = Syscall.open(path, (OpenFlags)access);
+            this.fd = Syscall.open(path, OpenFlags.O_RDWR);
             if (this.fd < 0)
                throw new Win32Exception();
-            if (csPin != -1)
-               this.cs = new Gpio(csPin, Gpio.Mode.Write);
-            this.cs.Value = true;
+            if (ssPin != -1)
+               this.ss = new Gpio(ssPin, Gpio.Mode.Write);
+            this.ss.Value = true;
          }
          catch
          {
@@ -55,9 +37,9 @@ namespace NPi
 
       public void Dispose ()
       {
-         if (this.cs != null)
-            this.cs.Dispose();
-         this.cs = null;
+         if (this.ss != null)
+            this.ss.Dispose();
+         this.ss = null;
          if (this.fd >= 0)
             Syscall.close(this.fd);
          this.fd = -1;
@@ -103,15 +85,15 @@ namespace NPi
                   hRx = GCHandle.Alloc(rxBuffer, GCHandleType.Pinned);
                   pRx = hRx.Value.AddrOfPinnedObject();
                }
-               if (this.cs != null)
-                  this.cs.Value = false;
+               if (this.ss != null)
+                  this.ss.Value = false;
                if (SendReceive(this.fd, pTx, txOffset, pRx, rxOffset, count) < 0)
                   throw new Win32Exception();
             }
             finally
             {
-               if (this.cs != null)
-                  this.cs.Value = true;
+               if (this.ss != null)
+                  this.ss.Value = true;
                if (hTx != null)
                   hTx.Value.Free();
                if (hRx != null)
@@ -192,7 +174,8 @@ namespace NPi
          Int32 txOffset,
          IntPtr rxBuffer, 
          Int32 rxOffset,
-         Int32 count);
+         Int32 count
+      );
       #endregion
    }
 }

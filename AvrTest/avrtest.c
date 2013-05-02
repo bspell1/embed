@@ -42,27 +42,28 @@ int main ()
    cli();
 
    PIN_SET_OUTPUT(PIN_ARDUINO_LED);
-   //PIN_SET_OUTPUT(PIN_SDA);
-   //PIN_SET_OUTPUT(PIN_SCL);
 
    PIN_SET_LO(PIN_ARDUINO_LED);
 
    tlc5940_init();
    I2cInit(NULL);
 
+   //PIN_SET_HI(PIN_SDA);
+   //PIN_SET_HI(PIN_SCL);
+
    sei();
 
    // SX1509 addresses: 0x3E, 0x3F, 0x70, 0x71
    UI8 addr = 0x3E;
-   BYTE RegDir[]  = { 0x0F, 0xFF };
-   BYTE RegData[] = { 0x11, 0x00 };
+   BYTE RegDir[]  = { 0x0F, 0x00 }; // set all pins to output
+   BYTE RegData[] = { 0x11, 0x00 }; // initialize outputs to low
    I2cSend(addr, RegDir, sizeof(RegDir));
    for ( ; ; )
    {
       RegData[1] = 0xFF;
       I2cSend(addr, RegData, sizeof(RegData));
       _delay_ms(1000);
-      RegData[1] = 0xFF;
+      RegData[1] = 0x00;
       I2cSend(addr, RegData, sizeof(RegData));
       _delay_ms(1000);
    }

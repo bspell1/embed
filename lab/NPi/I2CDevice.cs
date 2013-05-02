@@ -10,46 +10,25 @@ namespace NPi
 {
    public class I2CDevice : IDisposable
    {
-      private UnixStream stream;
-      private Int32 slave = 0;
+      private Int32 fd = -1;
 
-      public enum Access
+      public I2CDevice (String path)
       {
-         Read = OpenFlags.O_RDONLY,
-         Write = OpenFlags.O_WRONLY,
-         ReadWrite = OpenFlags.O_RDWR
-      }
-
-      public I2CDevice (String path) 
-         : this(path, Access.ReadWrite)
-      {
-      }
-      public I2CDevice (
-         String path, 
-         Access access)
-      {
-         Int32 fd = Syscall.open(path, (OpenFlags)access);
+         this.fd = Syscall.open(path, OpenFlags.O_RDWR);
          if (fd < 0)
             throw new Win32Exception();
-         this.stream = new UnixStream(fd);
       }
 
       public void Dispose ()
       {
-         if (this.stream != null)
-            this.stream.Dispose();
-         this.stream = null;
+         if (this.fd >= 0)
+            Syscall.close(this.fd);
+         this.fd = -1;
       }
 
       public Int32 SlaveAddress
       {
-         get { return this.slave; }
-         set
-         {
-            if (SetSlaveAddress(this.stream.Handle, value) < 0)
-               throw new Win32Exception();
-            this.slave = value;
-         }
+         get; set; 
       }
 
       public void Read (Byte[] buffer)
@@ -63,7 +42,24 @@ namespace NPi
 
       public Int32 Read (Byte[] buffer, Int32 offset, Int32 count)
       {
-         return this.stream.Read(buffer, offset, count);
+         GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+         try
+         {
+            if (SetSlaveAddress(this.fd, this.SlaveAddress) < 0)
+               throw new Win32Exception();
+            var result = Syscall.read(
+               this.fd, 
+               hBuffer.AddrOfPinnedObject() + offset, 
+               (UInt64)count
+            );
+            if (result < 0)
+               throw new Win32Exception();
+            return (Int32)result;
+         }
+         finally
+         {
+            hBuffer.Free();
+         }
       }
 
       public void Write (Byte[] buffer)
@@ -78,14 +74,31 @@ namespace NPi
 
       public void Write (Byte[] buffer, Int32 offset, Int32 count)
       {
-         this.stream.Write(buffer, offset, count);
+         GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+         try
+         {
+            if (SetSlaveAddress(this.fd, this.SlaveAddress) < 0)
+               throw new Win32Exception();
+            var result = Syscall.write(
+               this.fd,
+               hBuffer.AddrOfPinnedObject() + offset,
+               (UInt64)count
+            );
+            if (result != count)
+               throw new Win32Exception();
+         }
+         finally
+         {
+            hBuffer.Free();
+         }
       }
 
       #region Native Methods
       [DllImport("monoext", EntryPoint = "i2c_set_slave", SetLastError = true)]
       private static extern Int32 SetSlaveAddress (
          Int32 fd, 
-         Int32 address);
+         Int32 address
+      );
       #endregion
    }
 }

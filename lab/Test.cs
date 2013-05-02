@@ -38,6 +38,15 @@ namespace Lab
       public void Run ()
       {
 #if false
+         using (var i2c = new I2CDevice("/dev/i2c-1"))
+         {
+            i2c.SlaveAddress = 0x3E;
+            i2c.Write(new Byte[] { 0x0F, 0 });
+            i2c.Write(new Byte[] { 0x11, 0xFF });
+         }
+#endif
+
+#if false
          var tx = Encoding.ASCII.GetBytes("0123456789ABCDEF");
          var rx = new Byte[tx.Length];
          using (var spi = new SpiDevice("/dev/spidev0.0"))

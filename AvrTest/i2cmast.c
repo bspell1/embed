@@ -167,11 +167,11 @@ ISR(TWI_vect)
          TWCR = CONTROL_SEND_DATA;
          break;
       case STATUS_ARB_LOST:                        // arbitration lost, restart
+PIN_TOGGLE(PIN_ARDUINO_LED); //TODO: remove
          TWCR = CONTROL_START;
          break;
       case STATUS_MTX_ADR_ACK:                     // address byte transmitted
       case STATUS_MTX_DATA_ACK:                    // data byte transmitted
-         PIN_SET_HI(PIN_ARDUINO_LED); //TODO: remove
          if (nMsgIdx < g_cbMessage)
          {
             TWDR = g_pbMessage[nMsgIdx++];
@@ -199,9 +199,9 @@ ISR(TWI_vect)
          g_bXferOk = TRUE;
          TWCR = CONTROL_STOP;
          break;
-      case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_MTX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_MTX_DATA_NACK:                   // error - NACK was received after data
+      case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_BUS_ERROR:                       // general error
       default:                                     // unknown error
          g_cbMessage = nMsgIdx;
