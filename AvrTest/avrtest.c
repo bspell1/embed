@@ -68,11 +68,11 @@ int main ()
    #endif
 
    #if 1
-   UI16 min = 50;
-   UI16 max = 3000;
-   UI16 mul = 10;
+   UI16 min = 90;
+   UI16 max = 440;
+   UI16 mul = 1;
    UI16 duty = min;
-   UI8 dir = 1;
+   I8 dir = 1;
    for ( ; ; )
    {
       Tlc5940SetDuty(0, duty);
