@@ -127,7 +127,7 @@ VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
    while (I2cIsBusy())
       ;
    // set up I2C state
-   g_bAddr   = nSlaveAddr & ~BIT_MASK(ADDR_READ_BIT);
+   g_bAddr   = (nSlaveAddr << 1) & ~BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = (PBYTE)pvSend;
    g_cbSend  = cbSend;
    g_pbRecv  = NULL;
@@ -147,7 +147,7 @@ VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
    while (I2cIsBusy())
       ;
    // set up I2C state
-   g_bAddr   = nSlaveAddr | BIT_MASK(ADDR_READ_BIT);
+   g_bAddr   = (nSlaveAddr << 1) | BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = NULL;
    g_cbSend  = 0;
    g_pbRecv  = (PBYTE)pvBuffer;
@@ -174,7 +174,7 @@ VOID I2cSendRecv (
    while (I2cIsBusy())
       ;
    // set up I2C state
-   g_bAddr   = nSlaveAddr & ~BIT_MASK(ADDR_READ_BIT);
+   g_bAddr   = (nSlaveAddr << 1) & ~BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = (PBYTE)pvSend;
    g_cbSend  = cbSend;
    g_pbRecv  = (PBYTE)pvRecv;

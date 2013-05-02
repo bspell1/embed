@@ -46,13 +46,11 @@ int main ()
    PIN_SET_LO(PIN_ARDUINO_LED);
 
    Tlc5940Init();
-   I2cInit(NULL);
-
-   //PIN_SET_HI(PIN_SDA);
-   //PIN_SET_HI(PIN_SCL);
+   // I2cInit(NULL);
 
    sei();
 
+   #if 0
    // SX1509 addresses: 0x3E, 0x3F, 0x70, 0x71
    UI8 addr = 0x3E;
    BYTE RegDir[]  = { 0x0F, 0x00 }; // set all pins to output
@@ -62,16 +60,17 @@ int main ()
    {
       RegData[1] = 0xFF;
       I2cSend(addr, RegData, sizeof(RegData));
-      _delay_ms(1000);
+      _delay_ms(15);
       RegData[1] = 0x00;
       I2cSend(addr, RegData, sizeof(RegData));
-      _delay_ms(1000);
+      _delay_ms(15);
    }
+   #endif
 
-   #if 0
-   UI16 min = 90;
-   UI16 max = 440;
-   UI16 mul = 1;
+   #if 1
+   UI16 min = 50;
+   UI16 max = 3000;
+   UI16 mul = 10;
    UI16 duty = min;
    UI8 dir = 1;
    for ( ; ; )

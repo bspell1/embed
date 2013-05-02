@@ -29,18 +29,6 @@
 //-------------------[      Project Include Files      ]-------------------//
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
-// VOID TYPES
-//===========================================================================
-typedef void                  VOID;
-typedef VOID*                 PVOID;
-typedef uint8_t               BYTE;
-typedef BYTE*                 PBYTE;
-typedef size_t                BSIZE;
-#define BYTE_MIN              UINT8_MIN
-#define BYTE_MAX              UINT8_MAX
-#define BSIZE_MIN             0
-#define BSIZE_MAX             SIZE_MAX
-//===========================================================================
 // INTEGER TYPES
 //===========================================================================
 typedef int8_t                I8;
@@ -67,6 +55,18 @@ typedef uint32_t              UI32;
 typedef uint8_t               BOOL;
 #define FALSE                 ((BOOL)0)
 #define TRUE                  ((BOOL)1)
+//===========================================================================
+// BUFFER TYPES
+//===========================================================================
+typedef void                  VOID;
+typedef VOID*                 PVOID;
+typedef uint8_t               BYTE;
+typedef BYTE*                 PBYTE;
+typedef size_t                BSIZE;
+#define BYTE_MIN              UINT8_MIN
+#define BYTE_MAX              UINT8_MAX
+#define BSIZE_MIN             0
+#define BSIZE_MAX             SIZE_MAX
 //===========================================================================
 // AVR PINS
 //===========================================================================
