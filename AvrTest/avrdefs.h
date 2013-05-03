@@ -53,8 +53,13 @@ typedef uint32_t              UI32;
 // BOOLEAN TYPES
 //===========================================================================
 typedef uint8_t               BOOL;
+typedef BOOL                  BIT;
 #define FALSE                 ((BOOL)0)
 #define TRUE                  ((BOOL)1)
+#define BIT_LO                ((BIT)0)
+#define BIT_HI                ((BIT)1)
+#define BIT_MASK(b)           (1 << (b))
+#define BIT_TEST(v, b)        (((v) & BIT_MASK(b)) ? BIT_HI : BIT_LO)
 //===========================================================================
 // BUFFER TYPES
 //===========================================================================
@@ -74,11 +79,6 @@ typedef size_t                BSIZE;
 static __attribute__((unused)) volatile uint8_t* __ppbAvrDR[] = { &DDRB,  &DDRC,  &DDRD  };
 static __attribute__((unused)) volatile uint8_t* __ppbAvrDI[] = { &PINB,  &PINC,  &PIND  };
 static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC, &PORTD };
-// bit manipulation
-#define BIT_LO                0
-#define BIT_HI                1
-#define BIT_MASK(b)           (1 << (b))
-#define BIT_TEST(v, b)        (((v) & BIT_MASK(b)) ? BIT_HI : BIT_LO)
 // AVR pin definitions
 #define PIN_B0                0
 #define PIN_B1                1

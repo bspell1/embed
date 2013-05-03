@@ -26,7 +26,7 @@
 //-------------------[      Project Include Files      ]-------------------//
 #include "avrtest.h"
 #include "tlc5940.h"
-#include "i2cmast.h"
+#include "sx1509.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -46,28 +46,23 @@ int main ()
    PIN_SET_LO(PIN_ARDUINO_LED);
 
    Tlc5940Init();
-   // I2cInit(NULL);
+
+   HSX1509 h1509 = SX1509Init(0x3E);
 
    sei();
 
-   #if 0
-   // SX1509 addresses: 0x3E, 0x3F, 0x70, 0x71
-   UI8 addr = 0x3E;
-   BYTE RegDir[]  = { 0x0F, 0x00 }; // set all pins to output
-   BYTE RegData[] = { 0x11, 0x00 }; // initialize outputs to low
-   I2cSend(addr, RegDir, sizeof(RegDir));
+   #if 1
+   SX1509SetDir(h1509, 0x0000);                       // set all pins to output
    for ( ; ; )
    {
-      RegData[1] = 0xFF;
-      I2cSend(addr, RegData, sizeof(RegData));
+      SX1509SetData(h1509, 0xFFFF);                   // set all pins high
       _delay_ms(15);
-      RegData[1] = 0x00;
-      I2cSend(addr, RegData, sizeof(RegData));
+      SX1509SetData(h1509, 0x0000);                   // set all pins low
       _delay_ms(15);
    }
    #endif
 
-   #if 1
+   #if 0
    UI16 min = 90;
    UI16 max = 440;
    UI16 mul = 1;

@@ -33,7 +33,7 @@
 #define PIN_D5_XLAT                 PIN_D5               // Arduino 5, TLC5940 24 (XLAT)
 #define PIN_OC0A_GSCLK              PIN_OC0A             // Arduino 6, TLC5940 18 (GSCLK), ATmega328 OC0A
 //-------------------[        Module Variables         ]-------------------//
-struct 
+static struct 
 {
    volatile UI8   fFlags;           // component flags
    BYTE           pbGsData[24];     // 5940 greyscale register data
