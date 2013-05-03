@@ -84,6 +84,7 @@ namespace Lab
                   for (; ; )
                   {
                      camera.EndCaptureImage(frameBuffer, frameLen);
+                     Console.WriteLine("{0:mm/dd hh:mm:ss}: Got image,  {1} bytes", DateTime.Now, frameLen);
                      var nextFrameLen = camera.BeginCaptureImage();
                      var tmpPath = Path.Combine(basePath, Path.GetRandomFileName());
                      if (File.Exists(camPath))
