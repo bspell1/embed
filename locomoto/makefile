@@ -1,11 +1,11 @@
-TARGETNAME = avrtest
-MODULES    = tlc5940 i2cmast sx1509 proto avrtest
+TARGETNAME = locomoto
+MODULES    = tlc5940 i2cmast sx1509 proto stepmoto locomoto
 DEVICE     = atmega328p
-CLOCK      = 16000000
+F_CPU      = 16000000
 
-CC = avr-gcc
+CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Werror -Winline 								\
-			 -mint8 -O3 -funroll-loops -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+			 -mint8 -O3 -funroll-loops -DF_CPU=$(F_CPU) -mmcu=$(DEVICE)
 LDFLAGS = -lc -lm
 
 all: bin bin\$(TARGETNAME).hex

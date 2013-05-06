@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  avrtest.c
+// Module:  locomoto.c
 // Purpose: AVR microprocessor test laboratory
 //
 // Copyright © 2013
@@ -24,14 +24,14 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
-#include "avrtest.h"
+#include "locomoto.h"
 #include "i2cmast.h"
 #include "tlc5940.h"
 #include "sx1509.h"
+#include "stepmoto.h"
 #include "proto.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
-static HSX1509 g_h1509;
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
@@ -42,80 +42,35 @@ static HSX1509 g_h1509;
 //---------------------------------------------------------------------------
 int main ()
 {
-   cli();
+   sei();
 
    PIN_SET_OUTPUT(PIN_ARDUINO_LED);
    PIN_SET_LO(PIN_ARDUINO_LED);
 
-   I2cInit(NULL);
-   Tlc5940Init();
+   I2cInit();
+   SX1509Init();
+   Tlc5940Init(
+      &(TLC5940_CONFIG)
+      {
+         .nPinBlank = PIN_D2,                      // arduino 2
+         .nPinSClk  = PIN_D3,                      // arduino 3
+         .nPinSIn   = PIN_D4,                      // arduino 4
+         .nPinXlat  = PIN_D5,                      // arduino 5
+         .nPinGSClk = PIN_OC0A                     // arduino 6
+      }
+   );
+   StepMotorInit((STEPMOTOR_CONFIG[])
+   {
+      { 
+         .n1509Module = 0,                         // TLC5940 module 0
+         .n1509Offset = 0                          // TLC5940 pins 0-3
+      }
+   });
    ProtoInit();
 
-   g_h1509 = SX1509Init(0x3E);
-
-   sei();
-
-   SX1509SetDirOutput(g_h1509, 0);                      // set pin to output
-   SX1509SetDataLo(g_h1509, 0);                      // set pin to output
-
    for ( ; ; )
    {
    }
 
-   #if 0
-   SX1509SetClockSourceInternal(g_h1509);               // internal oscillator
-   SX1509SetMiscPwmFrequency(g_h1509, 1);               // set PWM frequency to 1mHz
-
-   SX1509SetInputDisableHi(g_h1509, 4);                 // disable input
-   SX1509SetPullUpLo(g_h1509, 4);                       // disable pull-up
-   SX1509SetOpenDrainHi(g_h1509, 4);                    // enable open drain
-   SX1509SetDirOutput(g_h1509, 4);                      // set pin to output
-   SX1509SetPwmEnableHi(g_h1509, 4);                    // enable PWM
-
-   SX1509Set8(g_h1509, SX1509_REG_TON4, 15);
-   SX1509Set8(g_h1509, SX1509_REG_TRISE4, 15);
-   SX1509Set8(g_h1509, SX1509_REG_TFALL4, 15);
-   SX1509Set8(g_h1509, SX1509_REG_OFF4, 15 << 3);
-
-   SX1509SetDataLo(g_h1509, 4);                         // set pin 0 lo to activate PWM
-
-   SX1509SetDirOutput(g_h1509, 0);                      // set pin 0 output
-
-/*
-   I8 dir = 1;
-   UI8 pwm = 0;
-   for ( ; ; )
-   {
-      SX1509Set8(g_h1509, SX1509_REG_ION4, pwm);
-      pwm += dir;
-      if (pwm == 0 || pwm == 255)
-         dir *= -1;
-      _delay_ms(5);
-   }
-*/
-   #endif
-
-   #if 0
-   UI16 min = 90;
-   UI16 max = 440;
-   UI16 mul = 1;
-   UI16 duty = min;
-   I8 dir = 1;
-   for ( ; ; )
-   {
-      Tlc5940SetDuty(0, duty);
-      duty += dir * mul;
-      if (duty < min)
-         duty = min;
-      else if (duty > max)
-         duty = max;
-      if (duty == min || duty == max)
-      {
-         dir *= -1;
-         _delay_ms(2000);
-      }
-      _delay_ms(1);
-   }
-   #endif
    return 0;
 }

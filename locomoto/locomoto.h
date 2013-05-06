@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  avrtest.h
+// Module:  locomoto.h
 // Purpose: AVR microprocessor test laboratory
 //
 // Copyright © 2013
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __AVRTEST_H
-#define __AVRTEST_H
+#ifndef __LOCOMOTO_H
+#define __LOCOMOTO_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,4 +27,4 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __AVRTEST_H
+#endif // __LOCOMOTO_H

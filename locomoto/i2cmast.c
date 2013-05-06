@@ -82,7 +82,6 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static volatile I2C_CALLBACK  g_pCallback = NULL;     // I/O completion callback
 static volatile BYTE          g_bAddr     = 0;        // slave address/read bit
 static volatile PBYTE         g_pbSend    = NULL;     // send buffer
 static volatile BSIZE         g_cbSend    = 0;        // send buffer length
@@ -92,12 +91,11 @@ static volatile BSIZE         g_cbRecv    = 0;        // receive buffer size
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
 // Purpose:    I2C interface initialization
-// Parameters: pCallback - I/O completion callback
+// Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cInit (I2C_CALLBACK pCallback)
+VOID I2cInit ()
 {
-   g_pCallback = pCallback;
    // initialize I2C registers
    TWSR = 0;                                 // prescale the I2C clock at 0, clear status
    TWBR = (F_CPU / I2C_FREQUENCY - 16) / 2;  // set to 400kHz bit rate
@@ -113,7 +111,7 @@ VOID I2cInit (I2C_CALLBACK pCallback)
 BOOL I2cIsBusy ()
 {
    // busy if the interrupt is enabled
-   return TWCR & (1<<TWIE);
+   return REG_GET(TWCR, TWIE);
 }
 //-----------< FUNCTION: I2cWait >-------------------------------------------
 // Purpose:    waits for the I2C bus to become available
@@ -231,8 +229,6 @@ ISR(TWI_vect)
          else
          {
             // send complete, so stop
-            if (g_pCallback != NULL)
-               g_pCallback(TRUE, g_bAddr, NULL, 0);
             TWCR = CONTROL_STOP;
          }
          break;
@@ -249,8 +245,6 @@ ISR(TWI_vect)
       case STATUS_MRX_DATA_NACK:                   // NACK transmitted
          g_pbRecv[nMsgIdx++] = TWDR;
          g_cbRecv = nMsgIdx;
-         if (g_pCallback != NULL)
-            g_pCallback(TRUE, g_bAddr & ~BIT_MASK(ADDR_READ_BIT), g_pbRecv, g_cbRecv);
          TWCR = CONTROL_STOP;
          break;
       case STATUS_MTX_ADR_NACK:                    // error - NACK was received after address
@@ -258,8 +252,6 @@ ISR(TWI_vect)
       case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_BUS_ERROR:                       // general error
       default:                                     // unknown error
-         if (g_pCallback != NULL)
-            g_pCallback(FALSE, g_bAddr & ~BIT_MASK(ADDR_READ_BIT), g_pbRecv, g_cbRecv);
          TWCR = CONTROL_ABORT;
          break;
    }

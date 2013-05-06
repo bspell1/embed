@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  tlc5940.h
-// Purpose: TLC4950 PWM driver
+// Module:  proto.h
+// Purpose: locomoto driver communication protocol
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,16 +18,25 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __TLC5940_H
-#define __TLC5940_H
+#ifndef __PROTO_H
+#define __PROTO_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#ifndef __AVRTEST_H
-#include "avrtest.h"
+#ifndef __AVRDEFS_H
+#include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-VOID     Tlc5940Init       ();
-UI16     Tlc5940GetDuty    (UI8 nChannel);
-VOID     Tlc5940SetDuty    (UI8 nChannel, UI16 nDuty);
-#endif // __TLC5940_H
+//===========================================================================
+// PROTOCOL CONFIGURATION
+// . PROTO_BAUD: the UART baud rate for the protocol interface
+//===========================================================================
+#ifndef PROTO_BAUD
+#  define PROTO_BAUD                (57600)           // base baud rate
+#  define PROTO_BAUD_2X             (TRUE)            // 2x multiplier (115200 baud)
+#endif
+//===========================================================================
+// PROTOCOL API
+//===========================================================================
+VOID  ProtoInit   ();
+#endif // __PROTO_H

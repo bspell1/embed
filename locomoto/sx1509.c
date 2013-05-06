@@ -27,130 +27,128 @@
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
-static BYTE I2cData[6];
+static UI8  pI2cAddress[4] = { 0x3E, 0x3F, 0x70, 0x71 };
+static BYTE pbI2cData[6];
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SX1509Init >----------------------------------------
 // Purpose:    SX1509 interface initialization
-// Parameters: nAddress - I2C address of the chip
-// Returns:    handle to the SX1509 interface
+// Parameters: none
+// Returns:    none
 //---------------------------------------------------------------------------
-HSX1509 SX1509Init (UI8 nAddress)
+VOID SX1509Init ()
 {
-   // create the component handle
-   HSX1509 h1509 = { nAddress };
-   return h1509;
 }
 //-----------< FUNCTION: SX1509Get8 >----------------------------------------
 // Purpose:    reads an 8-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to read
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to read
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-UI8 SX1509Get8 (HSX1509 h1509, UI8 nReg)
+UI8 SX1509Get8 (UI8 nModule, UI8 nReg)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = 0;
-   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 1);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = 0;
+   I2cSendRecv(pI2cAddress[nModule], pbI2cData, 1, pbI2cData + 1, 1);
    I2cWait();
-   return I2cData[1];
+   return pbI2cData[1];
 }
 //-----------< FUNCTION: SX1509Set8 >----------------------------------------
 // Purpose:    writes an 8-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to write
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to write
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-VOID SX1509Set8 (HSX1509 h1509, UI8 nReg, UI8 nValue)
+VOID SX1509Set8 (UI8 nModule, UI8 nReg, UI8 nValue)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = nValue;
-   I2cSend(h1509.Handle, I2cData, 2);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = nValue;
+   I2cSend(pI2cAddress[nModule], pbI2cData, 2);
 }
 //-----------< FUNCTION: SX1509Get16 >---------------------------------------
 // Purpose:    reads a 16-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to read
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to read
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-UI16 SX1509Get16 (HSX1509 h1509, UI8 nReg)
+UI16 SX1509Get16 (UI8 nModule, UI8 nReg)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = 0;
-   I2cData[2] = 0;
-   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 2);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = 0;
+   pbI2cData[2] = 0;
+   I2cSendRecv(pI2cAddress[nModule], pbI2cData, 1, pbI2cData + 1, 2);
    I2cWait();
    return 
-      ((UI16)I2cData[1] << 8) | 
-      (      I2cData[2] << 0);
+      ((UI16)pbI2cData[1] << 8) | 
+      (      pbI2cData[2] << 0);
 }
 //-----------< FUNCTION: SX1509Set16 >----------------------------------------
 // Purpose:    writes a 16-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to write
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to write
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-VOID SX1509Set16 (HSX1509 h1509, UI8 nReg, UI16 nValue)
+VOID SX1509Set16 (UI8 nModule, UI8 nReg, UI16 nValue)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = (nValue >> 8);
-   I2cData[2] = (nValue >> 0);
-   I2cSend(h1509.Handle, I2cData, 3);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = (nValue >> 8);
+   pbI2cData[2] = (nValue >> 0);
+   I2cSend(pI2cAddress[nModule], pbI2cData, 3);
 }
 //-----------< FUNCTION: SX1509Get32 >---------------------------------------
 // Purpose:    reads a 32-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to read
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to read
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-UI32 SX1509Get32 (HSX1509 h1509, UI8 nReg)
+UI32 SX1509Get32 (UI8 nModule, UI8 nReg)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = 0;
-   I2cData[2] = 0;
-   I2cData[3] = 0;
-   I2cData[4] = 0;
-   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 4);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = 0;
+   pbI2cData[2] = 0;
+   pbI2cData[3] = 0;
+   pbI2cData[4] = 0;
+   I2cSendRecv(pI2cAddress[nModule], pbI2cData, 1, pbI2cData + 1, 4);
    I2cWait();
    return 
-      ((UI32)I2cData[1] << 24) | 
-      ((UI32)I2cData[2] << 16) | 
-      ((UI32)I2cData[3] <<  8) | 
-      (      I2cData[4] <<  0);
+      ((UI32)pbI2cData[1] << 24) | 
+      ((UI32)pbI2cData[2] << 16) | 
+      ((UI32)pbI2cData[3] <<  8) | 
+      (      pbI2cData[4] <<  0);
 }
 //-----------< FUNCTION: SX1509Set32 >----------------------------------------
 // Purpose:    writes a 32-bit register
-// Parameters: h1509 - SX1509 component handle
-//             nReg  - the register to write
+// Parameters: nModule - SX1509 module number
+//             nReg    - the register to write
 // Returns:    the requested register value
 //---------------------------------------------------------------------------
-VOID SX1509Set32 (HSX1509 h1509, UI8 nReg, UI32 nValue)
+VOID SX1509Set32 (UI8 nModule, UI8 nReg, UI32 nValue)
 {
    I2cWait();
-   I2cData[0] = nReg;
-   I2cData[1] = (nValue >> 24);
-   I2cData[2] = (nValue >> 16);
-   I2cData[3] = (nValue >>  8);
-   I2cData[4] = (nValue >>  0);
-   I2cSend(h1509.Handle, I2cData, 5);
+   pbI2cData[0] = nReg;
+   pbI2cData[1] = (nValue >> 24);
+   pbI2cData[2] = (nValue >> 16);
+   pbI2cData[3] = (nValue >>  8);
+   pbI2cData[4] = (nValue >>  0);
+   I2cSend(pI2cAddress[nModule], pbI2cData, 5);
 }
 //-----------< FUNCTION: SX1509GetKeyData >----------------------------------
 // Purpose:    reads the keyboard data register to determine the key pressed
-// Parameters: h1509 - SX1509 component handle
+// Parameters: nModule - SX1509 module number
 // Returns:    the current keyboard data register
 //             -1, -1 if no key was pressed
 //---------------------------------------------------------------------------
-HSX1509_KEYPAD_DATA SX1509GetKeyData (HSX1509 h1509)
+UI8_KEYPAD_DATA SX1509GetKeyData (UI8 nModule)
 { 
-   UI16 nData = SX1509Get16(h1509, SX1509_REG_KEYDATA1);
+   UI16 nData = SX1509Get16(nModule, SX1509_REG_KEYDATA1);
    UI8 nRowData = nData >> 8;
    UI8 nColData = nData;
-   HSX1509_KEYPAD_DATA data = { -1, -1 };
+   UI8_KEYPAD_DATA data = { -1, -1 };
    for (UI8 i = 0; i < 8; i++)
       if (!(nRowData & BIT_MASK(i)))
          data.nRow = i;

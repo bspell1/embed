@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  proto.h
-// Purpose: moto driver communication protocol
+// Module:  stepmoto.h
+// Purpose: stepper motor driver module
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __PROTO_H
-#define __PROTO_H
+#ifndef __STEPMOTO_H
+#define __STEPMOTO_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,5 +27,28 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-VOID  ProtoInit   ();
-#endif // __PROTO_H
+//===========================================================================
+// STEPPER MOTOR CONFIGURATION
+// . STEPMOTO_COUNT: the number of stepper motors in the circuit
+//===========================================================================
+#ifndef STEPMOTO_COUNT
+#  define STEPMOTO_COUNT      2
+#endif
+//===========================================================================
+// STEPPER MOTOR STRUCTURES
+//===========================================================================
+typedef struct tagStepMotorConfig
+{
+   UI8   n1509Module;                              // SX1509 module numbers
+   UI8   n1509Offset;                              // SX1509 starting pins
+} STEPMOTOR_CONFIG, *PSTEPMOTOR_CONFIG;
+//===========================================================================
+// STEPPER MOTOR API
+//===========================================================================
+VOID     StepMotorInit        (STEPMOTOR_CONFIG* pConfig);
+BOOL     StepMotorIsBusy      ();
+VOID     StepMotorWait        ();
+VOID     StepMotorStop        (UI8 nMotor);
+VOID     StepMotorStopAll     ();
+VOID     StepMotorRun         (UI8 nMotor, UI8 nDelay, I8 nSteps);
+#endif // __STEPMOTO_H

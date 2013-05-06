@@ -36,15 +36,8 @@
 //===========================================================================
 // I2C INTERFACE
 //===========================================================================
-// send/receive completion callback
-typedef  VOID (*I2C_CALLBACK) (
-   BOOL bXferOk, 
-   UI8 nSlaveAddr, 
-   PVOID pvRecv, 
-   BSIZE cbRecv
-);
 // I2C API
-VOID     I2cInit        (I2C_CALLBACK pCallback);
+VOID     I2cInit        ();
 BOOL     I2cIsBusy      ();
 VOID     I2cWait        ();
 VOID     I2cSend        (UI8 nSlaveAddr, PVOID pvSend, BSIZE cbSend);
