@@ -28,35 +28,12 @@
 #include "i2cmast.h"
 #include "tlc5940.h"
 #include "sx1509.h"
+#include "proto.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 static HSX1509 g_h1509;
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-#define USART_BAUDRATE 57600
-#define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
-void uart_init ()
-{
-   UBRR0H = BAUD_PRESCALE >> 8;                       // set baud rate
-   UBRR0L = BAUD_PRESCALE;
-   UCSR0B = (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);    // enable TX/RX
-}
-void uart_write (uint8_t c)
-{
-   while (!(UCSR0A & (1<<UDRE0)));  // wait until data register empty
-   UDR0 = c;
-}
-uint8_t uart_read ()
-{
-   while (!(UCSR0A & (1<<RXC0)));   // wait until data register full
-   return (uint8_t)UDR0;
-}
-ISR(USART_RX_vect)
-{
-   PIN_TOGGLE(PIN_ARDUINO_LED);
-   uint8_t data = uart_read();
-   uart_write(data);
-}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -70,9 +47,9 @@ int main ()
    PIN_SET_OUTPUT(PIN_ARDUINO_LED);
    PIN_SET_LO(PIN_ARDUINO_LED);
 
-   uart_init();
    I2cInit(NULL);
    Tlc5940Init();
+   ProtoInit();
 
    g_h1509 = SX1509Init(0x3E);
 

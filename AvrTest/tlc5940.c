@@ -49,26 +49,22 @@ VOID Tlc5940Init ()
 {
    // initialize the data vector
    memset(&Tlc5940, 0, sizeof(Tlc5940));
-
    // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
    REG_SET_HI(TCCR0A, COM0A0);                             // toggle OC0A on tick
    REG_SET_HI(TCCR0A, WGM01);                              // CTC value at OCR0A
    REG_SET_HI(TCCR0B, CS00);                               // prescale = 1 (16mHz)
    OCR0A = F_CPU / 204800 / 2 - 1;                         // reset at 39 ticks
-
    // 8-bit Clock 2, software, 1kHz
    REG_SET_HI(TCCR2A, WGM21);                              // CTC value at OCR2A
    REG_SET_HI(TCCR2B, CS22);                               // prescale = 64 (250kHz)
    REG_SET_HI(TIMSK2, OCIE2A);                             // enable compare interrupt
    OCR2A = F_CPU / 64 / 1000 - 1;                          // reset at 250 ticks
-
    // digital pin setup
    PIN_SET_OUTPUT(PIN_D2_BLANK);                           
    PIN_SET_OUTPUT(PIN_D3_SCLK);                            
    PIN_SET_OUTPUT(PIN_D4_SIN);                             
    PIN_SET_OUTPUT(PIN_D5_XLAT);                            
    PIN_SET_OUTPUT(PIN_OC0A_GSCLK);                         
-
    // set BLANK high
    PIN_SET_HI(PIN_D2_BLANK);
 }
