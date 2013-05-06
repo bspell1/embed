@@ -55,8 +55,14 @@ int main ()
 
    sei();
 
+   SX1509SetDirOutput(g_h1509, 0);                      // set pin to output
+   SX1509SetDataLo(g_h1509, 0);                      // set pin to output
 
-   #if 1
+   for ( ; ; )
+   {
+   }
+
+   #if 0
    SX1509SetClockSourceInternal(g_h1509);               // internal oscillator
    SX1509SetMiscPwmFrequency(g_h1509, 1);               // set PWM frequency to 1mHz
 
@@ -75,9 +81,6 @@ int main ()
 
    SX1509SetDirOutput(g_h1509, 0);                      // set pin 0 output
 
-   for ( ; ; )
-   {
-   }
 /*
    I8 dir = 1;
    UI8 pwm = 0;

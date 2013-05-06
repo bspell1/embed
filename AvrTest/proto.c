@@ -102,7 +102,7 @@ ISR(USART_RX_vect)
          UI8 nChannel = UartRead();                   // . read the output channel (0-3)
          UI8 nOutput  = UartRead();                   // . read the digital output value
          UI8 nBit     = nOutput >> 4;                 // . decode the output number
-         BIT bValue   = nOutput & 0x0F;               // . decode the output value
+         BIT bValue   = nOutput & 0x01;               // . decode the output value
          sei();                                       // . enable interrupts for I2C read/write
          SX1509SetDataBit(                            // . write the output data
             g_ph1509[nChannel], 
@@ -110,7 +110,7 @@ ISR(USART_RX_vect)
             bValue
          );
       }  break;
-      default:                                     // unknown command
+      default:                                        // unknown command
          break;
    }
 }
