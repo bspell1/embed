@@ -82,12 +82,12 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static I2C_CALLBACK  g_pCallback = NULL;     // I/O completion callback
-static BYTE          g_bAddr     = 0;        // slave address/read bit
-static PBYTE         g_pbSend    = NULL;     // send buffer
-static BSIZE         g_cbSend    = 0;        // send buffer length
-static PBYTE         g_pbRecv    = NULL;     // receive buffer
-static BSIZE         g_cbRecv    = 0;        // receive buffer size
+static volatile I2C_CALLBACK  g_pCallback = NULL;     // I/O completion callback
+static volatile BYTE          g_bAddr     = 0;        // slave address/read bit
+static volatile PBYTE         g_pbSend    = NULL;     // send buffer
+static volatile BSIZE         g_cbSend    = 0;        // send buffer length
+static volatile PBYTE         g_pbRecv    = NULL;     // receive buffer
+static volatile BSIZE         g_cbRecv    = 0;        // receive buffer size
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -115,6 +115,16 @@ BOOL I2cIsBusy ()
    // busy if the interrupt is enabled
    return TWCR & (1<<TWIE);
 }
+//-----------< FUNCTION: I2cWait >-------------------------------------------
+// Purpose:    waits for the I2C bus to become available
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID I2cWait ()
+{
+   while (I2cIsBusy())
+      ;
+}
 //-----------< FUNCTION: I2cSend >-------------------------------------------
 // Purpose:    sends a message on the I2C interface
 // Parameters: nSlaveAddr - address of the slave to send to
@@ -124,8 +134,7 @@ BOOL I2cIsBusy ()
 //---------------------------------------------------------------------------
 VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
 {
-   while (I2cIsBusy())
-      ;
+   I2cWait();
    // set up I2C state
    g_bAddr   = (nSlaveAddr << 1) & ~BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = (PBYTE)pvSend;
@@ -144,8 +153,7 @@ VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
 //---------------------------------------------------------------------------
 VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
 {
-   while (I2cIsBusy())
-      ;
+   I2cWait();
    // set up I2C state
    g_bAddr   = (nSlaveAddr << 1) | BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = NULL;
@@ -171,8 +179,7 @@ VOID I2cSendRecv (
    PVOID pvRecv, 
    BSIZE cbRecv)
 {
-   while (I2cIsBusy())
-      ;
+   I2cWait();
    // set up I2C state
    g_bAddr   = (nSlaveAddr << 1) & ~BIT_MASK(ADDR_READ_BIT);
    g_pbSend  = (PBYTE)pvSend;

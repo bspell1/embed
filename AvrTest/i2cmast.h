@@ -46,6 +46,7 @@ typedef  VOID (*I2C_CALLBACK) (
 // I2C API
 VOID     I2cInit        (I2C_CALLBACK pCallback);
 BOOL     I2cIsBusy      ();
+VOID     I2cWait        ();
 VOID     I2cSend        (UI8 nSlaveAddr, PVOID pvSend, BSIZE cbSend);
 VOID     I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
 VOID     I2cSendRecv    (UI8   nSlaveAddr, 

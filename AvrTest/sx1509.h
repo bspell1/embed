@@ -97,9 +97,9 @@ typedef struct tagHSX1509KeypadData
 #define SX1509_REG_LEVELSHIFTER2          0x1D
 #define SX1509_REG_CLOCK                  0x1E
 #define SX1509_REG_MISC                   0x1F
-#define SX1509_REG_LEDDRIVERENABLE        0x20
-#define SX1509_REG_LEDDRIVERENABLEB       0x20
-#define SX1509_REG_LEDDRIVERENABLEA       0x21
+#define SX1509_REG_PWMDRIVERENABLE        0x20
+#define SX1509_REG_PWMDRIVERENABLEB       0x20
+#define SX1509_REG_PWMDRIVERENABLEA       0x21
 // debounce and keypad engine
 #define SX1509_REG_DEBOUNCECONFIG         0x22
 #define SX1509_REG_DEBOUNCEENABLE         0x23
@@ -109,7 +109,7 @@ typedef struct tagHSX1509KeypadData
 #define SX1509_REG_KEYCONFIG2             0x26
 #define SX1509_REG_KEYDATA1               0x27
 #define SX1509_REG_KEYDATA2               0x28
-// LED driver (PWM, blinking, breathing)
+// PWM driver (static, blinking, breathing)
 #define SX1509_REG_TON0                   0x29
 #define SX1509_REG_ION0                   0x2A
 #define SX1509_REG_OFF0                   0x02
@@ -180,6 +180,11 @@ typedef struct tagHSX1509KeypadData
 #define SX1509_REG_HIGHINPUTA             0x6A
 // software reset
 #define SX1509_REG_RESET                  0x6B
+//===========================================================================
+// DIRECTION REGISTER VALUES
+//===========================================================================
+#define SX1509_DIR_OUTPUT                 BIT_LO
+#define SX1509_DIR_INPUT                  BIT_HI
 //===========================================================================
 // SENSE REGISTER VALUES
 //===========================================================================
@@ -638,6 +643,10 @@ inline VOID SX1509ToggleDir (HSX1509 h1509, UI8 nIo)
       else
          SX1509Toggle(h1509, SX1509_REG_DIRB, nIo - 8);
    }
+inline VOID SX1509SetDirOutput (HSX1509 h1509, UI8 nIo)
+   { SX1509SetDirBit(h1509, nIo, SX1509_DIR_OUTPUT); }
+inline VOID SX1509SetDirInput (HSX1509 h1509, UI8 nIo)
+   { SX1509SetDirBit(h1509, nIo, SX1509_DIR_INPUT); }
 //===========================================================================
 // DATA REGISTER
 //===========================================================================
@@ -987,13 +996,13 @@ inline VOID SX1509SetMiscFaderALinear (HSX1509 h1509)
    { SX1509SetBit(h1509, SX1509_REG_MISC, 3, SX1509_MISC_FADER_LINEAR); }
 inline VOID SX1509SetMiscFaderALogarithmic (HSX1509 h1509)
    { SX1509SetBit(h1509, SX1509_REG_MISC, 3, SX1509_MISC_FADER_LOGARITHMIC); }
-// LED frequency bits (4-6)
-inline UI8 SX1509GetMiscLedFrequency (HSX1509 h1509)
+// PWM frequency bits (4-6)
+inline UI8 SX1509GetMiscPwmFrequency (HSX1509 h1509)
    { return (SX1509GetMisc(h1509) >> 4) & 7; }
-inline VOID SX1509SetMiscLedFrequency (HSX1509 h1509, UI8 nFreq)
+inline VOID SX1509SetMiscPwmFrequency (HSX1509 h1509, UI8 nFreq)
    { SX1509SetMisc(h1509, (SX1509GetMisc(h1509) & 0x70) | (nFreq << 4)); }
-inline VOID SX1509SetMiscLedOff (HSX1509 h1509)
-   { SX1509SetMiscLedFrequency(h1509, 0); }
+inline VOID SX1509SetMiscPwmOff (HSX1509 h1509)
+   { SX1509SetMiscPwmFrequency(h1509, 0); }
 // fader mode bit for bank B (7)
 inline BIT SX1509GetMiscFaderBMode (HSX1509 h1509)
    { return SX1509GetBit(h1509, SX1509_REG_MISC, 7); }
@@ -1004,48 +1013,48 @@ inline VOID SX1509SetMiscFaderBLinear (HSX1509 h1509)
 inline VOID SX1509SetMiscFaderBLogarithmic (HSX1509 h1509)
    { SX1509SetBit(h1509, SX1509_REG_MISC, 7, SX1509_MISC_FADER_LOGARITHMIC); }
 //===========================================================================
-// LED DRIVER ENABLE REGISTER
+// PWM DRIVER ENABLE REGISTER
 //===========================================================================
-inline UI16 SX1509GetLedEnable (HSX1509 h1509)
-   { return SX1509Get16(h1509, SX1509_REG_LEDDRIVERENABLE); }
-inline VOID SX1509SetLedEnable (HSX1509 h1509, UI16 nValue)
-   { SX1509Set16(h1509, SX1509_REG_LEDDRIVERENABLE, nValue); }
-inline UI8 SX1509GetLedEnableA (HSX1509 h1509)
-   { return SX1509Get8(h1509, SX1509_REG_LEDDRIVERENABLEA); }
-inline VOID SX1509SetLedEnableA (HSX1509 h1509, UI8 nValue)
-   { SX1509Set8(h1509, SX1509_REG_LEDDRIVERENABLEA, nValue); }
-inline UI8 SX1509GetLedEnableB (HSX1509 h1509)
-   { return SX1509Get8(h1509, SX1509_REG_LEDDRIVERENABLEB); }
-inline VOID SX1509SetLedEnableB (HSX1509 h1509, UI8 nValue)
-   { SX1509Set8(h1509, SX1509_REG_LEDDRIVERENABLEB, nValue); }
-inline BIT SX1509GetLedEnableBit (HSX1509 h1509, UI8 nIo)
+inline UI16 SX1509GetPwmEnable (HSX1509 h1509)
+   { return SX1509Get16(h1509, SX1509_REG_PWMDRIVERENABLE); }
+inline VOID SX1509SetPwmEnable (HSX1509 h1509, UI16 nValue)
+   { SX1509Set16(h1509, SX1509_REG_PWMDRIVERENABLE, nValue); }
+inline UI8 SX1509GetPwmEnableA (HSX1509 h1509)
+   { return SX1509Get8(h1509, SX1509_REG_PWMDRIVERENABLEA); }
+inline VOID SX1509SetPwmEnableA (HSX1509 h1509, UI8 nValue)
+   { SX1509Set8(h1509, SX1509_REG_PWMDRIVERENABLEA, nValue); }
+inline UI8 SX1509GetPwmEnableB (HSX1509 h1509)
+   { return SX1509Get8(h1509, SX1509_REG_PWMDRIVERENABLEB); }
+inline VOID SX1509SetPwmEnableB (HSX1509 h1509, UI8 nValue)
+   { SX1509Set8(h1509, SX1509_REG_PWMDRIVERENABLEB, nValue); }
+inline BIT SX1509GetPwmEnableBit (HSX1509 h1509, UI8 nIo)
    {  return nIo < 8 ? 
-         SX1509GetBit(h1509, SX1509_REG_LEDDRIVERENABLEA, nIo) : 
-         SX1509GetBit(h1509, SX1509_REG_LEDDRIVERENABLEB, nIo - 8);
+         SX1509GetBit(h1509, SX1509_REG_PWMDRIVERENABLEA, nIo) : 
+         SX1509GetBit(h1509, SX1509_REG_PWMDRIVERENABLEB, nIo - 8);
    }
-inline VOID SX1509SetLedEnableLo (HSX1509 h1509, UI8 nIo)
+inline VOID SX1509SetPwmEnableLo (HSX1509 h1509, UI8 nIo)
    {  if (nIo < 8)
-         SX1509SetLo(h1509, SX1509_REG_LEDDRIVERENABLEA, nIo);
+         SX1509SetLo(h1509, SX1509_REG_PWMDRIVERENABLEA, nIo);
       else
-         SX1509SetLo(h1509, SX1509_REG_LEDDRIVERENABLEB, nIo - 8);
+         SX1509SetLo(h1509, SX1509_REG_PWMDRIVERENABLEB, nIo - 8);
    }
-inline VOID SX1509SetLedEnableHi (HSX1509 h1509, UI8 nIo)
+inline VOID SX1509SetPwmEnableHi (HSX1509 h1509, UI8 nIo)
    {  if (nIo < 8)
-         SX1509SetHi(h1509, SX1509_REG_LEDDRIVERENABLEA, nIo);
+         SX1509SetHi(h1509, SX1509_REG_PWMDRIVERENABLEA, nIo);
       else
-         SX1509SetHi(h1509, SX1509_REG_LEDDRIVERENABLEB, nIo - 8);
+         SX1509SetHi(h1509, SX1509_REG_PWMDRIVERENABLEB, nIo - 8);
    }
-inline VOID SX1509SetLedEnableBit (HSX1509 h1509, UI8 nIo, BIT fValue)
+inline VOID SX1509SetPwmEnableBit (HSX1509 h1509, UI8 nIo, BIT fValue)
    {  if (nIo < 8)
-         SX1509SetBit(h1509, SX1509_REG_LEDDRIVERENABLEA, nIo, fValue);
+         SX1509SetBit(h1509, SX1509_REG_PWMDRIVERENABLEA, nIo, fValue);
       else
-         SX1509SetBit(h1509, SX1509_REG_LEDDRIVERENABLEB, nIo - 8, fValue);
+         SX1509SetBit(h1509, SX1509_REG_PWMDRIVERENABLEB, nIo - 8, fValue);
    }
-inline VOID SX1509ToggleLedEnable (HSX1509 h1509, UI8 nIo)
+inline VOID SX1509TogglePwmEnable (HSX1509 h1509, UI8 nIo)
    {  if (nIo < 8)
-         SX1509Toggle(h1509, SX1509_REG_LEDDRIVERENABLEA, nIo);
+         SX1509Toggle(h1509, SX1509_REG_PWMDRIVERENABLEA, nIo);
       else
-         SX1509Toggle(h1509, SX1509_REG_LEDDRIVERENABLEB, nIo - 8);
+         SX1509Toggle(h1509, SX1509_REG_PWMDRIVERENABLEB, nIo - 8);
    }
 //===========================================================================
 // DEBOUNCE CONFIGURATION REGISTER
@@ -1182,22 +1191,9 @@ inline VOID SX1509SetKeypadDim (HSX1509 h1509, HSX1509_KEYPAD_DIM dim)
 //===========================================================================
 // KEYPAD DATA REGISTER
 //===========================================================================
+HSX1509_KEYPAD_DATA SX1509GetKeyData (HSX1509 h1509);
 inline UI8 SX1509GetKeyData1 (HSX1509 h1509)
    { return SX1509Get8(h1509, SX1509_REG_KEYDATA1); }
 inline UI8 SX1509GetKeyData2 (HSX1509 h1509)
    { return SX1509Get8(h1509, SX1509_REG_KEYDATA2); }
-inline HSX1509_KEYPAD_DATA SX1509GetKeyData (HSX1509 h1509)
-   { 
-      UI16 nData = SX1509Get8(h1509, SX1509_REG_KEYDATA1);
-      UI8 nRowData = nData >> 8;
-      UI8 nColData = nData;
-      HSX1509_KEYPAD_DATA data = { 0, 0 };
-      for (UI8 i = 0; i < 8; i++)
-         if (!(nRowData & (1<<i)))
-            data.nRow = i;
-      for (UI8 i = 0; i < 8; i++)
-         if (!(nColData & (1<<i)))
-            data.nCol = i + 8;
-      return data;
-   }
 #endif // __SX1509_H

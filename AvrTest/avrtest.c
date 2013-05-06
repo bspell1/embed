@@ -25,12 +25,38 @@
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "avrtest.h"
+#include "i2cmast.h"
 #include "tlc5940.h"
 #include "sx1509.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
+static HSX1509 g_h1509;
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
+#define USART_BAUDRATE 57600
+#define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
+void uart_init ()
+{
+   UBRR0H = BAUD_PRESCALE >> 8;                       // set baud rate
+   UBRR0L = BAUD_PRESCALE;
+   UCSR0B = (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);    // enable TX/RX
+}
+void uart_write (uint8_t c)
+{
+   while (!(UCSR0A & (1<<UDRE0)));  // wait until data register empty
+   UDR0 = c;
+}
+uint8_t uart_read ()
+{
+   while (!(UCSR0A & (1<<RXC0)));   // wait until data register full
+   return (uint8_t)UDR0;
+}
+ISR(USART_RX_vect)
+{
+   PIN_TOGGLE(PIN_ARDUINO_LED);
+   uint8_t data = uart_read();
+   uart_write(data);
+}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -42,24 +68,51 @@ int main ()
    cli();
 
    PIN_SET_OUTPUT(PIN_ARDUINO_LED);
-
    PIN_SET_LO(PIN_ARDUINO_LED);
 
+   uart_init();
+   I2cInit(NULL);
    Tlc5940Init();
 
-   HSX1509 h1509 = SX1509Init(0x3E);
+   g_h1509 = SX1509Init(0x3E);
 
    sei();
 
+
    #if 1
-   SX1509SetDir(h1509, 0x0000);                       // set all pins to output
+   SX1509SetClockSourceInternal(g_h1509);               // internal oscillator
+   SX1509SetMiscPwmFrequency(g_h1509, 1);               // set PWM frequency to 1mHz
+
+   SX1509SetInputDisableHi(g_h1509, 4);                 // disable input
+   SX1509SetPullUpLo(g_h1509, 4);                       // disable pull-up
+   SX1509SetOpenDrainHi(g_h1509, 4);                    // enable open drain
+   SX1509SetDirOutput(g_h1509, 4);                      // set pin to output
+   SX1509SetPwmEnableHi(g_h1509, 4);                    // enable PWM
+
+   SX1509Set8(g_h1509, SX1509_REG_TON4, 15);
+   SX1509Set8(g_h1509, SX1509_REG_TRISE4, 15);
+   SX1509Set8(g_h1509, SX1509_REG_TFALL4, 15);
+   SX1509Set8(g_h1509, SX1509_REG_OFF4, 15 << 3);
+
+   SX1509SetDataLo(g_h1509, 4);                         // set pin 0 lo to activate PWM
+
+   SX1509SetDirOutput(g_h1509, 0);                      // set pin 0 output
+
    for ( ; ; )
    {
-      SX1509SetData(h1509, 0xFFFF);                   // set all pins high
-      _delay_ms(15);
-      SX1509SetData(h1509, 0x0000);                   // set all pins low
-      _delay_ms(15);
    }
+/*
+   I8 dir = 1;
+   UI8 pwm = 0;
+   for ( ; ; )
+   {
+      SX1509Set8(g_h1509, SX1509_REG_ION4, pwm);
+      pwm += dir;
+      if (pwm == 0 || pwm == 255)
+         dir *= -1;
+      _delay_ms(5);
+   }
+*/
    #endif
 
    #if 0

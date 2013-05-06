@@ -27,32 +27,9 @@
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
+static BYTE I2cData[6];
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: RegisterRead >--------------------------------------
-// Purpose:    reads a value from a SX1509 register
-// Parameters: h1509  - SX1509 component handle
-//             pbData - pointer to read buffer, first byte is register
-//             cbData - number of bytes to read
-// Returns:    none
-//---------------------------------------------------------------------------
-static VOID RegisterRead (HSX1509 h1509, PBYTE pbData, BSIZE cbData)
-{
-   I2cSendRecv(h1509.Handle, pbData, 1, pbData + 1, cbData - 1);
-   while (I2cIsBusy())
-      ;
-}
-//-----------< FUNCTION: RegisterWrite >-------------------------------------
-// Purpose:    writes a value to a SX1509 register
-// Parameters: h1509  - SX1509 component handle
-//             pbData - pointer to write buffer, first byte is register
-//             cbData - number of bytes to write
-// Returns:    none
-//---------------------------------------------------------------------------
-static VOID RegisterWrite (HSX1509 h1509, PBYTE pbData, BSIZE cbData)
-{
-   I2cSend(h1509.Handle, pbData, cbData);
-}
 //-----------< FUNCTION: SX1509Init >----------------------------------------
 // Purpose:    SX1509 interface initialization
 // Parameters: nAddress - I2C address of the chip
@@ -72,9 +49,12 @@ HSX1509 SX1509Init (UI8 nAddress)
 //---------------------------------------------------------------------------
 UI8 SX1509Get8 (HSX1509 h1509, UI8 nReg)
 {
-   BYTE data[2] = { nReg, 0 };
-   RegisterRead(h1509, data, sizeof(data));
-   return data[1];
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = 0;
+   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 1);
+   I2cWait();
+   return I2cData[1];
 }
 //-----------< FUNCTION: SX1509Set8 >----------------------------------------
 // Purpose:    writes an 8-bit register
@@ -84,8 +64,10 @@ UI8 SX1509Get8 (HSX1509 h1509, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set8 (HSX1509 h1509, UI8 nReg, UI8 nValue)
 {
-   BYTE data[2] = { nReg, nValue };
-   RegisterWrite(h1509, data, sizeof(data));
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = nValue;
+   I2cSend(h1509.Handle, I2cData, 2);
 }
 //-----------< FUNCTION: SX1509Get16 >---------------------------------------
 // Purpose:    reads a 16-bit register
@@ -95,11 +77,15 @@ VOID SX1509Set8 (HSX1509 h1509, UI8 nReg, UI8 nValue)
 //---------------------------------------------------------------------------
 UI16 SX1509Get16 (HSX1509 h1509, UI8 nReg)
 {
-   BYTE data[3] = { nReg, 0, 0 };
-   RegisterRead(h1509, data, sizeof(data));
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = 0;
+   I2cData[2] = 0;
+   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 2);
+   I2cWait();
    return 
-      ((UI16)data[1] << 8) | 
-      (      data[2] << 0);
+      ((UI16)I2cData[1] << 8) | 
+      (      I2cData[2] << 0);
 }
 //-----------< FUNCTION: SX1509Set16 >----------------------------------------
 // Purpose:    writes a 16-bit register
@@ -109,8 +95,11 @@ UI16 SX1509Get16 (HSX1509 h1509, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set16 (HSX1509 h1509, UI8 nReg, UI16 nValue)
 {
-   BYTE data[3] = { nReg, (nValue >> 8), (nValue >> 0) };
-   RegisterWrite(h1509, data, sizeof(data));
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = (nValue >> 8);
+   I2cData[2] = (nValue >> 0);
+   I2cSend(h1509.Handle, I2cData, 3);
 }
 //-----------< FUNCTION: SX1509Get32 >---------------------------------------
 // Purpose:    reads a 32-bit register
@@ -120,13 +109,19 @@ VOID SX1509Set16 (HSX1509 h1509, UI8 nReg, UI16 nValue)
 //---------------------------------------------------------------------------
 UI32 SX1509Get32 (HSX1509 h1509, UI8 nReg)
 {
-   BYTE data[5] = { nReg, 0, 0, 0, 0 };
-   RegisterRead(h1509, data, sizeof(data));
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = 0;
+   I2cData[2] = 0;
+   I2cData[3] = 0;
+   I2cData[4] = 0;
+   I2cSendRecv(h1509.Handle, I2cData, 1, I2cData + 1, 4);
+   I2cWait();
    return 
-      ((UI32)data[1] << 24) | 
-      ((UI32)data[2] << 16) | 
-      ((UI32)data[3] <<  8) | 
-      (      data[4] <<  0);
+      ((UI32)I2cData[1] << 24) | 
+      ((UI32)I2cData[2] << 16) | 
+      ((UI32)I2cData[3] <<  8) | 
+      (      I2cData[4] <<  0);
 }
 //-----------< FUNCTION: SX1509Set32 >----------------------------------------
 // Purpose:    writes a 32-bit register
@@ -136,6 +131,31 @@ UI32 SX1509Get32 (HSX1509 h1509, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set32 (HSX1509 h1509, UI8 nReg, UI32 nValue)
 {
-   BYTE data[5] = { nReg, (nValue >> 24), (nValue >> 16), (nValue >> 8), (nValue >> 0) };
-   RegisterWrite(h1509, data, sizeof(data));
+   I2cWait();
+   I2cData[0] = nReg;
+   I2cData[1] = (nValue >> 24);
+   I2cData[2] = (nValue >> 16);
+   I2cData[3] = (nValue >>  8);
+   I2cData[4] = (nValue >>  0);
+   I2cSend(h1509.Handle, I2cData, 5);
+}
+//-----------< FUNCTION: SX1509GetKeyData >----------------------------------
+// Purpose:    reads the keyboard data register to determine the key pressed
+// Parameters: h1509 - SX1509 component handle
+// Returns:    the current keyboard data register
+//             -1, -1 if no key was pressed
+//---------------------------------------------------------------------------
+HSX1509_KEYPAD_DATA SX1509GetKeyData (HSX1509 h1509)
+{ 
+   UI16 nData = SX1509Get16(h1509, SX1509_REG_KEYDATA1);
+   UI8 nRowData = nData >> 8;
+   UI8 nColData = nData;
+   HSX1509_KEYPAD_DATA data = { -1, -1 };
+   for (UI8 i = 0; i < 8; i++)
+      if (!(nRowData & BIT_MASK(i)))
+         data.nRow = i;
+   for (UI8 i = 0; i < 8; i++)
+      if (!(nColData & BIT_MASK(i)))
+         data.nCol = i + 8;
+   return data;
 }

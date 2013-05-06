@@ -189,7 +189,7 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define REG_GET(r, b)         BIT_TEST(r, b)
 #define REG_SET_LO(r, b)      (r) &= ~BIT_MASK(b)
 #define REG_SET_HI(r, b)      (r) |= BIT_MASK(b)
-#define REG_SET(r, b, v)      if ((v)) REG_SET_HI(r, b); else REG_SET_LO(r, b)
+#define REG_SET(r, b, v)      do { if ((v)) REG_SET_HI(r, b); else REG_SET_LO(r, b); } while (0)
 #define REG_TOGGLE(r, b)      (r) ^= BIT_MASK(b)
 // pin configuration
 #define PIN_MODE_INPUT        0
