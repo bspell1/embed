@@ -123,7 +123,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 //---------------------------------------------------------------------------
 BOOL StepMotorIsBusy ()
 {
-   return RegGet(TIMSK1, OCIE1B);
+   return RegGet(TIMSK2, OCIE2B);
 }
 //-----------< FUNCTION: StepMotorWait >-------------------------------------
 // Purpose:    waits until the stepper motor stops running
@@ -177,7 +177,7 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
       g_pMotors[nMotor].nDelay = nDelay;
       g_pMotors[nMotor].nTimer = 0;
       g_pMotors[nMotor].nSteps = nSteps;
-      RegSetHi(TIMSK1, OCIE1B);
+      RegSetHi(TIMSK2, OCIE2B);
    }
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
@@ -240,7 +240,7 @@ ISR(TIMER2_COMPB_vect)
          if (g_pMotors[nMotor].nSteps != 0)
             bIdle = FALSE;
       if (bIdle)
-         RegSetLo(TIMSK1, OCIE1B);
+         RegSetLo(TIMSK2, OCIE2B);
    }
    nLock--;
 }
