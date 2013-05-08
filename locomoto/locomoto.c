@@ -59,17 +59,25 @@ int main ()
          .nPinGSClk = PIN_OC0A                     // arduino 6
       }
    );
-   StepMotorInit((STEPMOTOR_CONFIG[])
-   {
-      { 
-         .n1509Module = 0,                         // TLC5940 module 0
-         .n1509Offset = 0                          // TLC5940 pins 0-3
+   StepMotorInit(
+      (STEPMOTOR_CONFIG[STEPMOTO_COUNT])
+      {
+         { 
+            .n1509Module = 0,                         // TLC5940 module 0
+            .n1509Offset = 0                          // TLC5940 pins 0-3
+         },
+         { 
+            .n1509Module = 0,                         // TLC5940 module 0
+            .n1509Offset = 4                          // TLC5940 pins 4-7
+         }
       }
-   });
+   );
    ProtoInit();
 
    for ( ; ; )
    {
+      StepMotorRun(0, 50, 100);
+      _delay_ms(5000);
    }
 
    return 0;

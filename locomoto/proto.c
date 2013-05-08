@@ -53,7 +53,6 @@ static BYTE UartRead ()
 // Parameters: b - the byte to write
 // Returns:    none
 //---------------------------------------------------------------------------
-#if 0
 static VOID UartWrite (BYTE b)
 {
    // wait until data register empty
@@ -62,7 +61,6 @@ static VOID UartWrite (BYTE b)
    // output the data byte
    UDR0 = b;
 }
-#endif
 //-----------< FUNCTION: ProtoInit >-----------------------------------------
 // Purpose:    initializes the protocol module
 // Parameters: none

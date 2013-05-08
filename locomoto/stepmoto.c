@@ -32,6 +32,7 @@ static struct
    UI8   n1509Module;                              // SX1509 module number
    UI8   n1509Offset;                              // SX1509 starting pin (pink)
    UI8   nDelay;                                   // stage delay, in 0.1ms units
+   UI8   nTimer;                                   // stage timer
    I8    nSteps;                                   // number of steps (+/-) to run
    UI8   nStage;                                   // current step stage (0-3)
 } g_pMotors[STEPMOTO_COUNT];
@@ -41,31 +42,54 @@ static UI8 g_pStages[] =
    0x0A,                                           // 1010, pink/blue on
    0x06,                                           // 0110, orange/blue on
    0x05,                                           // 0101, orange/yellow on
-   0x0A                                            // 1001, pink/yellow
+   0x09                                            // 1001, pink/yellow
 };
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: SetBankData >---------------------------------------
+//-----------< FUNCTION: SetDirReg >-----------------------------------------
+// Purpose:    sets the direction register for a stepper motor
+// Parameters: nMotor - motor to assign
+//             nDir   - SX1509 pin direction to assign
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID SetDirReg (UI8 nMotor, UI8 nDir)
+{
+   if (g_pMotors[nMotor].n1509Offset < 8)
+   {
+      UI8 nRegData = SX1509GetDirA(g_pMotors[nMotor].n1509Module);
+      nRegData &= ~(0x0F << (g_pMotors[nMotor].n1509Offset % 8));
+      nRegData |=  (nDir << (g_pMotors[nMotor].n1509Offset % 8));
+      SX1509SetDirA(g_pMotors[nMotor].n1509Module, nRegData);
+   }
+   else
+   {
+      UI8 nRegData = SX1509GetDirB(g_pMotors[nMotor].n1509Module);
+      nRegData &= ~(0x0F << (g_pMotors[nMotor].n1509Offset % 8));
+      nRegData |=  (nDir << (g_pMotors[nMotor].n1509Offset % 8));
+      SX1509SetDirB(g_pMotors[nMotor].n1509Module, nRegData);
+   }
+}
+//-----------< FUNCTION: SetDataReg >----------------------------------------
 // Purpose:    sets the data register for a stepper motor
 // Parameters: nMotor - motor to assign
 //             nData  - motor data to assign
 // Returns:    none
 //---------------------------------------------------------------------------
-static VOID SetBankData (UI8 nMotor, UI8 nData)
+static VOID SetDataReg (UI8 nMotor, UI8 nData)
 {
    if (g_pMotors[nMotor].n1509Offset < 8)
    {
-      UI8 nBank = SX1509GetDataA(g_pMotors[nMotor].n1509Module);
-      nBank &= (0x0E  << g_pMotors[nMotor].n1509Offset % 8);
-      nBank |= (nData << g_pMotors[nMotor].n1509Offset % 8);
-      SX1509SetDataA(g_pMotors[nMotor].n1509Module, nBank);
+      UI8 nRegData = SX1509GetDataA(g_pMotors[nMotor].n1509Module);
+      nRegData &= ~(0x0F  << (g_pMotors[nMotor].n1509Offset % 8));
+      nRegData |=  (nData << (g_pMotors[nMotor].n1509Offset % 8));
+      SX1509SetDataA(g_pMotors[nMotor].n1509Module, nRegData);
    }
    else
    {
-      UI8 nBank = SX1509GetDataB(g_pMotors[nMotor].n1509Module);
-      nBank &= (0x0E  << g_pMotors[nMotor].n1509Offset % 8);
-      nBank |= (nData << g_pMotors[nMotor].n1509Offset % 8);
-      SX1509SetDataB(g_pMotors[nMotor].n1509Module, nBank);
+      UI8 nRegData = SX1509GetDataB(g_pMotors[nMotor].n1509Module);
+      nRegData &= ~(0x0F  << (g_pMotors[nMotor].n1509Offset % 8));
+      nRegData |=  (nData << (g_pMotors[nMotor].n1509Offset % 8));
+      SX1509SetDataB(g_pMotors[nMotor].n1509Module, nRegData);
    }
 }
 //-----------< FUNCTION: StepMotorInit >-------------------------------------
@@ -77,18 +101,21 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 {
    // initialize motor data
    memset(g_pMotors, 0, sizeof(g_pMotors));
-   for (UI8 i = 0; i < STEPMOTO_COUNT; i++)
+   for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
    {
-      g_pMotors[i].n1509Module = pConfig[i].n1509Module;
-      g_pMotors[i].n1509Offset = pConfig[i].n1509Offset;
+      // configure module/pin offsets
+      g_pMotors[nMotor].n1509Module = pConfig[nMotor].n1509Module;
+      g_pMotors[nMotor].n1509Offset = pConfig[nMotor].n1509Offset;
+      // enable output on motor pins
+      SetDataReg(nMotor, 0);
+      SetDirReg(nMotor, 0);
    }
-   // 8-bit clock 2, software, 0.1kHz
-   REG_SET_HI(TCCR2A, WGM21);                            // CTC value at OCR2B
-   REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
-   OCR2B = F_CPU / 64 / 10000 - 1;                       // reset OC2B at 25 ticks for 0.1kHz
-   // enable output on motor pins
-   for (UI8 i = 0; i < 4; i++)
-      SX1509SetDirOutput(g_pMotors[i].n1509Module, g_pMotors[i].n1509Offset + i);
+   // 16-bit clock 1, software, 0.1kHz
+   REG_SET_HI(TCCR1B, WGM12);                            // CTC value at OCR1A
+   REG_SET_HI(TCCR1B, CS11);                             // prescale = 64 (250kHz)
+   REG_SET_HI(TCCR1B, CS10);                             // prescale = 64 (250kHz)
+   OCR1A = F_CPU / 64 / 10000 - 1;                       // reset OC1A at 25 ticks for 0.1kHz
+   REG_SET_HI(TIMSK1, OCIE1A);                           // TODO: remove
 }
 //-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
 // Purpose:    polls the stepper motor's busy status
@@ -98,7 +125,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 //---------------------------------------------------------------------------
 BOOL StepMotorIsBusy ()
 {
-   return REG_GET(TIMSK2, OCIE2B);
+   return REG_GET(TIMSK1, OCIE1A);
 }
 //-----------< FUNCTION: StepMotorWait >-------------------------------------
 // Purpose:    waits until the stepper motor stops running
@@ -120,6 +147,7 @@ VOID StepMotorStop (UI8 nMotor)
    // reset motor state and turn off all pins
    g_pMotors[nMotor].nSteps = 0;
    g_pMotors[nMotor].nDelay = 0;
+   g_pMotors[nMotor].nTimer = 0;
    g_pMotors[nMotor].nStage = 0;
 }
 //-----------< FUNCTION: StepMotorStopAll >----------------------------------
@@ -145,49 +173,70 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
    if (nSteps != 0)
    {
       g_pMotors[nMotor].nDelay = nDelay;
+      g_pMotors[nMotor].nTimer = 0;
       g_pMotors[nMotor].nSteps = nSteps;
-      REG_SET_HI(TIMSK2, OCIE2B);
+      REG_SET_HI(TIMSK1, OCIE1A);
    }
 }
-//-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
+//-----------< INTERRUPT: TIMER1_COMPA_vect >--------------------------------
 // Purpose:    responds to 0.1kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-ISR(TIMER2_COMPB_vect)
+ISR(TIMER1_COMPA_vect)
 {
-   BOOL bDone = TRUE;
-   for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+   static UI16 ms = 0;
+   if (ms++ == 10000)
    {
-      UI8 nBankData = 0;
-      if (g_pMotors[nMotor].nSteps > 0)
-      {
-         // moving forward, go to the next stage
-         // decrement step count when cycle completes
-         nBankData = g_pStages[g_pMotors[nMotor].nStage++];
-         if (g_pMotors[nMotor].nStage == 4)
-         {
-            g_pMotors[nMotor].nStage = 0;
-            g_pMotors[nMotor].nSteps--;
-         }
-         bDone = FALSE;
-      }
-      else if (g_pMotors[nMotor].nSteps < 0)
-      {
-         // moving backward, go to the previous stage
-         // increment step count when cycle completes
-         nBankData = g_pStages[3 - g_pMotors[nMotor].nStage++];
-         if (g_pMotors[nMotor].nStage == 4)
-         {
-            g_pMotors[nMotor].nStage = 0;
-            g_pMotors[nMotor].nSteps++;
-         }
-         bDone = FALSE;
-      }
-      sei();
-      SetBankData(nMotor, nBankData);
+      while (!(UCSR0A & (1<<UDRE0))) ;
+      UDR0 = 0x0C;
+      ms = 0;
    }
-   // disable the ISR if no more steps are needed
+   // uninterruptible phase, count down time to next stage for each motor
+   for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+      if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
+         g_pMotors[nMotor].nTimer--;
+   // interruptible phase, update motor registers
+   static UI8 nLock = 0;
+   if (nLock++ == 0)
+   {
+      sei();
+      for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+      {
+         if (g_pMotors[nMotor].nTimer == 0)
+         {
+            if (g_pMotors[nMotor].nSteps > 0)
+            {
+               // moving forward, go to the next stage
+               // decrement step count when cycle completes
+               UI8 nBankData = g_pStages[g_pMotors[nMotor].nStage++];
+               if (g_pMotors[nMotor].nStage == 4)
+               {
+                  g_pMotors[nMotor].nStage = 0;
+                  g_pMotors[nMotor].nSteps--;
+               }
+               SetDataReg(nMotor, nBankData);
+            }
+            else if (g_pMotors[nMotor].nSteps < 0)
+            {
+               // moving backward, go to the previous stage
+               // increment step count when cycle completes
+               UI8 nBankData = g_pStages[3 - g_pMotors[nMotor].nStage++];
+               if (g_pMotors[nMotor].nStage == 4)
+               {
+                  g_pMotors[nMotor].nStage = 0;
+                  g_pMotors[nMotor].nSteps++;
+               }
+               SetDataReg(nMotor, nBankData);
+            }
+            if (g_pMotors[nMotor].nSteps != 0)
+               g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
+         }
+      }
+   }
+   nLock--;
+   /* TODO: disable the ISR if no more steps are needed
    if (bDone)
-      REG_SET_LO(TIMSK2, OCIE2B);
+      REG_SET_LO(TIMSK1, OCIE1A);
+   */
 }

@@ -4,7 +4,7 @@ DEVICE     = atmega328p
 F_CPU      = 16000000
 
 CC      = avr-gcc
-CCFLAGS = -std=gnu99 -Wall -Wextra -Werror -Winline 								\
+CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -mint8 -O3 -funroll-loops -DF_CPU=$(F_CPU) -mmcu=$(DEVICE)
 LDFLAGS = -lc -lm
 

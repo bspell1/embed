@@ -69,7 +69,7 @@
    CONTROL_BASE| \
    (0<<TWIE)|(0<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
-#define CONTROL_SEND_DATA \
+#define CONTROL_XFER_DATA \
    CONTROL_BASE| \
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
@@ -82,11 +82,11 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static volatile BYTE          g_bAddr     = 0;        // slave address/read bit
-static volatile PBYTE         g_pbSend    = NULL;     // send buffer
-static volatile BSIZE         g_cbSend    = 0;        // send buffer length
-static volatile PBYTE         g_pbRecv    = NULL;     // receive buffer
-static volatile BSIZE         g_cbRecv    = 0;        // receive buffer size
+static BYTE          g_bAddr     = 0;        // slave address/read bit
+static PBYTE         g_pbSend    = NULL;     // send buffer
+static BSIZE         g_cbSend    = 0;        // send buffer length
+static PBYTE         g_pbRecv    = NULL;     // receive buffer
+static BSIZE         g_cbRecv    = 0;        // receive buffer size
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -201,7 +201,7 @@ ISR(TWI_vect)
       case STATUS_REP_START:                       // re-START transmitted
          nMsgIdx = 0;
          TWDR = g_bAddr;
-         TWCR = CONTROL_SEND_DATA;
+         TWCR = CONTROL_XFER_DATA;
          break;
       case STATUS_ARB_LOST:                        // arbitration lost, restart
          // combination send/receive transaction,
@@ -216,35 +216,34 @@ ISR(TWI_vect)
          {
             // keep on sending
             TWDR = g_pbSend[nMsgIdx++];
-            TWCR = CONTROL_SEND_DATA;
+            TWCR = CONTROL_XFER_DATA;
          }
          else if (g_pbRecv != NULL)
          {
             // send complete, but combination
             // transaction, so restart in read mode
-            nMsgIdx = 0;
             g_bAddr |= BIT_MASK(ADDR_READ_BIT);
             TWCR = CONTROL_START;
          }
          else
          {
             // send complete, so stop
+            TWDR = 0xFF;
             TWCR = CONTROL_STOP;
          }
          break;
-      case STATUS_MRX_ADR_ACK:                     // address byte transmitted
-         TWCR = CONTROL_SEND_ACK;
-         break;
-      case STATUS_MRX_DATA_ACK:                    // data byte received
+      case STATUS_MRX_DATA_ACK:                    // data byte received, ACK transmitted
          g_pbRecv[nMsgIdx++] = TWDR;
+      case STATUS_MRX_ADR_ACK:                     // address byte transmitted
          if (nMsgIdx < g_cbRecv - 1)
             TWCR = CONTROL_SEND_ACK;
          else
             TWCR = CONTROL_SEND_NACK;
          break;
-      case STATUS_MRX_DATA_NACK:                   // NACK transmitted
+      case STATUS_MRX_DATA_NACK:                   // data byte received, NACK transmitted
          g_pbRecv[nMsgIdx++] = TWDR;
          g_cbRecv = nMsgIdx;
+         TWDR = 0xFF;
          TWCR = CONTROL_STOP;
          break;
       case STATUS_MTX_ADR_NACK:                    // error - NACK was received after address
@@ -252,6 +251,7 @@ ISR(TWI_vect)
       case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_BUS_ERROR:                       // general error
       default:                                     // unknown error
+         TWDR = 0xFF;
          TWCR = CONTROL_ABORT;
          break;
    }
