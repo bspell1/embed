@@ -110,12 +110,11 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
       SetDataReg(nMotor, 0);
       SetDirReg(nMotor, 0);
    }
-   // 16-bit clock 1, software, 0.1kHz
-   REG_SET_HI(TCCR1B, WGM12);                            // CTC value at OCR1A
-   REG_SET_HI(TCCR1B, CS11);                             // prescale = 64 (250kHz)
-   REG_SET_HI(TCCR1B, CS10);                             // prescale = 64 (250kHz)
-   OCR1A = F_CPU / 64 / 10000 - 1;                       // reset OC1A at 25 ticks for 0.1kHz
-   REG_SET_HI(TIMSK1, OCIE1A);                           // TODO: remove
+   // 8-bit clock 2, software, 0.1kHz
+   REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
+   REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
+   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 0.1kHz
+   REG_SET_HI(TIMSK2, OCIE2B);                           // TODO: remove
 }
 //-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
 // Purpose:    polls the stepper motor's busy status
@@ -125,7 +124,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 //---------------------------------------------------------------------------
 BOOL StepMotorIsBusy ()
 {
-   return REG_GET(TIMSK1, OCIE1A);
+   return REG_GET(TIMSK1, OCIE1B);
 }
 //-----------< FUNCTION: StepMotorWait >-------------------------------------
 // Purpose:    waits until the stepper motor stops running
@@ -175,23 +174,16 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
       g_pMotors[nMotor].nDelay = nDelay;
       g_pMotors[nMotor].nTimer = 0;
       g_pMotors[nMotor].nSteps = nSteps;
-      REG_SET_HI(TIMSK1, OCIE1A);
+      REG_SET_HI(TIMSK1, OCIE1B);
    }
 }
-//-----------< INTERRUPT: TIMER1_COMPA_vect >--------------------------------
+//-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
 // Purpose:    responds to 0.1kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER2_COMPB_vect)
 {
-   static UI16 ms = 0;
-   if (ms++ == 10000)
-   {
-      while (!(UCSR0A & (1<<UDRE0))) ;
-      UDR0 = 0x0C;
-      ms = 0;
-   }
    // uninterruptible phase, count down time to next stage for each motor
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
@@ -237,6 +229,6 @@ ISR(TIMER1_COMPA_vect)
    nLock--;
    /* TODO: disable the ISR if no more steps are needed
    if (bDone)
-      REG_SET_LO(TIMSK1, OCIE1A);
+      REG_SET_LO(TIMSK1, OCIE1B);
    */
 }

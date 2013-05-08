@@ -56,11 +56,11 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    REG_SET_HI(TCCR0A, WGM01);                            // CTC value at OCR0A
    REG_SET_HI(TCCR0B, CS00);                             // prescale = 1 (16mHz)
    OCR0A = F_CPU / 409600 - 1;                           // reset at 39 ticks
-   // 8-bit clock 2, software, 1kHz
-   REG_SET_HI(TCCR2A, WGM21);                            // CTC value at OCR2A
+   // 8-bit clock 2, software, 0.1kHz
+   REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
    REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
    REG_SET_HI(TIMSK2, OCIE2A);                           // enable compare interrupt A
-   OCR2A = F_CPU / 64 / 1000 - 1;                        // reset OC2A at 250 ticks for 1kHz
+   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 0.1kHz
    // digital pin setup
    PIN_SET_OUTPUT(Tlc5940.nPinBlank);                           
    PIN_SET_OUTPUT(Tlc5940.nPinSClk);                            
@@ -110,26 +110,28 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
    UI16 nLoDuty  = 4095 - nDuty;
    if (nChannel % 2 == 0)
    {
-      pb[0] = (pb[0] & 0xF0) | (nLoDuty >> 8);   // high nibble at offset low nibble
+      pb[0] = (pb[0] & 0xF0) | (nLoDuty >> 8);   // high nibble at low nibble of offset
       pb[1] = nLoDuty;                           // low byte at next offset
    }
    else
    {
       pb[0] = nLoDuty >> 4;                      // high byte at offset
-      pb[1] = (pb[1] & 0x0F) | (nLoDuty << 4);   // low nibble at next offset high nibble
+      pb[1] = (pb[1] & 0x0F) | (nLoDuty << 4);   // low nibble at high nibble of next offset
    }
    Tlc5940.bUpdate = TRUE;
 }
 //-----------< INTERRUPT: TIMER2_COMPA_vect >--------------------------------
-// Purpose:    responds to 1kHz timer events
+// Purpose:    responds to 0.1kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
 ISR(TIMER2_COMPA_vect)
 {
-   static UI16 ms = 0;
-   if (ms % 20 == 0)
+   // servo cycle is 20ms
+   static UI16 fms = 0;
+   if (fms++ % 200 == 0)
    {
+      // uninterruptible phase
       // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
       PIN_PULSE(Tlc5940.nPinBlank);
@@ -137,7 +139,9 @@ ISR(TIMER2_COMPA_vect)
       if (Tlc5940.bUpdate)
       {
          Tlc5940.bUpdate = FALSE;
+         // interuptible phase
          // shift in greyscale bytes, MSB first
+         sei();
          for (UI8 i = 0; i < sizeof(Tlc5940.pbGsData); i++)
          {
             // shift in the current greyscale byte, MSB first
@@ -152,8 +156,6 @@ ISR(TIMER2_COMPA_vect)
          // pulse XLAT to latch in the greyscale data
          PIN_PULSE(Tlc5940.nPinXlat);
       }
+      fms = 0;
    }
-   ms++;
-   if (ms >= 65500)
-      ms = 0;
 }
