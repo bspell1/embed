@@ -52,14 +52,14 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    Tlc5940.nPinXlat  = pConfig->nPinXlat;
    Tlc5940.nPinGSClk = pConfig->nPinGSClk;
    // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
-   RegSetHi(TCCR0A, COM0A0);                           // toggle OC0A on tick
-   RegSetHi(TCCR0A, WGM01);                            // CTC value at OCR0A
-   RegSetHi(TCCR0B, CS00);                             // prescale = 1 (16mHz)
+   RegSetHi(TCCR0A, COM0A0);                             // toggle OC0A on tick
+   RegSetHi(TCCR0A, WGM01);                              // CTC value at OCR0A
+   RegSetHi(TCCR0B, CS00);                               // prescale = 1 (16mHz)
    OCR0A = F_CPU / 409600 - 1;                           // reset at 39 ticks
    // 8-bit clock 2, software, 10kHz
-   RegSetHi(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
-   RegSetHi(TCCR2B, CS22);                             // prescale = 64 (250kHz)
-   RegSetHi(TIMSK2, OCIE2A);                           // enable compare interrupt A
+   RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
+   RegSetHi(TCCR2B, CS22);                               // prescale = 64 (250kHz)
+   RegSetHi(TIMSK2, OCIE2A);                             // enable compare interrupt A
    OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
    // digital pin setup
    PinSetOutput(Tlc5940.nPinBlank);                           

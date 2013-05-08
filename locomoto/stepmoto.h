@@ -43,6 +43,13 @@ typedef struct tagStepMotorConfig
    UI8   n1509Offset;                              // SX1509 starting pins
 } STEPMOTOR_CONFIG, *PSTEPMOTOR_CONFIG;
 //===========================================================================
+// STEPPER MOTOR PARAMETERS
+#define STEPMOTOR_STEP_MIN    (I16_MIN + 1)
+#define STEPMOTOR_STEP_MAX    (I16_MAX - 1)
+#define STEPMOTOR_FORWARD     (I16_MAX)
+#define STEPMOTOR_REVERSE     (I16_MIN)
+//===========================================================================
+//===========================================================================
 // STEPPER MOTOR API
 //===========================================================================
 VOID     StepMotorInit        (STEPMOTOR_CONFIG* pConfig);
@@ -50,5 +57,10 @@ BOOL     StepMotorIsBusy      ();
 VOID     StepMotorWait        ();
 VOID     StepMotorStop        (UI8 nMotor);
 VOID     StepMotorStopAll     ();
-VOID     StepMotorRun         (UI8 nMotor, UI8 nDelay, I8 nSteps);
+VOID     StepMotorRun         (UI8 nMotor, UI8 nDelay, I16 nSteps);
+// motor helpers
+inline VOID StepMotorRunForward (UI8 nMotor, UI8 nDelay)
+   { StepMotorRun(nMotor, nDelay, STEPMOTOR_FORWARD); }
+inline VOID StepMotorRunReverse (UI8 nMotor, UI8 nDelay)
+   { StepMotorRun(nMotor, nDelay, STEPMOTOR_REVERSE); }
 #endif // __STEPMOTO_H

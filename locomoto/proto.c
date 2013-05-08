@@ -28,11 +28,51 @@
 #include "sx1509.h"
 #include "stepmoto.h"
 //-------------------[       Module Definitions        ]-------------------//
-#define PROTO_COMMAND_NONE          (0x00)
+// protocol signature byte
+#define PROTO_SIGNATURE             (0xC0)
+// protocol command map
+#define PROTO_COMMAND_PING          (0x00)
 #define PROTO_COMMAND_SETOUTPUT     (0x01)
 #define PROTO_COMMAND_SETSERVO      (0x02)
 #define PROTO_COMMAND_STEPMOTOR     (0x03)
 #define PROTO_COMMAND_STOPMOTOR     (0x04)
+// protocol command dispatchers
+static VOID DispatchPing      ();
+static VOID DispatchSetOutput ();
+static VOID DispatchSetServo  ();
+static VOID DispatchStepMotor ();
+static VOID DispatchStopMotor ();
+// command dispatch mapping
+static struct
+{
+   UI8   nParams;                   // parameter count
+   VOID  (*pfnDispatch)();          // dispatch function
+} g_pParamMap[] = 
+{
+   { 1, DispatchPing },
+   { 2, DispatchSetOutput },
+   { 3, DispatchSetServo },
+   { 4, DispatchStepMotor },
+   { 1, DispatchStopMotor }
+};
+// protocol receive buffer
+static struct
+{
+   union
+   {
+      BYTE     pbBuffer[6];
+      struct
+      {
+         BYTE  bSignature;
+         BYTE  bCommand;
+         BYTE  bParam0;
+         BYTE  bParam1;
+         BYTE  bParam2;
+         BYTE  bParam3;
+      };
+   };
+   UI8         cbBuffer;
+} g_Receive;
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
@@ -51,41 +91,96 @@ VOID ProtoInit ()
 //---------------------------------------------------------------------------
 ISR(USART_RX_vect)
 {
-   BYTE nCommand = UartRecv();                        // read the next command byte
-   switch (nCommand)
+   // disable recursive interrupts but
+   // run the protocol interruptible
+   RegSetLo(UCSR0B, RXCIE0);
+   sei();
+   // read and decode the protocol bytes
+   g_Receive.pbBuffer[g_Receive.cbBuffer++] = UartRecv();
+   switch (g_Receive.cbBuffer)
    {
-      case PROTO_COMMAND_SETOUTPUT: {                 // set a digital output pin
-         UI8 nChannel = UartRecv();                   // . read the output channel (0-64)
-         BIT bValue   = UartRecv() & 0x01;            // . decode the output value
-         sei();                                       // . enable interrupts for I2C read/write
-         SX1509SetDataBit(                            // . write the output data
-            nChannel / 16, 
-            nChannel % 16,
-            bValue
-         );
-      }  break;
-      case PROTO_COMMAND_SETSERVO: {                  // set a servo duty cycle value
-         UI8  nChannel = UartRecv();                  // . read the servo channel byte
-         BYTE nDutyHi  = UartRecv();                  // . read the duty cycle word
-         BYTE nDutyLo  = UartRecv();
-         UI16 nDuty = ((UI16)nDutyHi << 8) | nDutyLo; // . encode the duty cyle word
-         Tlc5940SetDuty(                              // . update the servo driver
-            nChannel / 16, 
-            nChannel % 16, 
-            nDuty
-         );             
-      }  break;
-      case PROTO_COMMAND_STEPMOTOR: {                 // run a step motor
-         UI8 nMotor = UartRecv();                     // . read the motor number byte
-         UI8 nDelay = UartRecv();                     // . read the stage delay byte
-         I8  nSteps = (I8)UartRecv();                 // . read the number of steps
-         StepMotorRun(nMotor, nDelay, nSteps);        // . run the motor
-      }  break;
-      case PROTO_COMMAND_STOPMOTOR: {                 // stop a step motor
-         UI8 nMotor = UartRecv();                     // . read the motor number byte
-         StepMotorStop(nMotor);                       // . stop the motor
-      }  break;
-      default:                                        // unknown command
+      case 1:
+         if (g_Receive.bSignature != PROTO_SIGNATURE)
+            g_Receive.cbBuffer = 0;
+         break;
+      case 2:
+         if (g_Receive.bCommand >= sizeof(g_pParamMap))
+            g_Receive.cbBuffer = 0;
+      default:
+         // dispatch when all parameters have been received
+         if (g_Receive.cbBuffer - 2 == g_pParamMap[g_Receive.bCommand].nParams)
+         {
+            g_pParamMap[g_Receive.bCommand].pfnDispatch();
+            g_Receive.cbBuffer = 0;
+         }
          break;
    }
+   // re-enable UART interrupts
+   cli();
+   RegSetHi(UCSR0B, RXCIE0);
+}
+//-----------< FUNCTION: DispatchPing >--------------------------------------
+// Purpose:    executes a ping command
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchPing ()
+{
+   UartSend(g_Receive.bParam0);
+}
+//-----------< FUNCTION: DispatchSetOutput >---------------------------------
+// Purpose:    sets an output pin value on the SX1509
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchSetOutput ()
+{
+   // decode the output channel (0-64)
+   // decode the output value bit
+   UI8 nChannel = g_Receive.bParam0;
+   BIT bValue   = g_Receive.bParam1 & 0x01;
+   // enable interrupts for I2C read/write
+   // write the output data
+   SX1509SetDataBit(nChannel / 16, nChannel % 16, bValue);
+}
+//-----------< FUNCTION: DispatchSetServo >----------------------------------
+// Purpose:    sets a servo duty cycle value on the TLC5940
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchSetServo ()
+{
+   // decode the servo channel
+   // decode the duty cyle
+   UI8  nChannel = g_Receive.bParam0;
+   UI16 nDuty    = ((UI16)g_Receive.bParam1 << 8) | g_Receive.bParam2;
+   // update the servo driver
+   Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);             
+}
+//-----------< FUNCTION: DispatchStepMotor >---------------------------------
+// Purpose:    runs a stepper motor a number of steps
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchStepMotor ()
+{
+   // decode the motor number
+   // decode the stage delay
+   // decode the step count
+   UI8  nMotor = g_Receive.bParam0;
+   UI8  nDelay = g_Receive.bParam1;
+   I16  nSteps = ((I16)g_Receive.bParam2 << 8) | g_Receive.bParam3;
+   // run the motor
+   StepMotorRun(nMotor, nDelay, nSteps);
+}
+//-----------< FUNCTION: DispatchStopMotor >---------------------------------
+// Purpose:    stops a stepper motor
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchStopMotor ()
+{
+   // decode the motor number and stop it
+   UI8 nMotor = g_Receive.bParam0;
+   StepMotorStop(nMotor);
 }

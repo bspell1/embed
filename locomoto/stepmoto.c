@@ -33,7 +33,7 @@ static struct
    UI8   n1509Offset;                              // SX1509 starting pin (pink)
    UI8   nDelay;                                   // stage delay, in 0.1ms units
    UI8   nTimer;                                   // stage timer
-   I8    nSteps;                                   // number of steps (+/-) to run
+   I16   nSteps;                                   // number of steps (+/-) to run
    UI8   nStage;                                   // current step stage (0-3)
 } g_pMotors[STEPMOTO_COUNT];
 // motor forward step stages
@@ -111,10 +111,9 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
       SetDirReg(nMotor, 0);
    }
    // 8-bit clock 2, software, 10kHz
-   RegSetHi(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
-   RegSetHi(TCCR2B, CS22);                             // prescale = 64 (250kHz)
+   RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
+   RegSetHi(TCCR2B, CS22);                               // prescale = 64 (250kHz)
    OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
-   RegSetHi(TIMSK2, OCIE2B);                           // TODO: remove
 }
 //-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
 // Purpose:    polls the stepper motor's busy status
@@ -164,9 +163,13 @@ VOID StepMotorStopAll  ()
 // Parameters: nMotor - the stepper motor to run
 //             nDelay - the stepper stage delay, in 0.1ms units
 //             nSteps - the number of steps to run
+//                      > 0     => run forward |nSteps| steps
+//                      < 0     => run reverse |nSteps| steps
+//                      I16_MAX => run forward continuously
+//                      I16_MIN => run reverse continuously
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
+VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 {
    StepMotorStop(nMotor);
    if (nSteps != 0)
@@ -184,14 +187,16 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
 //---------------------------------------------------------------------------
 ISR(TIMER2_COMPB_vect)
 {
-   // uninterruptible phase, count down time to next stage for each motor
+   // uninterruptible phase
+   // count down time to next stage for each motor
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
-   // interruptible phase, update motor registers
    static UI8 nLock = 0;
    if (nLock++ == 0)
    {
+      // interruptible phase
+      // update motor registers
       sei();
       for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       {
@@ -205,7 +210,8 @@ ISR(TIMER2_COMPB_vect)
                if (g_pMotors[nMotor].nStage == 4)
                {
                   g_pMotors[nMotor].nStage = 0;
-                  g_pMotors[nMotor].nSteps--;
+                  if (g_pMotors[nMotor].nSteps != I16_MAX)
+                     g_pMotors[nMotor].nSteps--;
                }
                SetDataReg(nMotor, nBankData);
             }
@@ -217,7 +223,8 @@ ISR(TIMER2_COMPB_vect)
                if (g_pMotors[nMotor].nStage == 4)
                {
                   g_pMotors[nMotor].nStage = 0;
-                  g_pMotors[nMotor].nSteps++;
+                  if (g_pMotors[nMotor].nSteps != I16_MIN)
+                     g_pMotors[nMotor].nSteps++;
                }
                SetDataReg(nMotor, nBankData);
             }
@@ -225,10 +232,15 @@ ISR(TIMER2_COMPB_vect)
                g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
          }
       }
+      // uninterruptible phase
+      // determine whether all motors are idle, disable interrupts if so
+      cli();
+      BOOL bIdle = TRUE;
+      for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+         if (g_pMotors[nMotor].nSteps != 0)
+            bIdle = FALSE;
+      if (bIdle)
+         RegSetLo(TIMSK1, OCIE1B);
    }
    nLock--;
-   /* TODO: disable the ISR if no more steps are needed
-   if (bDone)
-      RegSetLo(TIMSK1, OCIE1B);
-   */
 }
