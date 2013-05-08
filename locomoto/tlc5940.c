@@ -56,11 +56,11 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    REG_SET_HI(TCCR0A, WGM01);                            // CTC value at OCR0A
    REG_SET_HI(TCCR0B, CS00);                             // prescale = 1 (16mHz)
    OCR0A = F_CPU / 409600 - 1;                           // reset at 39 ticks
-   // 8-bit clock 2, software, 0.1kHz
+   // 8-bit clock 2, software, 10kHz
    REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
    REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
    REG_SET_HI(TIMSK2, OCIE2A);                           // enable compare interrupt A
-   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 0.1kHz
+   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
    // digital pin setup
    PIN_SET_OUTPUT(Tlc5940.nPinBlank);                           
    PIN_SET_OUTPUT(Tlc5940.nPinSClk);                            
@@ -121,7 +121,7 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
    Tlc5940.bUpdate = TRUE;
 }
 //-----------< INTERRUPT: TIMER2_COMPA_vect >--------------------------------
-// Purpose:    responds to 0.1kHz timer events
+// Purpose:    responds to 10kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------

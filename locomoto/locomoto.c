@@ -49,7 +49,6 @@ int main ()
 
    I2cInit();
    SX1509Init();
-   /*
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
@@ -60,7 +59,6 @@ int main ()
          .nPinGSClk = PIN_OC0A                     // arduino 6
       }
    );
-   */
    StepMotorInit(
       (STEPMOTOR_CONFIG[STEPMOTO_COUNT])
       {

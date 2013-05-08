@@ -31,20 +31,51 @@
 // SX1509 DATA STRUCTURES
 //===========================================================================
 // row/column configuration
-typedef struct tagUI8KeypadDim
+typedef struct tagSX1509KeypadDim
 {
    UI8   nRows;
    UI8   nCols;
-} UI8_KEYPAD_DIM;
+} SX1509_KEYPAD_DIM;
 // row/column data
-typedef struct tagUI8KeypadData
+typedef struct tagSX1509KeypadData
 {
    UI8   nRow;
    UI8   nCol;
-} UI8_KEYPAD_DATA;
+} SX1509_KEYPAD_DATA;
+// PWM configuration
+typedef struct tagSX1509PWM_CONFIG
+{
+   UI8   nOnTime;
+   UI8   nOnIntensity;
+   UI8   nOffTime;
+   UI8   nOffIntensity;
+   UI8   nFadeInTime;
+   UI8   nFadeOutTime;
+} SX1509_PWM_CONFIG;
+//===========================================================================
+// SX1509 I/O PINS
+//===========================================================================
+#define SX1509_IO_0                       0x00
+#define SX1509_IO_1                       0x01
+#define SX1509_IO_2                       0x02
+#define SX1509_IO_3                       0x03
+#define SX1509_IO_4                       0x04
+#define SX1509_IO_5                       0x05
+#define SX1509_IO_6                       0x06
+#define SX1509_IO_7                       0x07
+#define SX1509_IO_8                       0x08
+#define SX1509_IO_9                       0x09
+#define SX1509_IO_10                      0x0A
+#define SX1509_IO_11                      0x0B
+#define SX1509_IO_12                      0x0C
+#define SX1509_IO_13                      0x0D
+#define SX1509_IO_14                      0x0E
+#define SX1509_IO_15                      0x0F
 //===========================================================================
 // SX1509 REGISTERS
 //===========================================================================
+// for initialization
+#define SX1509_REG_INVALID                0xFF
 // device and I/O banks
 #define SX1509_REG_INPUTDISABLE           0x00
 #define SX1509_REG_INPUTDISABLEB          0x00
@@ -257,6 +288,18 @@ typedef struct tagUI8KeypadData
 #define SX1509_AUTOSLEEP_2SX              0x05
 #define SX1509_AUTOSLEEP_4SX              0x06
 #define SX1509_AUTOSLEEP_8SX              0x07
+//===========================================================================
+// PWM TIME REGISTER VALUES
+//===========================================================================
+#define SX1509_ONTIME_INFINITE            0x00
+#define SX1509_OFFTIME_INFINITE           0x00
+#define SX1509_FADEIN_OFF                 0x00
+#define SX1509_FADEOUT_OFF                0x00
+//===========================================================================
+// HIGH INPUT REGISTER VALUES
+//===========================================================================
+#define SX1509_HIGHINPUT_OFF              BIT_LO
+#define SX1509_HIGHINPUT_ON               BIT_HI
 //===========================================================================
 // SX1509 CORE API
 //===========================================================================
@@ -1167,15 +1210,15 @@ inline VOID SX1509SetKeypadRows (UI8 nModule, UI8 nValue)
       ); 
    }
 // dimension bits (rows + columns)
-inline UI8_KEYPAD_DIM SX1509GetKeypadDim (UI8 nModule)
+inline SX1509_KEYPAD_DIM SX1509GetKeypadDim (UI8 nModule)
    {
       UI8 nConfig = SX1509GetKeyConfig2(nModule);
-      return (UI8_KEYPAD_DIM) { 
+      return (SX1509_KEYPAD_DIM) { 
          .nRows = (nConfig & 0x38) >> 3,
          .nCols = nConfig & 0x07
       };
    }
-inline VOID SX1509SetKeypadDim (UI8 nModule, UI8_KEYPAD_DIM dim)
+inline VOID SX1509SetKeypadDim (UI8 nModule, SX1509_KEYPAD_DIM dim)
    {
       UI8 nConfig = SX1509GetKeyConfig2(nModule);
       SX1509SetKeyConfig2(
@@ -1186,9 +1229,115 @@ inline VOID SX1509SetKeypadDim (UI8 nModule, UI8_KEYPAD_DIM dim)
 //===========================================================================
 // KEYPAD DATA REGISTER
 //===========================================================================
-UI8_KEYPAD_DATA SX1509GetKeyData (UI8 nModule);
 inline UI8 SX1509GetKeyData1 (UI8 nModule)
    { return SX1509Get8(nModule, SX1509_REG_KEYDATA1); }
 inline UI8 SX1509GetKeyData2 (UI8 nModule)
    { return SX1509Get8(nModule, SX1509_REG_KEYDATA2); }
+SX1509_KEYPAD_DATA SX1509GetKeyData (UI8 nModule);
+//===========================================================================
+// PWM ON TIME REGISTERS
+//===========================================================================
+UI8 SX1509GetOnTime (UI8 nModule, UI8 nIo);
+VOID SX1509SetOnTime (UI8 nModule, UI8 nIo, UI8 nValue);
+inline VOID SX1509SetOnInfinite (UI8 nModule, UI8 nIo)
+   { SX1509SetOnTime(nModule, nIo, SX1509_ONTIME_INFINITE); }
+//===========================================================================
+// PWM ON INTENSITY REGISTERS
+//===========================================================================
+UI8 SX1509GetOnIntensity (UI8 nModule, UI8 nIo);
+VOID SX1509SetOnIntensity (UI8 nModule, UI8 nIo, UI8 nValue);
+//===========================================================================
+// PWM OFF REGISTERS
+//===========================================================================
+UI8 SX1509GetOff (UI8 nModule, UI8 nIo);
+VOID SX1509SetOff (UI8 nModule, UI8 nIo, UI8 nValue);
+inline UI8 SX1509GetOffTime (UI8 nModule, UI8 nIo)
+   { return SX1509GetOff(nModule, nIo) >> 3; }
+inline VOID SX1509SetOffTime (UI8 nModule, UI8 nIo, UI8 nValue)
+   { 
+      SX1509SetOff(
+         nModule, 
+         nIo, 
+         (SX1509GetOff(nModule, nIo) & 0x07) | ((nValue & 0x1F) << 3)
+      ); 
+   }
+inline VOID SX1509SetOffInfinite (UI8 nModule, UI8 nIo)
+   { SX1509SetOffTime(nModule, nIo, SX1509_OFFTIME_INFINITE); }
+inline UI8 SX1509GetOffIntensity (UI8 nModule, UI8 nIo)
+   { return SX1509GetOff(nModule, nIo) & 0x07; }
+inline VOID SX1509SetOffIntensity (UI8 nModule, UI8 nIo, UI8 nValue)
+   { 
+      SX1509SetOff(
+         nModule, 
+         nIo, 
+         (SX1509GetOff(nModule, nIo) & 0xF8) | (nValue & 0x07)
+      ); 
+   }
+//===========================================================================
+// PWM FADE IN TIME REGISTERS
+//===========================================================================
+UI8 SX1509GetFadeInTime (UI8 nModule, UI8 nIo);
+VOID SX1509SetFadeInTime (UI8 nModule, UI8 nIo, UI8 nValue);
+inline VOID SX1509SetFadeInOff (UI8 nModule, UI8 nIo)
+   { SX1509SetFadeInTime(nModule, nIo, SX1509_FADEIN_OFF); }
+//===========================================================================
+// PWM FADE OUT TIME REGISTERS
+//===========================================================================
+UI8 SX1509GetFadeOutTime (UI8 nModule, UI8 nIo);
+VOID SX1509SetFadeOutTime (UI8 nModule, UI8 nIo, UI8 nValue);
+inline VOID SX1509SetFadeOutOff (UI8 nModule, UI8 nIo)
+   { SX1509SetFadeOutTime(nModule, nIo, SX1509_FADEOUT_OFF); }
+//===========================================================================
+// PWM CONFIGURATION REGISTERS
+//===========================================================================
+SX1509_PWM_CONFIG SX1509GetPwmConfig (UI8 nModule, UI8 nIo);
+VOID SX1509SetPwmConfig (UI8 nModule, UI8 nIo, SX1509_PWM_CONFIG config);
+//===========================================================================
+// HIGH INPUT (5V vs. 3V3) REGISTER
+//===========================================================================
+inline UI16 SX1509GetHighInput (UI8 nModule)
+   { return SX1509Get16(nModule, SX1509_REG_HIGHINPUT); }
+inline VOID SX1509SetHighInput (UI8 nModule, UI16 nValue)
+   { SX1509Set16(nModule, SX1509_REG_HIGHINPUT, nValue); }
+inline UI8 SX1509GetHighInputA (UI8 nModule)
+   { return SX1509Get8(nModule, SX1509_REG_HIGHINPUTA); }
+inline VOID SX1509SetHighInputA (UI8 nModule, UI8 nValue)
+   { SX1509Set8(nModule, SX1509_REG_HIGHINPUTA, nValue); }
+inline UI8 SX1509GetHighInputB (UI8 nModule)
+   { return SX1509Get8(nModule, SX1509_REG_HIGHINPUTB); }
+inline VOID SX1509SetHighInputB (UI8 nModule, UI8 nValue)
+   { SX1509Set8(nModule, SX1509_REG_HIGHINPUTB, nValue); }
+inline BIT SX1509GetHighInputBit (UI8 nModule, UI8 nIo)
+   {  return nIo < 8 ? 
+         SX1509GetBit(nModule, SX1509_REG_HIGHINPUTA, nIo) : 
+         SX1509GetBit(nModule, SX1509_REG_HIGHINPUTB, nIo - 8);
+   }
+inline VOID SX1509SetHighInputLo (UI8 nModule, UI8 nIo)
+   {  if (nIo < 8)
+         SX1509SetLo(nModule, SX1509_REG_HIGHINPUTA, nIo);
+      else
+         SX1509SetLo(nModule, SX1509_REG_HIGHINPUTB, nIo - 8);
+   }
+inline VOID SX1509SetHighInputHi (UI8 nModule, UI8 nIo)
+   {  if (nIo < 8)
+         SX1509SetHi(nModule, SX1509_REG_HIGHINPUTA, nIo);
+      else
+         SX1509SetHi(nModule, SX1509_REG_HIGHINPUTB, nIo - 8);
+   }
+inline VOID SX1509SetHighInputBit (UI8 nModule, UI8 nIo, BIT fValue)
+   {  if (nIo < 8)
+         SX1509SetBit(nModule, SX1509_REG_HIGHINPUTA, nIo, fValue);
+      else
+         SX1509SetBit(nModule, SX1509_REG_HIGHINPUTB, nIo - 8, fValue);
+   }
+inline VOID SX1509ToggleHighInput (UI8 nModule, UI8 nIo)
+   {  if (nIo < 8)
+         SX1509Toggle(nModule, SX1509_REG_HIGHINPUTA, nIo);
+      else
+         SX1509Toggle(nModule, SX1509_REG_HIGHINPUTB, nIo - 8);
+   }
+//===========================================================================
+// RESET REGISTER
+//===========================================================================
+VOID SX1509Reset (UI8 nModule);
 #endif // __SX1509_H

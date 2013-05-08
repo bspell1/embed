@@ -110,10 +110,10 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
       SetDataReg(nMotor, 0);
       SetDirReg(nMotor, 0);
    }
-   // 8-bit clock 2, software, 0.1kHz
+   // 8-bit clock 2, software, 10kHz
    REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
    REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
-   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 0.1kHz
+   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
    REG_SET_HI(TIMSK2, OCIE2B);                           // TODO: remove
 }
 //-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
@@ -178,7 +178,7 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
    }
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
-// Purpose:    responds to 0.1kHz timer events
+// Purpose:    responds to 10kHz timer events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
