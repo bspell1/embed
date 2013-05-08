@@ -1,5 +1,5 @@
 TARGETNAME = locomoto
-MODULES    = tlc5940 i2cmast sx1509 proto stepmoto locomoto
+MODULES    = tlc5940 uart i2cmast sx1509 proto stepmoto locomoto
 DEVICE     = atmega328p
 F_CPU      = 16000000
 

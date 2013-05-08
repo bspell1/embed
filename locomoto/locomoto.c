@@ -25,6 +25,7 @@
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "locomoto.h"
+#include "uart.h"
 #include "i2cmast.h"
 #include "tlc5940.h"
 #include "sx1509.h"
@@ -44,9 +45,10 @@ int main ()
 {
    sei();
 
-   PIN_SET_OUTPUT(PIN_ARDUINO_LED);
-   PIN_SET_LO(PIN_ARDUINO_LED);
+   PinSetOutput(PIN_ARDUINO_LED);
+   PinSetLo(PIN_ARDUINO_LED);
 
+   UartInit();
    I2cInit();
    SX1509Init();
    Tlc5940Init(

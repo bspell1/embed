@@ -52,23 +52,23 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    Tlc5940.nPinXlat  = pConfig->nPinXlat;
    Tlc5940.nPinGSClk = pConfig->nPinGSClk;
    // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
-   REG_SET_HI(TCCR0A, COM0A0);                           // toggle OC0A on tick
-   REG_SET_HI(TCCR0A, WGM01);                            // CTC value at OCR0A
-   REG_SET_HI(TCCR0B, CS00);                             // prescale = 1 (16mHz)
+   RegSetHi(TCCR0A, COM0A0);                           // toggle OC0A on tick
+   RegSetHi(TCCR0A, WGM01);                            // CTC value at OCR0A
+   RegSetHi(TCCR0B, CS00);                             // prescale = 1 (16mHz)
    OCR0A = F_CPU / 409600 - 1;                           // reset at 39 ticks
    // 8-bit clock 2, software, 10kHz
-   REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
-   REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
-   REG_SET_HI(TIMSK2, OCIE2A);                           // enable compare interrupt A
+   RegSetHi(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
+   RegSetHi(TCCR2B, CS22);                             // prescale = 64 (250kHz)
+   RegSetHi(TIMSK2, OCIE2A);                           // enable compare interrupt A
    OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
    // digital pin setup
-   PIN_SET_OUTPUT(Tlc5940.nPinBlank);                           
-   PIN_SET_OUTPUT(Tlc5940.nPinSClk);                            
-   PIN_SET_OUTPUT(Tlc5940.nPinSIn);                             
-   PIN_SET_OUTPUT(Tlc5940.nPinXlat);                            
-   PIN_SET_OUTPUT(Tlc5940.nPinGSClk);                         
+   PinSetOutput(Tlc5940.nPinBlank);                           
+   PinSetOutput(Tlc5940.nPinSClk);                            
+   PinSetOutput(Tlc5940.nPinSIn);                             
+   PinSetOutput(Tlc5940.nPinXlat);                            
+   PinSetOutput(Tlc5940.nPinGSClk);                         
    // set BLANK high
-   PIN_SET_HI(Tlc5940.nPinBlank);
+   PinSetHi(Tlc5940.nPinBlank);
 }
 //-----------< FUNCTION: Tlc5940GetDuty >------------------------------------
 // Purpose:    gets the duty cycle for a PWM channel
@@ -134,7 +134,7 @@ ISR(TIMER2_COMPA_vect)
       // uninterruptible phase
       // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
-      PIN_PULSE(Tlc5940.nPinBlank);
+      PinPulse(Tlc5940.nPinBlank);
       // update the 5940's greyscale register if requested
       if (Tlc5940.bUpdate)
       {
@@ -149,12 +149,12 @@ ISR(TIMER2_COMPA_vect)
             {
                // set SIN to the greyscale bit value and
                // pulse SCLK to shift in the greyscale bit
-               PIN_SET(Tlc5940.nPinSIn, BIT_TEST(Tlc5940.pbGsData[i], j));
-               PIN_PULSE(Tlc5940.nPinSClk);
+               PinSet(Tlc5940.nPinSIn, BitTest(Tlc5940.pbGsData[i], j));
+               PinPulse(Tlc5940.nPinSClk);
             }
          }
          // pulse XLAT to latch in the greyscale data
-         PIN_PULSE(Tlc5940.nPinXlat);
+         PinPulse(Tlc5940.nPinXlat);
       }
       fms = 0;
    }

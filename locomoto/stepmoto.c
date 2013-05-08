@@ -111,10 +111,10 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
       SetDirReg(nMotor, 0);
    }
    // 8-bit clock 2, software, 10kHz
-   REG_SET_HI(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
-   REG_SET_HI(TCCR2B, CS22);                             // prescale = 64 (250kHz)
+   RegSetHi(TCCR2A, WGM21);                            // CTC mode, compare at OCR2A
+   RegSetHi(TCCR2B, CS22);                             // prescale = 64 (250kHz)
    OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
-   REG_SET_HI(TIMSK2, OCIE2B);                           // TODO: remove
+   RegSetHi(TIMSK2, OCIE2B);                           // TODO: remove
 }
 //-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
 // Purpose:    polls the stepper motor's busy status
@@ -124,7 +124,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 //---------------------------------------------------------------------------
 BOOL StepMotorIsBusy ()
 {
-   return REG_GET(TIMSK1, OCIE1B);
+   return RegGet(TIMSK1, OCIE1B);
 }
 //-----------< FUNCTION: StepMotorWait >-------------------------------------
 // Purpose:    waits until the stepper motor stops running
@@ -174,7 +174,7 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I8 nSteps)
       g_pMotors[nMotor].nDelay = nDelay;
       g_pMotors[nMotor].nTimer = 0;
       g_pMotors[nMotor].nSteps = nSteps;
-      REG_SET_HI(TIMSK1, OCIE1B);
+      RegSetHi(TIMSK1, OCIE1B);
    }
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
@@ -229,6 +229,6 @@ ISR(TIMER2_COMPB_vect)
    nLock--;
    /* TODO: disable the ISR if no more steps are needed
    if (bDone)
-      REG_SET_LO(TIMSK1, OCIE1B);
+      RegSetLo(TIMSK1, OCIE1B);
    */
 }

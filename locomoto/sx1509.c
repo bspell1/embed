@@ -243,10 +243,10 @@ SX1509_KEYPAD_DATA SX1509GetKeyData (UI8 nModule)
    UI8 nColData = nData;
    SX1509_KEYPAD_DATA data = { -1, -1 };
    for (UI8 i = 0; i < 8; i++)
-      if (!(nRowData & BIT_MASK(i)))
+      if (!(nRowData & BitMask(i)))
          data.nRow = i;
    for (UI8 i = 0; i < 8; i++)
-      if (!(nColData & BIT_MASK(i)))
+      if (!(nColData & BitMask(i)))
          data.nCol = i + 8;
    return data;
 }

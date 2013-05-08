@@ -58,8 +58,8 @@ typedef BOOL                  BIT;
 #define TRUE                  ((BOOL)1)
 #define BIT_LO                ((BIT)0)
 #define BIT_HI                ((BIT)1)
-#define BIT_MASK(b)           (1 << (b))
-#define BIT_TEST(v, b)        (((v) & BIT_MASK(b)) ? BIT_HI : BIT_LO)
+#define BitMask(b)            (1 << (b))
+#define BitTest(v, b)         (((v) & BitMask(b)) ? BIT_HI : BIT_LO)
 //===========================================================================
 // BUFFER TYPES
 //===========================================================================
@@ -186,11 +186,11 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define PIN_ARDUINO_A4        PIN_C4
 #define PIN_ARDUINO_A5        PIN_C5
 // register manipulation
-#define REG_GET(r, b)         BIT_TEST(r, b)
-#define REG_SET_LO(r, b)      (r) &= ~BIT_MASK(b)
-#define REG_SET_HI(r, b)      (r) |= BIT_MASK(b)
-#define REG_SET(r, b, v)      do { if ((v)) REG_SET_HI(r, b); else REG_SET_LO(r, b); } while (0)
-#define REG_TOGGLE(r, b)      (r) ^= BIT_MASK(b)
+#define RegGet(r, b)          BitTest(r, b)
+#define RegSetLo(r, b)        (r) &= ~BitMask(b)
+#define RegSetHi(r, b)        (r) |= BitMask(b)
+#define RegSet(r, b, v)       do { if ((v)) RegSetHi(r, b); else RegSetLo(r, b); } while (0)
+#define RegToggle(r, b)       (r) ^= BitMask(b)
 // pin configuration
 #define PIN_MODE_INPUT        0
 #define PIN_MODE_OUTPUT       1
@@ -199,17 +199,17 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define __PIN_IREG(p)         (*__ppbAvrDI[(p) / 8])
 #define __PIN_OREG(p)         (*__ppbAvrDO[(p) / 8])
 #define __PIN_BIT(p)          ((p) % 8)
-#define PIN_SET_MODE(p, m)    REG_SET(__PIN_DREG(p), __PIN_BIT(p), m)
-#define PIN_SET_INPUT(p)      REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_INPUT)
-#define PIN_SET_OUTPUT(p)     REG_SET(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_OUTPUT)
-#define PIN_SET_PULLUP(p)     PIN_SET_INPUT(p); REG_SET(__PIN_OREG(p), __PIN_BIT(p))
-#define PIN_READ(p)           REG_GET(__PIN_IREG(p), __PIN_BIT(p))
-#define PIN_GET(p)            REG_GET(__PIN_OREG(p), __PIN_BIT(p))
-#define PIN_SET_LO(p)         REG_SET_LO(__PIN_OREG(p), __PIN_BIT(p))
-#define PIN_SET_HI(p)         REG_SET_HI(__PIN_OREG(p), __PIN_BIT(p))
-#define PIN_SET(p, v)         REG_SET(__PIN_OREG(p), __PIN_BIT(p), v)
-#define PIN_TOGGLE(p)         REG_TOGGLE(__PIN_OREG(p), __PIN_BIT(p))
-#define PIN_PULSE_HILO(p)     PIN_SET_HI(p); PIN_SET_LO(p)
-#define PIN_PULSE_LOHI(p)     PIN_SET_LO(p); PIN_SET_HI(p)
-#define PIN_PULSE(p)          PIN_PULSE_HILO(p)
+#define PinSetMode(p, m)      RegSet(__PIN_DREG(p), __PIN_BIT(p), m)
+#define PinSetInput(p)        RegSet(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_INPUT)
+#define PinSetOutput(p)       RegSet(__PIN_DREG(p), __PIN_BIT(p), PIN_MODE_OUTPUT)
+#define PinSetPullup(p)       PinSetInput(p); RegSet(__PIN_OREG(p), __PIN_BIT(p))
+#define PinRead(p)            RegGet(__PIN_IREG(p), __PIN_BIT(p))
+#define PinGet(p)             RegGet(__PIN_OREG(p), __PIN_BIT(p))
+#define PinSetLo(p)           RegSetLo(__PIN_OREG(p), __PIN_BIT(p))
+#define PinSetHi(p)           RegSetHi(__PIN_OREG(p), __PIN_BIT(p))
+#define PinSet(p, v)          RegSet(__PIN_OREG(p), __PIN_BIT(p), v)
+#define PinToggle(p)          RegToggle(__PIN_OREG(p), __PIN_BIT(p))
+#define PinPulseHiLo(p)       PinSetHi(p); PinSetLo(p)
+#define PinPulseLoHi(p)       PinSetLo(p); PinSetHi(p)
+#define PinPulse(p)           PinPulseHiLo(p)
 #endif // __AVRDEFS_H
