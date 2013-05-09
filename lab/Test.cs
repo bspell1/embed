@@ -37,18 +37,19 @@ namespace Lab
 
       public void Run ()
       {
-         using (var loco = new SerialPort("/dev/ttyUSB0", 115200, Parity.None, 8, StopBits.One))
+         using (var loco = new LocoMoto.Driver("/dev/ttyUSB0", 0xFF))
          {
-            loco.Open();
+            var motor0 = loco.CreateStepper(0);
+            var motor1 = loco.CreateStepper(1);
+            motor0.StepsPerCycle = motor1.StepsPerCycle = 128;
             for (; ; )
             {
-               var steps = 128;
-               var msg = (Byte[])null;
-               msg = new Byte[] { 0xC0, 0xFF, 0x04, 0, 20, (Byte)(steps >> 8), (Byte)steps };
-               loco.Write(msg, 0, msg.Length);
-               msg = new Byte[] { 0xC0, 0xFF, 0x04, 1, 20, (Byte)(steps >> 8), (Byte)steps };
-               loco.Write(msg, 0, msg.Length);
+               motor0.Run();
+               motor1.RunReverse();
                Thread.Sleep(2000);
+               motor0.Stop();
+               motor1.Stop();
+               Thread.Sleep(1000);
             }
          }
 #if false

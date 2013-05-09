@@ -37,11 +37,14 @@
   <ItemGroup>
     <Compile Include="Clock.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="LocoMoto\Driver.cs" />
+    <Compile Include="NPi\BitBanger\StepperDriver.cs" />
     <Compile Include="NPi\I2CDevice.cs" />
     <Compile Include="NPi\Gpio.cs" />
+    <Compile Include="NPi\IStepperDriver.cs" />
     <Compile Include="NPi\Lcd.cs" />
     <Compile Include="NPi\SpiDevice.cs" />
-    <Compile Include="NPi\StepperMotor.cs" />
+    <Compile Include="NPi\Stepper.cs" />
     <Compile Include="NPi\VC0706Camera.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
