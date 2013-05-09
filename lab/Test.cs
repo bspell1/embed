@@ -44,7 +44,9 @@ namespace Lab
             {
                var steps = 128;
                var msg = (Byte[])null;
-               msg = new Byte[] { 0xC0, 0x03, 0, 20, (Byte)(steps >> 8), (Byte)steps };
+               msg = new Byte[] { 0xC0, 0xFF, 0x04, 0, 20, (Byte)(steps >> 8), (Byte)steps };
+               loco.Write(msg, 0, msg.Length);
+               msg = new Byte[] { 0xC0, 0xFF, 0x04, 1, 20, (Byte)(steps >> 8), (Byte)steps };
                loco.Write(msg, 0, msg.Length);
                Thread.Sleep(2000);
             }
