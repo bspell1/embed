@@ -37,6 +37,18 @@ namespace Lab
 
       public void Run ()
       {
+         using (var loco = new SerialPort("/dev/ttyUSB0", 115200, Parity.None, 8, StopBits.One))
+         {
+            loco.Open();
+            for (; ; )
+            {
+               var steps = 128;
+               var msg = (Byte[])null;
+               msg = new Byte[] { 0xC0, 0x03, 0, 20, (Byte)(steps >> 8), (Byte)steps };
+               loco.Write(msg, 0, msg.Length);
+               Thread.Sleep(2000);
+            }
+         }
 #if false
          using (var i2c = new I2CDevice("/dev/i2c-1"))
          {
@@ -66,7 +78,7 @@ namespace Lab
          }
 #endif
 
-#if true
+#if false
          for (; ; )
          {
             try
