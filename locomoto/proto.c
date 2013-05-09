@@ -21,6 +21,7 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "proto.h"
 #include "uart.h"
@@ -28,47 +29,69 @@
 #include "sx1509.h"
 #include "stepmoto.h"
 //-------------------[       Module Definitions        ]-------------------//
-// protocol signature byte
-#define PROTO_SIGNATURE             (0xC0)
+//===========================================================================
+// PROTOCOL SIGNATURE
+//===========================================================================
+#define PROTO_SIGNATURE             ((BYTE)0xC0)
+//===========================================================================
+// DEVICE ADDRESSING
+//===========================================================================
+// standard address values
+#define PROTO_ADDRESS_UNKNOWN       ((BYTE)0xFF)   // received only by unaddressed devices
+#define PROTO_ADDRESS_BROADCAST     ((BYTE)0x00)   // received by all devices
+// this device's address
+static BYTE       g_bAddress   = PROTO_ADDRESS_UNKNOWN;
+static BYTE EEMEM g_bEEAddress = PROTO_ADDRESS_UNKNOWN;
+//===========================================================================
+// PROTOCOL COMMANDS
+//===========================================================================
 // protocol command map
 #define PROTO_COMMAND_PING          (0x00)
-#define PROTO_COMMAND_SETOUTPUT     (0x01)
-#define PROTO_COMMAND_SETSERVO      (0x02)
-#define PROTO_COMMAND_STEPMOTOR     (0x03)
-#define PROTO_COMMAND_STOPMOTOR     (0x04)
+#define PROTO_COMMAND_SETADDRESS    (0x01)
+#define PROTO_COMMAND_SETOUTPUT     (0x02)
+#define PROTO_COMMAND_SETSERVO      (0x03)
+#define PROTO_COMMAND_STEPMOTOR     (0x04)
+#define PROTO_COMMAND_STOPMOTOR     (0x05)
+#define PROTO_COMMAND_MAX           (sizeof(g_pParamMap) / sizeof(*g_pParamMap) - 1)
 // protocol command dispatchers
-static VOID DispatchPing      ();
-static VOID DispatchSetOutput ();
-static VOID DispatchSetServo  ();
-static VOID DispatchStepMotor ();
-static VOID DispatchStopMotor ();
+static VOID    DispatchPing         ();
+static VOID    DispatchSetAddress   ();
+static VOID    DispatchSetOutput    ();
+static VOID    DispatchSetServo     ();
+static VOID    DispatchStepMotor    ();
+static VOID    DispatchStopMotor    ();
 // command dispatch mapping
-static struct
+static const struct
 {
    UI8   nParams;                   // parameter count
    VOID  (*pfnDispatch)();          // dispatch function
 } g_pParamMap[] = 
 {
    { 1, DispatchPing },
+   { 1, DispatchSetAddress },
    { 2, DispatchSetOutput },
    { 3, DispatchSetServo },
    { 4, DispatchStepMotor },
    { 1, DispatchStopMotor }
 };
-// protocol receive buffer
+//===========================================================================
+// PROTOCOL BUFFERS
+//===========================================================================
 static struct
 {
    union
    {
-      BYTE     pbBuffer[6];
+      BYTE     pbBuffer[8];
       struct
       {
          BYTE  bSignature;
+         BYTE  bAddress;
          BYTE  bCommand;
          BYTE  bParam0;
          BYTE  bParam1;
          BYTE  bParam2;
          BYTE  bParam3;
+         BYTE  bParam4;
       };
    };
    UI8         cbBuffer;
@@ -83,6 +106,7 @@ static struct
 //---------------------------------------------------------------------------
 VOID ProtoInit ()
 {
+   g_bAddress = eeprom_read_byte(&g_bEEAddress);
 }
 //-----------< INTERRUPT: USART_RX_vect >------------------------------------
 // Purpose:    responds to UART receive interrupts
@@ -99,14 +123,22 @@ ISR(USART_RX_vect)
    g_Receive.pbBuffer[g_Receive.cbBuffer++] = UartRecv();
    switch (g_Receive.cbBuffer)
    {
-      case 1:
+      case 1:     // signature byte
          if (g_Receive.bSignature != PROTO_SIGNATURE)
             g_Receive.cbBuffer = 0;
          break;
-      case 2:
-         if (g_Receive.bCommand >= sizeof(g_pParamMap))
+      case 2:     // address byte
+         if (g_Receive.bAddress != g_bAddress && 
+             g_Receive.bAddress != PROTO_ADDRESS_BROADCAST)
             g_Receive.cbBuffer = 0;
-      default:
+         break;
+      case 3:     // command byte
+         if (g_Receive.bCommand > PROTO_COMMAND_MAX)
+         {
+            g_Receive.cbBuffer = 0;
+            break;
+         }
+      default:    // parameter byte
          // dispatch when all parameters have been received
          if (g_Receive.cbBuffer - 2 == g_pParamMap[g_Receive.bCommand].nParams)
          {
@@ -127,6 +159,16 @@ ISR(USART_RX_vect)
 static VOID DispatchPing ()
 {
    UartSend(g_Receive.bParam0);
+}
+//-----------< FUNCTION: DispatchSetAddress >--------------------------------
+// Purpose:    executes an address assignment command
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID DispatchSetAddress ()
+{
+   g_bAddress = g_Receive.bParam0;
+   eeprom_write_byte(&g_bEEAddress, g_bAddress);
 }
 //-----------< FUNCTION: DispatchSetOutput >---------------------------------
 // Purpose:    sets an output pin value on the SX1509

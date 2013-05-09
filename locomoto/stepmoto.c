@@ -37,7 +37,7 @@ static struct
    UI8   nStage;                                   // current step stage (0-3)
 } g_pMotors[STEPMOTO_COUNT];
 // motor forward step stages
-static UI8 g_pStages[] = 
+static const UI8 g_pStages[] = 
 {
    0x0A,                                           // 1010, pink/blue on
    0x06,                                           // 0110, orange/blue on

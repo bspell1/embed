@@ -27,7 +27,7 @@
 //-------------------[        Module Variables         ]-------------------//
 static UI8  g_pI2cAddress[4] = { 0x3E, 0x3F, 0x70, 0x71 };
 static BYTE g_pbI2cData[6];
-static UI8  g_pnTOnRegs[] = 
+static const UI8 g_pnTOnRegs[] = 
 {
    SX1509_REG_TON0,
    SX1509_REG_TON1,
@@ -46,7 +46,7 @@ static UI8  g_pnTOnRegs[] =
    SX1509_REG_TON14,
    SX1509_REG_TON15,
 };
-static UI8 g_pnIOnRegs[] = 
+static const UI8 g_pnIOnRegs[] = 
 {
    SX1509_REG_ION0,
    SX1509_REG_ION1,
@@ -65,7 +65,7 @@ static UI8 g_pnIOnRegs[] =
    SX1509_REG_ION14,
    SX1509_REG_ION15,
 };
-static UI8 g_pnOffRegs[] = 
+static const UI8 g_pnOffRegs[] = 
 {
    SX1509_REG_OFF0,
    SX1509_REG_OFF1,
@@ -84,7 +84,7 @@ static UI8 g_pnOffRegs[] =
    SX1509_REG_OFF14,
    SX1509_REG_OFF15,
 };
-static UI8 g_pnTRiseRegs[] = 
+static const UI8 g_pnTRiseRegs[] = 
 {
    SX1509_REG_INVALID,
    SX1509_REG_INVALID,
@@ -103,7 +103,7 @@ static UI8 g_pnTRiseRegs[] =
    SX1509_REG_TRISE14,
    SX1509_REG_TRISE15,
 };
-static UI8 g_pnTFallRegs[] = 
+static const UI8 g_pnTFallRegs[] = 
 {
    SX1509_REG_INVALID,
    SX1509_REG_INVALID,

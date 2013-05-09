@@ -8,25 +8,37 @@ CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -mint8 -O3 -funroll-loops -DF_CPU=$(F_CPU) -mmcu=$(DEVICE)
 LDFLAGS = -lc -lm
 
-all: bin bin\$(TARGETNAME).hex
+all: bin\$(TARGETNAME).hex bin\$(TARGETNAME).eep
 
-clean: ; rm -fr bin
+clean: ; rm -fr bin/*
 
 rebuild: clean all
 
 asm: bin $(MODULES:%=bin\\%.S)
 
-#flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
-flash: all ; avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+#write-flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
+write-flash:  bin bin\$(TARGETNAME).hex
+	avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+write-eeprom: bin bin\$(TARGETNAME).eep
+	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 
-bin: ; mkdir bin
+bin:
+	mkdir bin
 
-bin\\%.o: %.c makefile avrdefs.h $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -c -o $@ $<
+bin\\%.o: %.c bin makefile avrdefs.h $(MODULES:%=%.h)
+	$(CC) $(CCFLAGS) -c -o $@ $<
 
-bin\\%.S: %.c makefile avrdefs.h $(MODULES:%=%.h) ; $(CC) $(CCFLAGS) -S -o $@ $<
+bin\\%.S: %.c makefile avrdefs.h $(MODULES:%=%.h)
+	$(CC) $(CCFLAGS) -S -o $@ $<
 
-bin\$(TARGETNAME).elf: $(MODULES:%=bin\\%.o) ; $(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
+bin\\%.elf: $(MODULES:%=bin\\%.o)
+	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
-bin\$(TARGETNAME).hex: bin\$(TARGETNAME).elf; 										\
-	rm -f $@ ; 																					\
-	avr-objcopy -j .text -j .data -O ihex $(^:bin\\%=bin/%) $(@:bin\\%=bin/%)
+bin\\%.hex: bin\%.elf
+	avr-objcopy -j .text -j .data -O ihex $(<:bin\\%=bin/%) $(@:bin\\%=bin/%)
+
+bin\\%.eep: bin\%.elf
+	avr-objcopy -j .eeprom -O ihex $(<:bin\\%=bin/%) $(@:bin\\%=bin/%)
+
+# override make to keep intermediate files for incremental
+.SECONDARY: 
