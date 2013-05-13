@@ -7,6 +7,8 @@ namespace LocoMoto
 {
    public class Driver : IDisposable
    {
+      public const Int32 BroadcastAddress = 0x00;
+      public const Int32 UnknownAddress = 0xFF;
       private const Int32 Signature = 0xC0;
       private enum Command
       {
@@ -24,6 +26,11 @@ namespace LocoMoto
       public Driver (String device, Int32 address)
       {
          this.port = new SerialPort(device, 115200, Parity.None, 8, StopBits.One);
+         this.port.DataReceived += (o, a) =>
+         {
+            while (this.port.BytesToRead > 0)
+               Console.WriteLine(this.port.ReadByte().ToString("X"));
+         };
          this.port.Open();
          this.address = address;
       }
@@ -45,6 +52,8 @@ namespace LocoMoto
             message[i + 3] = (Byte)data[i];
          lock (this)
             this.port.Write(message, 0, message.Length);
+         while (this.port.BytesToRead > 0)
+            Console.WriteLine(this.port.ReadByte().ToString("X"));
       }
 
       public NPi.Stepper CreateStepper (Int32 motorNumber)

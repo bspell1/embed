@@ -37,18 +37,36 @@ namespace Lab
 
       public void Run ()
       {
-         using (var loco = new LocoMoto.Driver("/dev/ttyUSB0", 0xFF))
+         var path = Directory.GetFiles("/dev", "ttyUSB*").Single();
+         Console.WriteLine("Connecting to locomoto on {0}.", path);
+         using (var loco = new LocoMoto.Driver(path, LocoMoto.Driver.UnknownAddress))
          {
             var motor0 = loco.CreateStepper(0);
             var motor1 = loco.CreateStepper(1);
             motor0.StepsPerCycle = motor1.StepsPerCycle = 128;
+            motor0.Rpm = motor1.Rpm = 60;
+            motor0.Stop(); motor1.Stop();
+            var dir = 1;
+            var alt = false;
+            var step = 5;
             for (; ; )
             {
-               motor0.Run();
-               motor1.RunReverse();
-               Thread.Sleep(2000);
-               motor0.Stop();
-               motor1.Stop();
+               if (motor0.Rpm >= 60 || motor0.Rpm <= 6)
+                  dir *= -1;
+               motor0.Rpm += dir * step;
+               motor0.Rpm = Math.Min(Math.Max(motor0.Rpm, 6), 60);
+               motor1.Rpm = motor0.Rpm;
+               if (!alt)
+               {
+                  motor0.Run();
+                  motor1.RunReverse();
+               }
+               else
+               {
+                  motor0.RunReverse();
+                  motor1.Run();
+               }
+               alt = !alt;
                Thread.Sleep(1000);
             }
          }
