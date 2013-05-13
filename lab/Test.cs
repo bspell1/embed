@@ -44,30 +44,42 @@ namespace Lab
             var motor0 = loco.CreateStepper(0);
             var motor1 = loco.CreateStepper(1);
             motor0.StepsPerCycle = motor1.StepsPerCycle = 128;
-            motor0.Rpm = motor1.Rpm = 60;
-            motor0.Stop(); motor1.Stop();
-            var dir = 1;
-            var alt = false;
-            var step = 5;
+            motor0.Rpm = motor1.Rpm = Stepper.MinRpm;
+            motor0.Stop();
+            motor1.Stop();
             for (; ; )
             {
-               if (motor0.Rpm >= 60 || motor0.Rpm <= 6)
-                  dir *= -1;
-               motor0.Rpm += dir * step;
-               motor0.Rpm = Math.Min(Math.Max(motor0.Rpm, 6), 60);
-               motor1.Rpm = motor0.Rpm;
-               if (!alt)
+               switch (Console.ReadKey().Key)
                {
-                  motor0.Run();
-                  motor1.RunReverse();
+                  case ConsoleKey.W:
+                     motor0.Rpm = Math.Min(motor0.Rpm + 10, Stepper.MaxRpm);
+                     motor0.Run();
+                     break;
+                  case ConsoleKey.S:
+                     motor0.Rpm = Math.Max(motor0.Rpm - 10, 0);
+                     if (motor0.Rpm == 0)
+                        motor0.Stop();
+                     else
+                        motor0.Run();
+                     break;
+                  case ConsoleKey.O:
+                     motor1.Rpm = Math.Min(motor1.Rpm + 10, Stepper.MaxRpm);
+                     motor1.RunReverse();
+                     break;
+                  case ConsoleKey.L:
+                     motor1.Rpm = Math.Max(motor1.Rpm - 10, 0);
+                     if (motor1.Rpm == 0)
+                        motor1.Stop();
+                     else
+                        motor1.RunReverse();
+                     break;
+                  case ConsoleKey.Spacebar:
+                     motor0.Stop();
+                     motor1.Stop();
+                     break;
+                  default:
+                     break;
                }
-               else
-               {
-                  motor0.RunReverse();
-                  motor1.Run();
-               }
-               alt = !alt;
-               Thread.Sleep(1000);
             }
          }
 #if false

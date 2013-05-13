@@ -66,8 +66,10 @@ typedef BOOL                  BIT;
 //===========================================================================
 typedef void                  VOID;
 typedef VOID*                 PVOID;
+typedef volatile VOID*        PVVOID;
 typedef uint8_t               BYTE;
 typedef BYTE*                 PBYTE;
+typedef volatile BYTE*        PVBYTE;
 typedef size_t                BSIZE;
 #define BYTE_MIN              UINT8_MIN
 #define BYTE_MAX              UINT8_MAX

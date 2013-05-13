@@ -40,11 +40,11 @@
 VOID     I2cInit        ();
 BOOL     I2cIsBusy      ();
 VOID     I2cWait        ();
-VOID     I2cSend        (UI8 nSlaveAddr, PVOID pvSend, BSIZE cbSend);
-VOID     I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
-VOID     I2cSendRecv    (UI8   nSlaveAddr, 
-                         PVOID pvSend, 
-                         BSIZE cbSend,
-                         PVOID pvRecv, 
-                         BSIZE cbRecv);
+VOID     I2cSend        (UI8 nSlaveAddr, PVVOID pvSend, BSIZE cbSend);
+VOID     I2cRecv        (UI8 nSlaveAddr, PVVOID pvRecv, BSIZE cbRecv);
+VOID     I2cSendRecv    (UI8    nSlaveAddr, 
+                         PVVOID pvSend, 
+                         BSIZE  cbSend,
+                         PVVOID pvRecv, 
+                         BSIZE  cbRecv);
 #endif // __I2CMAST_H

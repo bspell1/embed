@@ -27,7 +27,7 @@
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 // motor state data
-static struct
+static volatile struct
 {
    UI8   n1509Module;                              // SX1509 module number
    UI8   n1509Offset;                              // SX1509 starting pin (pink)
@@ -100,7 +100,7 @@ static VOID SetDataReg (UI8 nMotor, UI8 nData)
 VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 {
    // initialize motor data
-   memset(g_pMotors, 0, sizeof(g_pMotors));
+   memset((PVOID)g_pMotors, 0, sizeof(g_pMotors));
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
    {
       // configure module/pin offsets
@@ -192,7 +192,7 @@ ISR(TIMER2_COMPB_vect)
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
-   static UI8 g_nLock = 0;
+   static volatile UI8 g_nLock = 0;
    if (g_nLock++ == 0)
    {
       // interruptible phase

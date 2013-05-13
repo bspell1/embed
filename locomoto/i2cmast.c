@@ -82,11 +82,11 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static BYTE          g_bAddr     = 0;        // slave address/read bit
-static PBYTE         g_pbSend    = NULL;     // send buffer
-static BSIZE         g_cbSend    = 0;        // send buffer length
-static PBYTE         g_pbRecv    = NULL;     // receive buffer
-static BSIZE         g_cbRecv    = 0;        // receive buffer size
+static BYTE  volatile  g_bAddr     = 0;        // slave address/read bit
+static PBYTE volatile  g_pbSend    = NULL;     // send buffer
+static BSIZE volatile  g_cbSend    = 0;        // send buffer length
+static PBYTE volatile  g_pbRecv    = NULL;     // receive buffer
+static BSIZE volatile  g_cbRecv    = 0;        // receive buffer size
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -130,7 +130,7 @@ VOID I2cWait ()
 //             cbSend     - number of bytes to send
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
+VOID I2cSend (BYTE nSlaveAddr, PVVOID pvSend, BSIZE cbSend)
 {
    I2cWait();
    // set up I2C state
@@ -149,7 +149,7 @@ VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
 //             cbRecv     - maximum number of bytes to receive
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
+VOID I2cRecv (UI8 nSlaveAddr, PVVOID pvBuffer, BSIZE cbBuffer)
 {
    I2cWait();
    // set up I2C state
@@ -171,10 +171,10 @@ VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
 // Returns:    none
 //---------------------------------------------------------------------------
 VOID I2cSendRecv (
-   UI8   nSlaveAddr, 
-   PVOID pvSend, 
+   UI8 nSlaveAddr, 
+   PVVOID pvSend, 
    BSIZE cbSend,
-   PVOID pvRecv, 
+   PVVOID pvRecv, 
    BSIZE cbRecv)
 {
    I2cWait();
@@ -194,7 +194,7 @@ VOID I2cSendRecv (
 //---------------------------------------------------------------------------
 ISR(TWI_vect)
 {
-   static UI8 nMsgIdx = 0;
+   static volatile UI8 nMsgIdx = 0;
    switch (TWSR)
    {
       case STATUS_START:                           // START transmitted

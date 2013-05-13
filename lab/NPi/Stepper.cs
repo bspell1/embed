@@ -7,6 +7,8 @@ namespace NPi
 {
    public class Stepper
    {
+      public const Int32 MinRpm = 6;
+      public const Int32 MaxRpm = 60;
       private IStepperDriver driver;
 
       public Stepper (IStepperDriver driver)
@@ -34,8 +36,10 @@ namespace NPi
       {
          if (this.StepsPerCycle == 0)
             throw new InvalidOperationException("Invalid StepsPerCycle");
-         if (this.Rpm < 6 || this.Rpm > 60)
-            throw new InvalidOperationException("Invalid RPM: valid range is [6,60]");
+         if (this.Rpm < MinRpm || this.Rpm > MaxRpm)
+            throw new InvalidOperationException(
+               String.Format("Invalid RPM: valid range is [{0}, {1}]", MinRpm, MaxRpm)
+            );
          this.driver.Step(steps, this.Rpm);
       }
 

@@ -32,7 +32,7 @@ static struct
    UI8            nPinSIn;                               // TLC5940 26 (SIN)
    UI8            nPinXlat;                              // TLC5940 24 (XLAT)
    UI8            nPinGSClk;                             // TLC5940 18 (GSCLK)
-   BOOL           bUpdate;                               // update needed indicator
+   volatile BOOL  bUpdate;                               // update needed indicator
    BYTE           pbGsData[24 * TLC5940_COUNT];          // 5940 greyscale register data
 } Tlc5940;
 //-------------------[        Module Prototypes        ]-------------------//
@@ -129,7 +129,7 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 ISR(TIMER2_COMPA_vect)
 {
    // servo cycle is 20ms
-   static UI16 fms = 0;
+   static volatile UI16 fms = 0;
    if (fms++ % 200 == 0)
    {
       // uninterruptible phase

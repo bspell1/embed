@@ -40,8 +40,8 @@
 #define PROTO_ADDRESS_UNKNOWN       ((BYTE)0xFF)   // received only by unaddressed devices
 #define PROTO_ADDRESS_BROADCAST     ((BYTE)0x00)   // received by all devices
 // this device's address
-static BYTE       g_bAddress   = PROTO_ADDRESS_UNKNOWN;
-static BYTE EEMEM g_bEEAddress = PROTO_ADDRESS_UNKNOWN;
+static volatile BYTE g_bAddress   = PROTO_ADDRESS_UNKNOWN;
+static BYTE EEMEM    g_bEEAddress = PROTO_ADDRESS_UNKNOWN;
 //===========================================================================
 // PROTOCOL COMMANDS
 //===========================================================================
@@ -77,7 +77,7 @@ static const struct
 //===========================================================================
 // PROTOCOL BUFFERS
 //===========================================================================
-static struct
+static volatile struct
 {
    union
    {
