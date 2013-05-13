@@ -59,6 +59,7 @@ typedef BOOL                  BIT;
 #define BIT_LO                ((BIT)0)
 #define BIT_HI                ((BIT)1)
 #define BitMask(b)            (1 << (b))
+#define BitUnmask(b)          (~BitMask(b))
 #define BitTest(v, b)         (((v) & BitMask(b)) ? BIT_HI : BIT_LO)
 //===========================================================================
 // BUFFER TYPES
@@ -187,7 +188,7 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define PIN_ARDUINO_A5        PIN_C5
 // register manipulation
 #define RegGet(r, b)          BitTest(r, b)
-#define RegSetLo(r, b)        (r) &= ~BitMask(b)
+#define RegSetLo(r, b)        (r) &= BitUnmask(b)
 #define RegSetHi(r, b)        (r) |= BitMask(b)
 #define RegSet(r, b, v)       do { if ((v)) RegSetHi(r, b); else RegSetLo(r, b); } while (0)
 #define RegToggle(r, b)       (r) ^= BitMask(b)

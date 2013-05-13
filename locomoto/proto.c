@@ -130,10 +130,7 @@ ISR(USART_RX_vect)
       case 2:     // address byte
          if (g_Receive.bAddress != g_bAddress && 
              g_Receive.bAddress != PROTO_ADDRESS_BROADCAST)
-         {
-            g_Receive.cbBuffer = 0;
-            UartSend(g_bAddress);   // TODO: remove
-         }
+         g_Receive.cbBuffer = 0;
          break;
       case 3:     // command byte
          if (g_Receive.bCommand > PROTO_COMMAND_MAX)

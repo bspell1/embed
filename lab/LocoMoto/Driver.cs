@@ -25,7 +25,7 @@ namespace LocoMoto
 
       public Driver (String device, Int32 address)
       {
-         this.port = new SerialPort(device, 115200, Parity.None, 8, StopBits.One);
+         this.port = new SerialPort(device, 57600, Parity.None, 8, StopBits.One);
          this.port.DataReceived += (o, a) =>
          {
             while (this.port.BytesToRead > 0)
@@ -52,8 +52,12 @@ namespace LocoMoto
             message[i + 3] = (Byte)data[i];
          lock (this)
             this.port.Write(message, 0, message.Length);
-         while (this.port.BytesToRead > 0)
-            Console.WriteLine(this.port.ReadByte().ToString("X"));
+      }
+
+      public Int32 Ping (Int32 value)
+      {
+         Send(Command.Ping, value);
+         return this.port.ReadByte();
       }
 
       public NPi.Stepper CreateStepper (Int32 motorNumber)

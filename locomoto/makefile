@@ -14,7 +14,10 @@ clean: ; rm -fr bin/*
 
 rebuild: clean all
 
-asm: bin $(MODULES:%=bin\\%.S)
+asm: $(MODULES:%=bin\\%.S)
+
+size: bin\$(TARGETNAME).elf
+	avr-size -C --mcu=$(DEVICE) $<
 
 #write-flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
 write-flash:  bin bin\$(TARGETNAME).hex
@@ -28,7 +31,7 @@ bin:
 bin\\%.o: %.c bin makefile avrdefs.h $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -c -o $@ $<
 
-bin\\%.S: %.c makefile avrdefs.h $(MODULES:%=%.h)
+bin\\%.S: %.c bin makefile avrdefs.h $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin\\%.elf: $(MODULES:%=bin\\%.o)

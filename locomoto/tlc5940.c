@@ -51,6 +51,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    Tlc5940.nPinSClk  = pConfig->nPinSClk;
    Tlc5940.nPinXlat  = pConfig->nPinXlat;
    Tlc5940.nPinGSClk = pConfig->nPinGSClk;
+   Tlc5940.bUpdate   = TRUE;
    // 8-bit clock 0, hardware, 409.6 kHz (50Hz servo * 4096 bits PWM * 2 toggles/cycle)
    RegSetHi(TCCR0A, COM0A0);                             // toggle OC0A on tick
    RegSetHi(TCCR0A, WGM01);                              // CTC value at OCR0A

@@ -192,8 +192,8 @@ ISR(TIMER2_COMPB_vect)
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
-   static UI8 nLock = 0;
-   if (nLock++ == 0)
+   static UI8 g_nLock = 0;
+   if (g_nLock++ == 0)
    {
       // interruptible phase
       // update motor registers
@@ -206,27 +206,27 @@ ISR(TIMER2_COMPB_vect)
             {
                // moving forward, go to the next stage
                // decrement step count when cycle completes
-               UI8 nBankData = g_pStages[g_pMotors[nMotor].nStage++];
+               UI8 nRegData = g_pStages[g_pMotors[nMotor].nStage++];
                if (g_pMotors[nMotor].nStage == 4)
                {
                   g_pMotors[nMotor].nStage = 0;
                   if (g_pMotors[nMotor].nSteps != I16_MAX)
                      g_pMotors[nMotor].nSteps--;
                }
-               SetDataReg(nMotor, nBankData);
+               SetDataReg(nMotor, nRegData);
             }
             else if (g_pMotors[nMotor].nSteps < 0)
             {
                // moving backward, go to the previous stage
                // increment step count when cycle completes
-               UI8 nBankData = g_pStages[3 - g_pMotors[nMotor].nStage++];
+               UI8 nRegData = g_pStages[3 - g_pMotors[nMotor].nStage++];
                if (g_pMotors[nMotor].nStage == 4)
                {
                   g_pMotors[nMotor].nStage = 0;
                   if (g_pMotors[nMotor].nSteps != I16_MIN)
                      g_pMotors[nMotor].nSteps++;
                }
-               SetDataReg(nMotor, nBankData);
+               SetDataReg(nMotor, nRegData);
             }
             if (g_pMotors[nMotor].nSteps != 0)
                g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
@@ -242,5 +242,5 @@ ISR(TIMER2_COMPB_vect)
       if (bIdle)
          RegSetLo(TIMSK2, OCIE2B);
    }
-   nLock--;
+   g_nLock--;
 }

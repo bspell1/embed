@@ -134,11 +134,11 @@ VOID I2cSend (BYTE nSlaveAddr, PVOID pvSend, BSIZE cbSend)
 {
    I2cWait();
    // set up I2C state
-   g_bAddr   = (nSlaveAddr << 1) & ~BitMask(ADDR_READ_BIT);
-   g_pbSend  = (PBYTE)pvSend;
-   g_cbSend  = cbSend;
-   g_pbRecv  = NULL;
-   g_cbRecv  = 0;
+   g_bAddr  = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
+   g_pbSend = (PBYTE)pvSend;
+   g_cbSend = cbSend;
+   g_pbRecv = NULL;
+   g_cbRecv = 0;
    // start the data transfer
    TWCR = CONTROL_START;
 }
@@ -153,11 +153,11 @@ VOID I2cRecv (UI8 nSlaveAddr, PVOID pvBuffer, BSIZE cbBuffer)
 {
    I2cWait();
    // set up I2C state
-   g_bAddr   = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
-   g_pbSend  = NULL;
-   g_cbSend  = 0;
-   g_pbRecv  = (PBYTE)pvBuffer;
-   g_cbRecv  = cbBuffer;
+   g_bAddr  = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
+   g_pbSend = NULL;
+   g_cbSend = 0;
+   g_pbRecv = (PBYTE)pvBuffer;
+   g_cbRecv = cbBuffer;
    // start the data transfer
    TWCR = CONTROL_START;
 }
@@ -179,11 +179,11 @@ VOID I2cSendRecv (
 {
    I2cWait();
    // set up I2C state
-   g_bAddr   = (nSlaveAddr << 1) & ~BitMask(ADDR_READ_BIT);
-   g_pbSend  = (PBYTE)pvSend;
-   g_cbSend  = cbSend;
-   g_pbRecv  = (PBYTE)pvRecv;
-   g_cbRecv  = cbRecv;
+   g_bAddr  = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
+   g_pbSend = (PBYTE)pvSend;
+   g_cbSend = cbSend;
+   g_pbRecv = (PBYTE)pvRecv;
+   g_cbRecv = cbRecv;
    // start the data transfer
    TWCR = CONTROL_START;
 }
@@ -207,7 +207,7 @@ ISR(TWI_vect)
          // combination send/receive transaction,
          // so clear the read bit to restart
          if (g_pbSend != NULL)
-            g_bAddr &= ~BitMask(ADDR_READ_BIT);
+            g_bAddr &= BitUnmask(ADDR_READ_BIT);
          TWCR = CONTROL_START;
          break;
       case STATUS_MTX_ADR_ACK:                     // address byte transmitted

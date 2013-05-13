@@ -25,7 +25,7 @@
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
-static UI8  g_pI2cAddress[4] = { 0x3E, 0x3F, 0x70, 0x71 };
+static const UI8 g_pI2cAddress[4] = { 0x3E, 0x3F, 0x70, 0x71 };
 static BYTE g_pbI2cData[6];
 static const UI8 g_pnTOnRegs[] = 
 {

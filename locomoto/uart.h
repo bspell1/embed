@@ -46,7 +46,7 @@
 #endif
 #ifndef UART_BAUD
 #  define UART_BAUD                 (57600)
-#  define UART_BAUD_2X              (TRUE)
+#  define UART_BAUD_2X              (FALSE)
 #endif
 //===========================================================================
 // UART INTERFACE

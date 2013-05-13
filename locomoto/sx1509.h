@@ -320,7 +320,7 @@ inline BIT SX1509GetBit (UI8 nModule, UI8 nReg, UI8 nBit)
 inline VOID SX1509SetHi (UI8 nModule, UI8 nReg, UI8 nBit)
    { SX1509Set8(nModule, nReg, SX1509Get8(nModule, nReg) | BitMask(nBit)); }
 inline VOID SX1509SetLo (UI8 nModule, UI8 nReg, UI8 nBit)
-   { SX1509Set8(nModule, nReg, SX1509Get8(nModule, nReg) & ~BitMask(nBit)); }
+   { SX1509Set8(nModule, nReg, SX1509Get8(nModule, nReg) & BitUnmask(nBit)); }
 inline VOID SX1509SetBit (UI8 nModule, UI8 nReg, UI8 nBit, BOOL fValue)
    {  if (fValue) 
          SX1509SetHi(nModule, nReg, nBit); 
