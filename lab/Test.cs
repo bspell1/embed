@@ -47,38 +47,55 @@ namespace Lab
             motor0.Rpm = motor1.Rpm = Stepper.MinRpm;
             motor0.Stop();
             motor1.Stop();
+            var rpm0 = 0;
+            var rpm1 = 0;
+            var rpmi = 10;
             for (; ; )
             {
-               switch (Console.ReadKey().Key)
+               var key = Console.ReadKey().Key;
+               switch (key)
                {
                   case ConsoleKey.W:
-                     motor0.Rpm = Math.Min(motor0.Rpm + 10, Stepper.MaxRpm);
-                     motor0.Run();
+                     rpm0 = Math.Min(Math.Max(rpm0 + rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
+                     motor0.Rpm = Math.Min(Math.Max(Math.Abs(rpm0), Stepper.MinRpm), Stepper.MaxRpm);
                      break;
                   case ConsoleKey.S:
-                     motor0.Rpm = Math.Max(motor0.Rpm - 10, 0);
-                     if (motor0.Rpm == 0)
-                        motor0.Stop();
-                     else
-                        motor0.Run();
+                     rpm0 = Math.Min(Math.Max(rpm0 - rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
+                     motor0.Rpm = Math.Min(Math.Max(Math.Abs(rpm0), Stepper.MinRpm), Stepper.MaxRpm);
                      break;
                   case ConsoleKey.O:
-                     motor1.Rpm = Math.Min(motor1.Rpm + 10, Stepper.MaxRpm);
-                     motor1.RunReverse();
+                     rpm1 = Math.Min(Math.Max(rpm1 + rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
+                     motor1.Rpm = Math.Min(Math.Max(Math.Abs(rpm1), Stepper.MinRpm), Stepper.MaxRpm);
                      break;
                   case ConsoleKey.L:
-                     motor1.Rpm = Math.Max(motor1.Rpm - 10, 0);
-                     if (motor1.Rpm == 0)
-                        motor1.Stop();
-                     else
-                        motor1.RunReverse();
+                     rpm1 = Math.Min(Math.Max(rpm1 - rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
+                     motor1.Rpm = Math.Min(Math.Max(Math.Abs(rpm1), Stepper.MinRpm), Stepper.MaxRpm);
                      break;
                   case ConsoleKey.Spacebar:
                      motor0.Stop();
                      motor1.Stop();
+                     rpm0 = rpm1 = 0;
                      break;
                   default:
                      break;
+               }
+               if (key == ConsoleKey.W || key == ConsoleKey.S)
+               {
+                  if (rpm0 == 0)
+                     motor0.Stop();
+                  else if (rpm0 > 0)
+                     motor0.Run();
+                  else
+                     motor0.RunReverse();
+               }
+               if (key == ConsoleKey.O || key == ConsoleKey.L)
+               {
+                  if (rpm1 == 0)
+                     motor1.Stop();
+                  else if (rpm1 > 0)
+                     motor1.RunReverse();
+                  else
+                     motor1.Run();
                }
             }
          }
