@@ -16,12 +16,11 @@ rebuild: clean all
 
 asm: $(MODULES:%=bin\\%.S)
 
-size: bin\$(TARGETNAME).elf
+dump-size: bin\$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
-#write-flash: all ; avrdude -q -patmega328p -carduino -PCOM5 -b57600 -D -Uflash:w:bin/$(TARGETNAME).hex:i
 write-flash:  bin bin\$(TARGETNAME).hex
-	avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+	avrdude -q -patmega328p -cusbtiny -B 1 -U  flash:w:bin/$(TARGETNAME).hex
 write-eeprom: bin bin\$(TARGETNAME).eep
 	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 
