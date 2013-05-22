@@ -95,7 +95,7 @@ VOID SpiWait ()
 //             cbSend - number of bytes to send
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID SpiSend (UI8 nSsPin, PVOID pvSend, BSIZE cbSend)
+VOID SpiSend (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend)
 {
    SpiSendRecv(nSsPin, pvSend, cbSend, NULL, 0);
 }
@@ -120,11 +120,11 @@ VOID SpiRecv (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv)
 // Returns:    none
 //---------------------------------------------------------------------------
 VOID SpiSendRecv (
-   UI8   nSsPin, 
-   PVOID pvSend, 
-   BSIZE cbSend,
-   PVOID pvRecv, 
-   BSIZE cbRecv
+   UI8    nSsPin, 
+   PCVOID pvSend, 
+   BSIZE  cbSend,
+   PVOID  pvRecv, 
+   BSIZE  cbRecv
 )
 {
    // wait for and enable the interrupt to lock SPI

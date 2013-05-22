@@ -163,7 +163,7 @@ VOID Nrf24Init (PNRF24_CONFIG pConfig)
    Nrf24SetIrqMask(NRF24_IRQ_NONE);
    Nrf24SetCrc(NRF24_CRC_8BIT);
    Nrf24SetAutoAck(NRF24_PIPE_ALL);
-   Nrf24SetRXEnabled((1 << NRF24_PIPE0) | (1 << NRF24_PIPE1));
+   Nrf24SetRXEnabled(BitMask(NRF24_PIPE0) | BitMask(NRF24_PIPE1));
    Nrf24SetAddressSize(5);
    Nrf24SetRetryDelay(250);
    Nrf24SetRetryCount(15);

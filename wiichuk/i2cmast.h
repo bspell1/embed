@@ -29,9 +29,14 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // I2C CONFIGURATION
+// . I2C_BUFFER_SIZE          size of the I2C send/receive buffer, in bytes
+// . I2C_FREQUENCY            I2C frequency, in Hz
 //===========================================================================
+#ifndef SPI_BUFFER_SIZE
+#  define SPI_BUFFER_SIZE     16
+#endif
 #ifndef I2C_FREQUENCY
-#  define I2C_FREQUENCY 400000
+#  define I2C_FREQUENCY       400000
 #endif
 //===========================================================================
 // I2C INTERFACE
@@ -41,8 +46,8 @@ VOID     I2cInit        ();
 BOOL     I2cIsBusy      ();
 VOID     I2cWait        ();
 VOID     I2cSend        (UI8 nSlaveAddr, PCVOID pvSend, BSIZE cbSend);
-VOID     I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
-VOID     I2cSendRecv    (UI8    nSlaveAddr, 
+UI8      I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
+UI8      I2cSendRecv    (UI8    nSlaveAddr, 
                          PCVOID pvSend, 
                          BSIZE  cbSend,
                          PVOID  pvRecv, 

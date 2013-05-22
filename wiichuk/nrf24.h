@@ -146,17 +146,17 @@ UI8      Nrf24GetFeatures        ();
 VOID     Nrf24SetFeatures        (UI8 fFeatures);
 // pipe register helpers
 inline BOOL Nrf24GetPipeAutoAck (UI8 nPipe)
-   { return (Nrf24GetAutoAck() & (1 << nPipe)) != 0; }
+   { return (Nrf24GetAutoAck() & BitMask(nPipe)) != 0; }
 inline VOID Nrf24SetPipeAutoAck (UI8 nPipe, BOOL value)
-   { Nrf24SetAutoAck((Nrf24GetAutoAck() & (0 << nPipe)) | (value << nPipe)); }
+   { Nrf24SetAutoAck((Nrf24GetAutoAck() & BitUnmask(nPipe)) | (value << nPipe)); }
 inline BOOL Nrf24GetPipeRXEnabled (UI8 nPipe)
-   { return (Nrf24GetRXEnabled() & (1 << nPipe)) != 0; }
+   { return (Nrf24GetRXEnabled() & BitMask(nPipe)) != 0; }
 inline VOID Nrf24SetPipeRXEnabled (UI8 nPipe, BOOL value)
-   { Nrf24SetRXEnabled((Nrf24GetRXEnabled() & (0 << nPipe)) | (value << nPipe)); }
+   { Nrf24SetRXEnabled((Nrf24GetRXEnabled() & BitUnmask(nPipe)) | (value << nPipe)); }
 inline BOOL Nrf24GetPipeDynPayload (UI8 nPipe)
-   { return (Nrf24GetDynPayload() & (1 << nPipe)) != 0; }
+   { return (Nrf24GetDynPayload() & BitMask(nPipe)) != 0; }
 inline VOID Nrf24SetPipeDynPayload (UI8 nPipe, BOOL value)
-   { Nrf24SetDynPayload((Nrf24GetDynPayload() & (0 << nPipe)) | (value << nPipe)); }
+   { Nrf24SetDynPayload((Nrf24GetDynPayload() & BitUnmask(nPipe)) | (value << nPipe)); }
 // feature register helpers
 inline BOOL Nrf24DynPayloadEnabled ()
    { return Nrf24GetFeatures() & NRF24_FEATURE_DYNPAYLOAD ? TRUE : FALSE; }

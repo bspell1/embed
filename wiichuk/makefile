@@ -3,7 +3,9 @@ MODULES    	= 	spimast i2cmast uart nrf24 wiichuk
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000 															\
 					SPI_BUFFER_SIZE=33														\
-				 	SPI_FREQUENCY=8000000
+				 	SPI_FREQUENCY=8000000													\
+				 	I2C_FREQUENCY=400000														\
+				 	I2C_BUFFER_SIZE=6
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\

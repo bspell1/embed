@@ -57,11 +57,11 @@
 VOID     SpiInit        ();
 BOOL     SpiIsBusy      ();
 VOID     SpiWait        ();
-VOID     SpiSend        (UI8 nSsPin, PVOID pvSend, BSIZE cbSend);
+VOID     SpiSend        (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend);
 VOID     SpiRecv        (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv);
-VOID     SpiSendRecv    (UI8   nSsPin, 
-                         PVOID pvSend, 
-                         BSIZE cbSend,
-                         PVOID pvRecv, 
-                         BSIZE cbRecv);
+VOID     SpiSendRecv    (UI8    nSsPin, 
+                         PCVOID pvSend, 
+                         BSIZE  cbSend,
+                         PVOID  pvRecv, 
+                         BSIZE  cbRecv);
 #endif // __SPIMAST_H

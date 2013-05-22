@@ -82,11 +82,9 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static BYTE  volatile  g_bAddr     = 0;        // slave address/read bit
-static PBYTE volatile  g_pbSend    = NULL;     // send buffer
-static BSIZE volatile  g_cbSend    = 0;        // send buffer length
-static PBYTE volatile  g_pbRecv    = NULL;     // receive buffer
-static BSIZE volatile  g_cbRecv    = 0;        // receive buffer size
+static BYTE g_pbBuffer[I2C_BUFFER_SIZE + 1];    // address byte + I2C data
+static UI8  g_cbSend = 0;                       // send count
+static UI8  g_cbRecv = 0;                       // receive count
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -132,34 +130,18 @@ VOID I2cWait ()
 //---------------------------------------------------------------------------
 VOID I2cSend (BYTE nSlaveAddr, PCVOID pvSend, BSIZE cbSend)
 {
-   I2cWait();
-   // set up I2C state
-   g_bAddr  = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
-   g_pbSend = (PBYTE)pvSend;
-   g_cbSend = cbSend;
-   g_pbRecv = NULL;
-   g_cbRecv = 0;
-   // start the data transfer
-   TWCR = CONTROL_START;
+   I2cSendRecv(nSlaveAddr, pvSend, cbSend, NULL, 0);
 }
 //-----------< FUNCTION: I2cRecv >-------------------------------------------
 // Purpose:    receives a message on the I2C interface
 // Parameters: nSlaveAddr - address of the slave to receive from
 //             pvRecv     - receive message buffer
 //             cbRecv     - maximum number of bytes to receive
-// Returns:    none
+// Returns:    the actual number of bytes received
 //---------------------------------------------------------------------------
-VOID I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
+UI8 I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
 {
-   I2cWait();
-   // set up I2C state
-   g_bAddr  = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
-   g_pbSend = NULL;
-   g_cbSend = 0;
-   g_pbRecv = (PBYTE)pvRecv;
-   g_cbRecv = cbRecv;
-   // start the data transfer
-   TWCR = CONTROL_START;
+   return I2cSendRecv(nSlaveAddr, NULL, 0, pvRecv, cbRecv);
 }
 //-----------< FUNCTION: I2cSendRecv >---------------------------------------
 // Purpose:    executes a combined send/receive transaction on the I2C bus
@@ -168,9 +150,9 @@ VOID I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
 //             cbSend     - number of bytes to send
 //             pvRecv     - receive message buffer
 //             cbRecv     - maximum number of bytes to receive
-// Returns:    none
+// Returns:    the actual number of bytes received
 //---------------------------------------------------------------------------
-VOID I2cSendRecv (
+UI8 I2cSendRecv (
    UI8    nSlaveAddr, 
    PCVOID pvSend, 
    BSIZE  cbSend,
@@ -178,51 +160,55 @@ VOID I2cSendRecv (
    BSIZE  cbRecv)
 {
    I2cWait();
+   // validate parameters
+   cbSend = MIN(cbSend, I2C_BUFFER_SIZE);
+   cbRecv = MIN(cbRecv, I2C_BUFFER_SIZE);
    // set up I2C state
-   g_bAddr  = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
-   g_pbSend = (PBYTE)pvSend;
-   g_cbSend = cbSend;
-   g_pbRecv = (PBYTE)pvRecv;
+   if (cbSend == 0)
+      g_pbBuffer[0] = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
+   else
+   {
+      g_pbBuffer[0] = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
+      memcpy(g_pbBuffer + 1, pvSend, cbSend);
+   }
+   g_cbSend = cbSend + 1;
    g_cbRecv = cbRecv;
    // start the data transfer
    TWCR = CONTROL_START;
+   // if receiving, wait for the transfer to complete
+   if (cbRecv != 0)
+   {
+      I2cWait();
+      memcpy(pvRecv, g_pbBuffer + 1, g_cbRecv);
+   }
+   return g_cbRecv;
 }
 //-----------< INTERRUPT: TWI_vect >-----------------------------------------
-// Purpose:    responds to TWI events
+// Purpose:    responds to I2C events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
 ISR(TWI_vect)
 {
-   static volatile UI8 nMsgIdx = 0;
+   static volatile UI8 g_cbOffset = 0;
    switch (TWSR)
    {
       case STATUS_START:                           // START transmitted
       case STATUS_REP_START:                       // re-START transmitted
-         nMsgIdx = 0;
-         TWDR = g_bAddr;
-         TWCR = CONTROL_XFER_DATA;
-         break;
-      case STATUS_ARB_LOST:                        // arbitration lost, restart
-         // combination send/receive transaction,
-         // so clear the read bit to restart
-         if (g_pbSend != NULL)
-            g_bAddr &= BitUnmask(ADDR_READ_BIT);
-         TWCR = CONTROL_START;
-         break;
+         g_cbOffset = 0;
       case STATUS_MTX_ADR_ACK:                     // address byte transmitted
       case STATUS_MTX_DATA_ACK:                    // data byte transmitted
-         if (nMsgIdx < g_cbSend)
+         if (g_cbOffset < g_cbSend)
          {
             // keep on sending
-            TWDR = g_pbSend[nMsgIdx++];
+            TWDR = g_pbBuffer[g_cbOffset++];
             TWCR = CONTROL_XFER_DATA;
          }
-         else if (g_pbRecv != NULL)
+         else if (g_cbRecv != 0)
          {
             // send complete, but combination
             // transaction, so restart in read mode
-            g_bAddr |= BitMask(ADDR_READ_BIT);
+            g_pbBuffer[0] |= BitMask(ADDR_READ_BIT);
             TWCR = CONTROL_START;
          }
          else
@@ -232,17 +218,24 @@ ISR(TWI_vect)
             TWCR = CONTROL_STOP;
          }
          break;
+      case STATUS_ARB_LOST:                        // arbitration lost, restart
+         // combination send/receive transaction,
+         // so clear the read bit ad restart
+         if (g_cbSend != 1)
+            g_pbBuffer[0] &= BitUnmask(ADDR_READ_BIT);
+         TWCR = CONTROL_START;
+         break;
       case STATUS_MRX_DATA_ACK:                    // data byte received, ACK transmitted
-         g_pbRecv[nMsgIdx++] = TWDR;
+         g_pbBuffer[g_cbOffset++] = TWDR;
       case STATUS_MRX_ADR_ACK:                     // address byte transmitted
-         if (nMsgIdx < g_cbRecv - 1)
+         if (g_cbOffset < g_cbRecv - 1)
             TWCR = CONTROL_SEND_ACK;
          else
             TWCR = CONTROL_SEND_NACK;
          break;
       case STATUS_MRX_DATA_NACK:                   // data byte received, NACK transmitted
-         g_pbRecv[nMsgIdx++] = TWDR;
-         g_cbRecv = nMsgIdx;
+         g_pbBuffer[g_cbOffset++] = TWDR;
+         g_cbRecv = g_cbOffset;
          TWDR = 0xFF;
          TWCR = CONTROL_STOP;
          break;
@@ -251,6 +244,7 @@ ISR(TWI_vect)
       case STATUS_MRX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_BUS_ERROR:                       // general error
       default:                                     // unknown error
+         g_cbRecv = 0;
          TWDR = 0xFF;
          TWCR = CONTROL_ABORT;
          break;
