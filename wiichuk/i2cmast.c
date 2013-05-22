@@ -130,7 +130,7 @@ VOID I2cWait ()
 //             cbSend     - number of bytes to send
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cSend (BYTE nSlaveAddr, PVVOID pvSend, BSIZE cbSend)
+VOID I2cSend (BYTE nSlaveAddr, PCVOID pvSend, BSIZE cbSend)
 {
    I2cWait();
    // set up I2C state
@@ -149,7 +149,7 @@ VOID I2cSend (BYTE nSlaveAddr, PVVOID pvSend, BSIZE cbSend)
 //             cbRecv     - maximum number of bytes to receive
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID I2cRecv (UI8 nSlaveAddr, PVVOID pvRecv, BSIZE cbRecv)
+VOID I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
 {
    I2cWait();
    // set up I2C state
@@ -171,11 +171,11 @@ VOID I2cRecv (UI8 nSlaveAddr, PVVOID pvRecv, BSIZE cbRecv)
 // Returns:    none
 //---------------------------------------------------------------------------
 VOID I2cSendRecv (
-   UI8 nSlaveAddr, 
-   PVVOID pvSend, 
-   BSIZE cbSend,
-   PVVOID pvRecv, 
-   BSIZE cbRecv)
+   UI8    nSlaveAddr, 
+   PCVOID pvSend, 
+   BSIZE  cbSend,
+   PVOID  pvRecv, 
+   BSIZE  cbRecv)
 {
    I2cWait();
    // set up I2C state

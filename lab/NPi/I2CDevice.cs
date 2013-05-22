@@ -45,7 +45,7 @@ namespace NPi
          GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
          try
          {
-            if (SetSlaveAddress(this.fd, this.SlaveAddress) < 0)
+            if (SetSlave(this.fd, this.SlaveAddress) < 0)
                throw new Win32Exception();
             var result = Syscall.read(
                this.fd, 
@@ -77,7 +77,7 @@ namespace NPi
          GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
          try
          {
-            if (SetSlaveAddress(this.fd, this.SlaveAddress) < 0)
+            if (SetSlave(this.fd, this.SlaveAddress) < 0)
                throw new Win32Exception();
             var result = Syscall.write(
                this.fd,
@@ -94,8 +94,8 @@ namespace NPi
       }
 
       #region Native Methods
-      [DllImport("monoext", EntryPoint = "i2c_set_slave", SetLastError = true)]
-      private static extern Int32 SetSlaveAddress (
+      [DllImport("monoext", EntryPoint = "I2cSetSlave", SetLastError = true)]
+      private static extern Int32 SetSlave (
          Int32 fd, 
          Int32 address
       );

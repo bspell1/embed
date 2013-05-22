@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.h
-// Purpose: LocoMoto motor driver program entry point
+// Module:  i2cmast.h
+// Purpose: AVR I2C master driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __LOCOMOTO_H
-#define __LOCOMOTO_H
+#ifndef __I2CMAST_H
+#define __I2CMAST_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,4 +27,24 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __LOCOMOTO_H
+//===========================================================================
+// I2C CONFIGURATION
+//===========================================================================
+#ifndef I2C_FREQUENCY
+#  define I2C_FREQUENCY 400000
+#endif
+//===========================================================================
+// I2C INTERFACE
+//===========================================================================
+// I2C API
+VOID     I2cInit        ();
+BOOL     I2cIsBusy      ();
+VOID     I2cWait        ();
+VOID     I2cSend        (UI8 nSlaveAddr, PCVOID pvSend, BSIZE cbSend);
+VOID     I2cRecv        (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv);
+VOID     I2cSendRecv    (UI8    nSlaveAddr, 
+                         PCVOID pvSend, 
+                         BSIZE  cbSend,
+                         PVOID  pvRecv, 
+                         BSIZE  cbRecv);
+#endif // __I2CMAST_H

@@ -37,6 +37,34 @@ namespace Lab
 
       public void Run ()
       {
+         using (var wii = new Nrf24("/dev/spidev0.0", 17))
+         {
+            wii.RXAddress0 = "Wii00";
+            wii.RXLength0 = 5;
+            // start up the transmitter/receiver
+            wii.Config = new Nrf24.ConfigRegister(wii.Config)
+               { Mode = Nrf24.Mode.Receive };
+            Console.WriteLine(wii.DumpRegisters());
+            for (; ; )
+            {
+               wii.BeginReceivePacket();
+               try
+               {
+                  Console.Write("{0:h:mm:ss tt}: Receiving...", DateTime.Now);
+                  var result = Encoding.ASCII.GetString(wii.EndReceivePacket(5));
+                  Console.WriteLine("done ({0}).", result);
+               }
+               catch (TimeoutException)
+               {
+                  Console.WriteLine("timeout.");
+               }
+               wii.ClearInterrupts();
+               if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                  break;
+            }
+         }
+
+#if false
          var path = Directory.GetFiles("/dev", "ttyUSB*").Single();
          Console.WriteLine("Connecting to locomoto on {0}.", path);
          using (var loco = new LocoMoto.Driver(path, LocoMoto.Driver.UnknownAddress))
@@ -45,6 +73,7 @@ namespace Lab
             var motor1 = loco.CreateStepper(1);
             motor0.StepsPerCycle = motor1.StepsPerCycle = 128;
             motor0.Rpm = motor1.Rpm = Stepper.MinRpm;
+            motor1.Reverse = true;
             motor0.Stop();
             motor1.Stop();
             var rpm0 = 0;
@@ -93,12 +122,14 @@ namespace Lab
                   if (rpm1 == 0)
                      motor1.Stop();
                   else if (rpm1 > 0)
-                     motor1.RunReverse();
-                  else
                      motor1.Run();
+                  else
+                     motor1.RunReverse();
                }
             }
          }
+#endif
+
 #if false
          using (var i2c = new I2CDevice("/dev/i2c-1"))
          {

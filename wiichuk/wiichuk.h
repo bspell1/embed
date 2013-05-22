@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.h
-// Purpose: LocoMoto motor driver program entry point
+// Module:  wiichuk.h
+// Purpose: Nintendo Wii nunchuk pair reader program entry point
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __LOCOMOTO_H
-#define __LOCOMOTO_H
+#ifndef __WIICHUK_H
+#define __WIICHUK_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,4 +27,4 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __LOCOMOTO_H
+#endif // __WIICHUK_H

@@ -28,7 +28,7 @@
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: i2c_set_slave >-------------------------------------
+//-----------< FUNCTION: I2cSetSlave >---------------------------------------
 // Purpose:    sets the slave address for an I2C transaction
 // Parameters: fd   - I2C device file descriptor
 //             addr - slave address (7-bit or 10-bit big endian)
@@ -37,14 +37,14 @@
 // Usage:      
 //    [DllImport(
 //       "monoext", 
-//       EntryPoint = "i2c_set_slave",
+//       EntryPoint = "I2cSetSlave",
 //       SetLastError = true )]
-//    private static extern Int32 SendReceive (
+//    private static extern Int32 SetSlave (
 //       Int32 fd, 
 //       Int32 addr
 //    );
 //---------------------------------------------------------------------------
-int i2c_set_slave (int fd, int addr)
+int I2cSetSlave (int fd, int addr)
 {
    return ioctl(fd, I2C_SLAVE, addr);
 }

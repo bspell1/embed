@@ -14,6 +14,9 @@ namespace NPi
          Write
       }
 
+      public const Boolean Hi = true;
+      public const Boolean Lo = false;
+
       private const String RootPath = "/sys/class/gpio";
       private Int32 pin;
       private Stream stream;

@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.h
-// Purpose: LocoMoto motor driver program entry point
+// Module:  wiichuk.c
+// Purpose: Nintendo Wii nunchuk pair reader program entry point
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,13 +18,58 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __LOCOMOTO_H
-#define __LOCOMOTO_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <avr/interrupt.h>
+#include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
-#ifndef __AVRDEFS_H
-#include "avrdefs.h"
-#endif
+#include "wiichuk.h"
+#include "i2cmast.h"
+#include "spimast.h"
+#include "nrf24.h"
+#include "uart.h"
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __LOCOMOTO_H
+//-------------------[        Module Variables         ]-------------------//
+//-------------------[        Module Prototypes        ]-------------------//
+//-------------------[         Implementation          ]-------------------//
+//-----------< FUNCTION: main >----------------------------------------------
+// Purpose:    program entry point
+// Parameters: none
+// Returns:    0 if successful
+//             nonzero otherwise
+//---------------------------------------------------------------------------
+int main ()
+{
+   sei();
+
+   PinSetLo(PIN_D4);
+   PinSetOutput(PIN_D4);
+
+   I2cInit();
+   SpiInit();
+   UartInit();
+
+   Nrf24Init(
+      &(NRF24_CONFIG)
+      {
+         .nSsPin = PIN_SS,
+         .nCePin = PIN_B1
+      }
+   );
+   Nrf24SetTXAddress("Wii00");
+   Nrf24DisableAck();
+   Nrf24PowerOn(NRF24_MODE_SEND);
+
+   UartSend(TCNT0);
+   UartSend(TCNT0);
+
+   for ( ; ; )
+   {
+      Nrf24Send(STR("Hello"), 5);
+      UartSend(0xC0);
+      PinToggle(PIN_D4);
+      _delay_ms(1000);
+   }
+
+   return 0;
+}

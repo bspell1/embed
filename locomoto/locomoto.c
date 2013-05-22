@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  locomoto.c
-// Purpose: AVR microprocessor test laboratory
+// Purpose: LocoMoto motor driver program entry point
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -21,7 +21,6 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 #include <avr/interrupt.h>
-#include <avr/sleep.h>
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "locomoto.h"

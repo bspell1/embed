@@ -43,6 +43,7 @@
     <Compile Include="NPi\Gpio.cs" />
     <Compile Include="NPi\IStepperDriver.cs" />
     <Compile Include="NPi\Lcd.cs" />
+    <Compile Include="NPi\Nrf24.cs" />
     <Compile Include="NPi\SpiDevice.cs" />
     <Compile Include="NPi\Stepper.cs" />
     <Compile Include="NPi\VC0706Camera.cs" />

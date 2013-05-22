@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.h
-// Purpose: LocoMoto motor driver program entry point
+// Module:  uart.h
+// Purpose: AVR UART driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __LOCOMOTO_H
-#define __LOCOMOTO_H
+#ifndef __UART_H
+#define __UART_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,4 +27,36 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __LOCOMOTO_H
+//===========================================================================
+// UART CONFIGURATION
+// . UART_SEND:      enable UART send
+// . UART_RECV:      enable UART receive
+// . UART_INTERRUPT: enable UART interrupts
+// . UART_BAUD:      sets the base UART baud rate
+// . UART_BAUD_2X:   sets the UART 2x baud rate multiplier
+//===========================================================================
+#ifndef UART_SEND
+#  define UART_SEND                 (TRUE)
+#endif
+#ifndef UART_RECV
+#  define UART_RECV                 (TRUE)
+#endif
+#ifndef UART_INTERRUPT
+#  define UART_INTERRUPT            (TRUE)
+#endif
+#ifndef UART_BAUD
+#  define UART_BAUD                 (57600)
+#  define UART_BAUD_2X              (FALSE)
+#endif
+//===========================================================================
+// UART INTERFACE
+//===========================================================================
+// UART API
+VOID     UartInit       ();
+BOOL     UartIsSendBusy ();
+VOID     UartSendWait   ();
+BOOL     UartIsRecvBusy ();
+VOID     UartRecvWait   ();
+VOID     UartSend       (BYTE b);
+BYTE     UartRecv       ();
+#endif // __UART_H

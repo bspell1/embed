@@ -56,7 +56,8 @@ namespace Lab
       static void ExecuteTests ()
       {
          Console.WriteLine(
-            "Running {0} threads, {1} iterations.",
+            "Started {0:h:mm:ss tt}. Running {1} threads, {2} iterations.",
+            DateTime.Now,
             Test.Threads,
             Test.Iterations
          );

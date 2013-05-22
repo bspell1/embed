@@ -45,7 +45,7 @@ static struct
 VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
 {
    // initialize the data vector
-   memset(&Tlc5940, 0, sizeof(Tlc5940));
+   memzero(&Tlc5940, sizeof(Tlc5940));
    Tlc5940.nPinBlank = pConfig->nPinBlank;
    Tlc5940.nPinSClk  = pConfig->nPinSClk;
    Tlc5940.nPinSClk  = pConfig->nPinSClk;

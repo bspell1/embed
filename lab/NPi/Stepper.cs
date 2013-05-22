@@ -22,6 +22,11 @@ namespace NPi
          set { this.driver.StepsPerCycle = value; }
       }
 
+      public Boolean Reverse
+      {
+         get; set;
+      }
+
       public Int32 Rpm
       {
          get; set;
@@ -40,7 +45,7 @@ namespace NPi
             throw new InvalidOperationException(
                String.Format("Invalid RPM: valid range is [{0}, {1}]", MinRpm, MaxRpm)
             );
-         this.driver.Step(steps, this.Rpm);
+         this.driver.Step(steps, !this.Reverse ? this.Rpm : -this.Rpm);
       }
 
       public void StepReverse (Int32 steps)
