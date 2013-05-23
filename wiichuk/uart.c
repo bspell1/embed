@@ -29,8 +29,12 @@
 //-------------------[         Implementation          ]-------------------//
 static volatile BYTE g_pbSend[UART_SEND_BUFFER_SIZE]; // send buffer
 static volatile BYTE g_pbRecv[UART_RECV_BUFFER_SIZE]; // receive buffer
-static volatile UI8  g_cbSend = 0;                    // send buffer length
-static volatile UI8  g_cbRecv = 0;                    // receive buffer length
+static volatile UI8  g_cbSend        = 0;             // send buffer length
+static volatile UI8  g_cbRecv        = 0;             // receive buffer length
+static volatile BYTE g_bSendDelim    = 0x00;          // send message delimiter
+static volatile BOOL g_bSendDelimSet = FALSE;         // send delimiter enabled
+static volatile BYTE g_bRecvDelim    = 0x00;          // receive  message delimiter
+static volatile BOOL g_bRecvDelimSet = FALSE;         // receive delimiter enabled
 //-----------< FUNCTION: UartInit >------------------------------------------
 // Purpose:    UART interface initialization
 // Parameters: none
@@ -38,7 +42,7 @@ static volatile UI8  g_cbRecv = 0;                    // receive buffer length
 //---------------------------------------------------------------------------
 VOID UartInit ()
 {
-   UBRR0  = (((F_CPU / (UART_BAUD * 16))) - 1);       // set base baud rate
+   UBRR0  = (F_CPU / (UART_BAUD * 16) - 1);           // set base baud rate
    UCSR0A = (UART_BAUD_2X << U2X0);                   // set 2x multiplier
    UCSR0B = (UART_SEND << TXEN0) |                    // enable TX
             (UART_RECV << RXEN0);                     // enable RX
@@ -46,6 +50,7 @@ VOID UartInit ()
             (0<<USBS0) |                              // set 1 stop bit
             (0<<UPM00) | (0<<UPM01);                  // set 0 parity bits
 }
+#if UART_SEND
 //-----------< FUNCTION: UartIsSendBusy >------------------------------------
 // Purpose:    polls the UART send busy state
 // Parameters: none
@@ -54,7 +59,7 @@ VOID UartInit ()
 //---------------------------------------------------------------------------
 BOOL UartIsSendBusy ()
 {
-   return !RegGet(UCSR0B, TXCIE0);
+   return RegGet(UCSR0B, TXCIE0);
 }
 //-----------< FUNCTION: UartSendWait >--------------------------------------
 // Purpose:    waits for the UART transmit register to become available
@@ -66,27 +71,6 @@ VOID UartSendWait ()
    while (UartIsSendBusy())
       ;
 }
-//-----------< FUNCTION: UartIsRecvBusy >------------------------------------
-// Purpose:    polls the UART receive busy state
-// Parameters: none
-// Returns:    TRUE if there is a transmit in progress
-//             FALSE otherwise
-//---------------------------------------------------------------------------
-BOOL UartIsRecvBusy ()
-{
-   return !RegGet(UCSR0B, RXCIE0);
-}
-//-----------< FUNCTION: UartRecvWait >--------------------------------------
-// Purpose:    waits for the UART receive register to become available
-// Parameters: none
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID UartRecvWait ()
-{
-   while (UartIsRecvBusy())
-      ;
-}
-#if UART_SEND
 //-----------< FUNCTION: UartSend >------------------------------------------
 // Purpose:    sends a message on the UART interface
 // Parameters: pbData - the message to send
@@ -108,6 +92,21 @@ VOID UartSend (PCVOID pvData, UI8 cbData)
       UDR0 = g_pbSend[0];
    }
 }
+//-----------< FUNCTION: UartSendDelim >-------------------------------------
+// Purpose:    sends a message, terminated with a delimiter
+// Parameters: pbData - the message to send
+//             cbData - the number of bytes to send
+//             bDelim - the message delimiter
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID UartSendDelim (PCVOID pvData, UI8 cbData, BYTE bDelim)
+{
+   // TODO: refactor
+   UartSendWait();
+   g_bSendDelim = bDelim;
+   g_bSendDelimSet = TRUE;
+   UartSend(pvData, cbData);
+}
 //-----------< INTERRUPT: USART_TX_vect >------------------------------------
 // Purpose:    responds to UART trasnmit complete events
 // Parameters: none
@@ -115,19 +114,45 @@ VOID UartSend (PCVOID pvData, UI8 cbData)
 //---------------------------------------------------------------------------
 ISR(USART_TX_vect)
 {
-   static UI8 g_cbTx = 0;
+   static UI8 g_cbTx = 1;
    // transmit the next byte if not done
-   if (++g_cbTx < g_cbSend)
-      UDR0 = g_pbSend[g_cbTx];
+   if (g_cbTx < g_cbSend)
+      UDR0 = g_pbSend[g_cbTx++];
+   else if (g_bSendDelimSet)
+   {
+      // transmit the message delimiter
+      UDR0 = g_bSendDelim;
+      g_bSendDelimSet = FALSE;
+   }
    else
    {
       // complete the transmission and disable the interrupt
-      g_cbTx = g_cbSend = 0;
+      g_cbTx = 1;
       RegSetLo(UCSR0B, TXCIE0);
    }
 }
 #endif
 #if UART_RECV
+//-----------< FUNCTION: UartIsRecvBusy >------------------------------------
+// Purpose:    polls the UART receive busy state
+// Parameters: none
+// Returns:    TRUE if there is a transmit in progress
+//             FALSE otherwise
+//---------------------------------------------------------------------------
+BOOL UartIsRecvBusy ()
+{
+   return RegGet(UCSR0B, RXCIE0);
+}
+//-----------< FUNCTION: UartRecvWait >--------------------------------------
+// Purpose:    waits for the UART receive register to become available
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID UartRecvWait ()
+{
+   while (UartIsRecvBusy())
+      ;
+}
 //-----------< FUNCTION: UartRecv >------------------------------------------
 // Purpose:    receives a message on the UART interface
 // Parameters: pbData - return the message via here
@@ -146,8 +171,25 @@ UI8 UartRecv (PVOID pvData, UI8 cbData)
       // start the transfer and wait for it to complete
       RegSetHi(UCSR0B, RXCIE0);
       UartRecvWait();
+      memcpy(pvData, (PVOID)g_pbRecv, g_cbRecv);
+      return g_cbRecv;
    }
-   return cbData;
+   return 0;
+}
+//-----------< FUNCTION: UartRecvDelim >-------------------------------------
+// Purpose:    receives a delimited message
+// Parameters: pbData - return the message via here (excluding delimiter)
+//             cbData - the number of bytes to receive
+//             bDelim - the message delimiter
+// Returns:    the actual number of bytes received
+//---------------------------------------------------------------------------
+UI8 UartRecvDelim (PVOID pvData, UI8 cbData, BYTE bDelim)
+{
+   // TODO: refactor
+   UartRecvWait();
+   g_bRecvDelim = bDelim;
+   g_bRecvDelimSet = TRUE;
+   return UartRecv(pvData, cbData);
 }
 //-----------< INTERRUPT: USART_RX_vect >------------------------------------
 // Purpose:    responds to UART receive complete events
@@ -157,12 +199,17 @@ UI8 UartRecv (PVOID pvData, UI8 cbData)
 ISR(USART_RX_vect)
 {
    static UI8 g_cbRx = 0;
-   // read the incoming byte
-   g_pbRecv[g_cbRx] = UDR0;
-   if (++g_cbRx >= g_cbRecv)
+   // read the incoming byte, stop at the delimiter
+   BYTE bRecv = UDR0;
+   if (g_bRecvDelimSet && bRecv == g_bRecvDelim)
+      g_cbRecv = g_cbRx;
+   else
+      g_pbRecv[g_cbRx++] = bRecv;
+   // if done, complete the receive and disable the interrupt
+   if (g_cbRx == g_cbRecv)
    {
-      // complete the receive and disable the interrupt
-      g_cbRx = g_cbRecv = 0;
+      g_cbRx = 0;
+      g_bRecvDelimSet = FALSE;
       RegSetLo(UCSR0B, RXCIE0);
    }
 }

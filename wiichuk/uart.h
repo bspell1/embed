@@ -67,9 +67,19 @@ BOOL     UartIsRecvBusy ();
 VOID     UartRecvWait   ();
 VOID     UartSend       (PCVOID pvData, UI8 cbData);
 UI8      UartRecv       (PVOID pvData, UI8 cbData);
+VOID     UartSendDelim  (PCVOID pvData, UI8 cbData, BYTE bDelim);
+UI8      UartRecvDelim  (PVOID pvData, UI8 cbData, BYTE bDelim);
 // UART string API
-inline VOID UartSendStr (PCSTR pszData)
-   { UartSend(pszData, strlen(pszData) + 1); }
-inline VOID UartRecvStr (PSTR pszData, UI8 cchData)
-   { pszData[UartRecv(pszData, cchData + 1)] = '\0'; }
+inline VOID UartSendChar (CHAR ch)
+   { UartSend(&ch, 1); }
+inline CHAR UartRecvChar ()
+   { CHAR ch = 0; UartRecv(&ch, 1); return ch; }
+inline VOID UartSendStr (PCSTR psz)
+   { UartSend(psz, strlen(psz)); }
+inline PSTR UartRecvStr (PSTR psz, UI8 cch)
+   { psz[UartRecv(psz, cch)] = '\0'; return psz; }
+inline VOID UartSendLine (PCSTR psz)
+   { UartSendDelim(psz, strlen(psz), '\n'); }
+inline PSTR UartRecvLine (PSTR psz, UI8 cch)
+   { psz[UartRecvDelim(psz, cch, '\n')] = '\0'; return psz; }
 #endif // __UART_H

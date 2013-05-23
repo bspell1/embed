@@ -6,11 +6,12 @@ PARAMETERS	= 	F_CPU=16000000 															\
 				 	SPI_FREQUENCY=8000000													\
 				 	I2C_FREQUENCY=400000														\
 				 	I2C_BUFFER_SIZE=6															\
-				 	UART_SEND=1
+				 	UART_SEND=1 UART_RECV=1
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
-			 -mint8 -O3 -funroll-loops -mmcu=$(DEVICE)								\
+			 -O3 -fno-inline-functions -funroll-loops 								\
+			 -mint8 -mmcu=$(DEVICE)															\
 			 $(PARAMETERS:%=-D% )
 LDFLAGS = -lc -lm
 
