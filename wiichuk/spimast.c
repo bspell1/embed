@@ -25,9 +25,9 @@
 #include "spimast.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
-static UI8  g_nSsPin = PIN_INVALID;                   // slave select pin
-static BYTE g_pbBuffer[SPI_BUFFER_SIZE];              // send/receive buffer
-static BYTE g_cbBuffer = 0;                           // current buffer length
+static volatile UI8  g_nSsPin = PIN_INVALID;       // slave select pin
+static volatile BYTE g_pbBuffer[SPI_BUFFER_SIZE];  // send/receive buffer
+static volatile BYTE g_cbBuffer = 0;               // current buffer length
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SpiInit >-------------------------------------------
@@ -88,28 +88,6 @@ VOID SpiWait ()
    while (SpiIsBusy())
       ;
 }
-//-----------< FUNCTION: SpiSend >-------------------------------------------
-// Purpose:    sends a message on the SPI interface
-// Parameters: nSsPin - slave select pin number (or PIN_INVALID for no SS)
-//             pvSend - send message buffer
-//             cbSend - number of bytes to send
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID SpiSend (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend)
-{
-   SpiSendRecv(nSsPin, pvSend, cbSend, NULL, 0);
-}
-//-----------< FUNCTION: SpiRecv >-------------------------------------------
-// Purpose:    receives a message on the SPI interface
-// Parameters: nSsPin - slave select pin number (or PIN_INVALID for no SS)
-//             pvRecv - receive message buffer
-//             cbRecv - maximum number of bytes to receive
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID SpiRecv (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv)
-{
-   SpiSendRecv(nSsPin, NULL, 0, pvRecv, cbRecv);
-}
 //-----------< FUNCTION: SpiSendRecv >---------------------------------------
 // Purpose:    executes a combined send/receive transaction on the SPI bus
 // Parameters: nSsPin - slave select pin number (or PIN_INVALID for no SS)
@@ -136,9 +114,9 @@ VOID SpiSendRecv (
    cbRecv = MIN(cbRecv, SPI_BUFFER_SIZE);
    g_cbBuffer = MAX(cbSend, cbRecv);
    if (pvSend != NULL)
-      memcpy(g_pbBuffer, pvSend, cbSend);
+      memcpy((PBYTE)g_pbBuffer, pvSend, cbSend);
    if (cbRecv > cbSend)
-      memzero(g_pbBuffer + cbSend, cbRecv - cbSend);
+      memzero((PBYTE)g_pbBuffer + cbSend, cbRecv - cbSend);
    // enable the slave and transfer the first byte
    if (g_nSsPin != PIN_INVALID)
       PinSetLo(g_nSsPin);
@@ -147,7 +125,7 @@ VOID SpiSendRecv (
    if (pvRecv != NULL)
    {
       SpiWait();
-      memcpy(pvRecv, g_pbBuffer, cbRecv);
+      memcpy(pvRecv, (PBYTE)g_pbBuffer, cbRecv);
    }
 }
 //-----------< INTERRUPT: SPI_STC_vect >-------------------------------------

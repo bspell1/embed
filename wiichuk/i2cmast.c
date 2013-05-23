@@ -82,9 +82,9 @@
    (1<<TWIE)|(1<<TWINT)| \
    (0<<TWEA)|(0<<TWSTA)|(0<<TWSTO)
 //-------------------[        Module Variables         ]-------------------//
-static BYTE g_pbBuffer[I2C_BUFFER_SIZE + 1];    // address byte + I2C data
-static UI8  g_cbSend = 0;                       // send count
-static UI8  g_cbRecv = 0;                       // receive count
+static volatile BYTE g_pbBuffer[I2C_BUFFER_SIZE + 1];    // address byte + I2C data
+static volatile UI8  g_cbSend = 0;                       // send count
+static volatile UI8  g_cbRecv = 0;                       // receive count
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -121,28 +121,6 @@ VOID I2cWait ()
    while (I2cIsBusy())
       ;
 }
-//-----------< FUNCTION: I2cSend >-------------------------------------------
-// Purpose:    sends a message on the I2C interface
-// Parameters: nSlaveAddr - address of the slave to send to
-//             pvSend     - send message buffer
-//             cbSend     - number of bytes to send
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID I2cSend (BYTE nSlaveAddr, PCVOID pvSend, BSIZE cbSend)
-{
-   I2cSendRecv(nSlaveAddr, pvSend, cbSend, NULL, 0);
-}
-//-----------< FUNCTION: I2cRecv >-------------------------------------------
-// Purpose:    receives a message on the I2C interface
-// Parameters: nSlaveAddr - address of the slave to receive from
-//             pvRecv     - receive message buffer
-//             cbRecv     - maximum number of bytes to receive
-// Returns:    the actual number of bytes received
-//---------------------------------------------------------------------------
-UI8 I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
-{
-   return I2cSendRecv(nSlaveAddr, NULL, 0, pvRecv, cbRecv);
-}
 //-----------< FUNCTION: I2cSendRecv >---------------------------------------
 // Purpose:    executes a combined send/receive transaction on the I2C bus
 // Parameters: nSlaveAddr - address of the slave to receive from
@@ -169,7 +147,7 @@ UI8 I2cSendRecv (
    else
    {
       g_pbBuffer[0] = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
-      memcpy(g_pbBuffer + 1, pvSend, cbSend);
+      memcpy((PBYTE)g_pbBuffer + 1, pvSend, cbSend);
    }
    g_cbSend = cbSend + 1;
    g_cbRecv = cbRecv;
@@ -179,7 +157,7 @@ UI8 I2cSendRecv (
    if (cbRecv != 0)
    {
       I2cWait();
-      memcpy(pvRecv, g_pbBuffer + 1, g_cbRecv);
+      memcpy(pvRecv, (PBYTE)g_pbBuffer + 1, g_cbRecv);
    }
    return g_cbRecv;
 }

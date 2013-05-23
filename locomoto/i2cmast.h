@@ -29,9 +29,14 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // I2C CONFIGURATION
+// . I2C_FREQUENCY            I2C frequency, in Hz
+// . I2C_BUFFER_SIZE          size of the I2C send/receive buffer, in bytes
 //===========================================================================
 #ifndef I2C_FREQUENCY
-#  define I2C_FREQUENCY 400000
+#  define I2C_FREQUENCY       400000
+#endif
+#ifndef I2C_BUFFER_SIZE
+#  define I2C_BUFFER_SIZE     16
 #endif
 //===========================================================================
 // I2C INTERFACE
@@ -40,11 +45,14 @@
 VOID     I2cInit        ();
 BOOL     I2cIsBusy      ();
 VOID     I2cWait        ();
-VOID     I2cSend        (UI8 nSlaveAddr, PVVOID pvSend, BSIZE cbSend);
-VOID     I2cRecv        (UI8 nSlaveAddr, PVVOID pvRecv, BSIZE cbRecv);
-VOID     I2cSendRecv    (UI8    nSlaveAddr, 
-                         PVVOID pvSend, 
+UI8      I2cSendRecv    (UI8    nSlaveAddr, 
+                         PCVOID pvSend, 
                          BSIZE  cbSend,
-                         PVVOID pvRecv, 
+                         PVOID  pvRecv, 
                          BSIZE  cbRecv);
+// I2C one-way helpers
+inline VOID I2cSend (UI8 nSlaveAddr, PCVOID pvSend, BSIZE cbSend)
+   { I2cSendRecv(nSlaveAddr, pvSend, cbSend, NULL, 0); }
+inline UI8 I2cRecv (UI8 nSlaveAddr, PVOID pvRecv, BSIZE cbRecv)
+   { return I2cSendRecv(nSlaveAddr, NULL, 0, pvRecv, cbRecv); }
 #endif // __I2CMAST_H

@@ -29,15 +29,12 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // SPI CONFIGURATION
-// . SPI_BUFFER_SIZE          size of the SPI send/receive buffer, in bytes
 // . SPI_FREQUENCY            frequency of the SCK clock, in Hz
 // . SPI_LSB                  set to TRUE to enable least-signifcant-bit first
 // . SPI_CPOL                 SPI mode for clock polarity
 // . SPI_CPHA                 SPI mode for clock phase
+// . SPI_BUFFER_SIZE          size of the SPI send/receive buffer, in bytes
 //===========================================================================
-#ifndef SPI_BUFFER_SIZE
-#  define SPI_BUFFER_SIZE     16
-#endif
 #ifndef SPI_FREQUENCY
 #  define SPI_FREQUENCY       8000000
 #endif
@@ -50,6 +47,9 @@
 #ifndef SPI_CPHA     
 #  define SPI_CPHA            0
 #endif
+#ifndef SPI_BUFFER_SIZE
+#  define SPI_BUFFER_SIZE     16
+#endif
 //===========================================================================
 // SPI INTERFACE
 //===========================================================================
@@ -57,11 +57,14 @@
 VOID     SpiInit        ();
 BOOL     SpiIsBusy      ();
 VOID     SpiWait        ();
-VOID     SpiSend        (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend);
-VOID     SpiRecv        (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv);
 VOID     SpiSendRecv    (UI8    nSsPin, 
                          PCVOID pvSend, 
                          BSIZE  cbSend,
                          PVOID  pvRecv, 
                          BSIZE  cbRecv);
+// SPI one-way helpers
+inline VOID SpiSend (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend)
+   { SpiSendRecv(nSsPin, pvSend, cbSend, NULL, 0); }
+inline VOID SpiRecv (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv)
+   { SpiSendRecv(nSsPin, NULL, 0, pvRecv, cbRecv); }
 #endif // __SPIMAST_H

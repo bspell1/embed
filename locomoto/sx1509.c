@@ -26,7 +26,6 @@
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 static const UI8 g_pI2cAddress[4] = { 0x3E, 0x3F, 0x70, 0x71 };
-static volatile BYTE g_pbI2cData [6];
 static const UI8 g_pnTOnRegs[] = 
 {
    SX1509_REG_TON0,
@@ -140,12 +139,9 @@ VOID SX1509Init ()
 //---------------------------------------------------------------------------
 UI8 SX1509Get8 (UI8 nModule, UI8 nReg)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = 0;
-   I2cSendRecv(g_pI2cAddress[nModule], g_pbI2cData, 1, g_pbI2cData + 1, 1);
-   I2cWait();
-   return g_pbI2cData[1];
+   BYTE pbData[1] = { 0, };
+   I2cSendRecv(g_pI2cAddress[nModule], &nReg, 1, pbData, sizeof(pbData));
+   return pbData[0];
 }
 //-----------< FUNCTION: SX1509Set8 >----------------------------------------
 // Purpose:    writes an 8-bit register
@@ -155,10 +151,8 @@ UI8 SX1509Get8 (UI8 nModule, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set8 (UI8 nModule, UI8 nReg, UI8 nValue)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = nValue;
-   I2cSend(g_pI2cAddress[nModule], g_pbI2cData, 2);
+   BYTE pbData[] = { nReg, nValue };
+   I2cSend(g_pI2cAddress[nModule], pbData, 2);
 }
 //-----------< FUNCTION: SX1509Get16 >---------------------------------------
 // Purpose:    reads a 16-bit register
@@ -168,15 +162,11 @@ VOID SX1509Set8 (UI8 nModule, UI8 nReg, UI8 nValue)
 //---------------------------------------------------------------------------
 UI16 SX1509Get16 (UI8 nModule, UI8 nReg)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = 0;
-   g_pbI2cData[2] = 0;
-   I2cSendRecv(g_pI2cAddress[nModule], g_pbI2cData, 1, g_pbI2cData + 1, 2);
-   I2cWait();
+   BYTE pbData[2] = { 0, };
+   I2cSendRecv(g_pI2cAddress[nModule], &nReg, 1, pbData, sizeof(pbData));
    return 
-      ((UI16)g_pbI2cData[1] << 8) | 
-      (      g_pbI2cData[2] << 0);
+      ((UI16)pbData[0] << 8) | 
+      (      pbData[1] << 0);
 }
 //-----------< FUNCTION: SX1509Set16 >----------------------------------------
 // Purpose:    writes a 16-bit register
@@ -186,11 +176,8 @@ UI16 SX1509Get16 (UI8 nModule, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set16 (UI8 nModule, UI8 nReg, UI16 nValue)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = (nValue >> 8);
-   g_pbI2cData[2] = (nValue >> 0);
-   I2cSend(g_pI2cAddress[nModule], g_pbI2cData, 3);
+   BYTE pbData[3] = { nReg, (nValue >> 8), (nValue >> 0) };
+   I2cSend(g_pI2cAddress[nModule], pbData, sizeof(pbData));
 }
 //-----------< FUNCTION: SX1509Get32 >---------------------------------------
 // Purpose:    reads a 32-bit register
@@ -200,19 +187,13 @@ VOID SX1509Set16 (UI8 nModule, UI8 nReg, UI16 nValue)
 //---------------------------------------------------------------------------
 UI32 SX1509Get32 (UI8 nModule, UI8 nReg)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = 0;
-   g_pbI2cData[2] = 0;
-   g_pbI2cData[3] = 0;
-   g_pbI2cData[4] = 0;
-   I2cSendRecv(g_pI2cAddress[nModule], g_pbI2cData, 1, g_pbI2cData + 1, 4);
-   I2cWait();
+   BYTE pbData[4] = { 0, };
+   I2cSendRecv(g_pI2cAddress[nModule], &nReg, 1, pbData, sizeof(pbData));
    return 
-      ((UI32)g_pbI2cData[1] << 24) | 
-      ((UI32)g_pbI2cData[2] << 16) | 
-      ((UI32)g_pbI2cData[3] <<  8) | 
-      (      g_pbI2cData[4] <<  0);
+      ((UI32)pbData[0] << 24) | 
+      ((UI32)pbData[1] << 16) | 
+      ((UI32)pbData[2] <<  8) | 
+      (      pbData[3] <<  0);
 }
 //-----------< FUNCTION: SX1509Set32 >----------------------------------------
 // Purpose:    writes a 32-bit register
@@ -222,13 +203,15 @@ UI32 SX1509Get32 (UI8 nModule, UI8 nReg)
 //---------------------------------------------------------------------------
 VOID SX1509Set32 (UI8 nModule, UI8 nReg, UI32 nValue)
 {
-   I2cWait();
-   g_pbI2cData[0] = nReg;
-   g_pbI2cData[1] = (nValue >> 24);
-   g_pbI2cData[2] = (nValue >> 16);
-   g_pbI2cData[3] = (nValue >>  8);
-   g_pbI2cData[4] = (nValue >>  0);
-   I2cSend(g_pI2cAddress[nModule], g_pbI2cData, 5);
+   BYTE pbData[] =
+   { 
+      nReg, 
+      (nValue >> 24), 
+      (nValue >> 16), 
+      (nValue >>  8), 
+      (nValue >>  0) 
+   };
+   I2cSend(g_pI2cAddress[nModule], pbData, sizeof(pbData));
 }
 //-----------< FUNCTION: SX1509GetKeyData >----------------------------------
 // Purpose:    reads the keyboard data register to determine the key pressed
@@ -363,26 +346,19 @@ VOID SX1509SetFadeOutTime (UI8 nModule, UI8 nIo, UI8 nValue)
 //---------------------------------------------------------------------------
 SX1509_PWM_CONFIG SX1509GetPwmConfig (UI8 nModule, UI8 nIo)
 {
-   I2cWait();
-   g_pbI2cData[0] = g_pnTOnRegs[nIo];
-   g_pbI2cData[1] = 0;
-   g_pbI2cData[2] = 0;
-   g_pbI2cData[3] = 0;
-   g_pbI2cData[4] = 0;
-   g_pbI2cData[5] = 0;
+   BYTE pbData[5] = { 0, };
    if (g_pnTRiseRegs[nIo] != SX1509_REG_INVALID)
-      I2cSendRecv(g_pI2cAddress[nModule], g_pbI2cData, 1, g_pbI2cData + 1, 5);
+      I2cSendRecv(g_pI2cAddress[nModule], &g_pnTOnRegs[nIo], 1, pbData, 5);
    else
-      I2cSendRecv(g_pI2cAddress[nModule], g_pbI2cData, 1, g_pbI2cData + 1, 3);
-   I2cWait();
+      I2cSendRecv(g_pI2cAddress[nModule], &g_pnTOnRegs[nIo], 1, pbData, 3);
    return (SX1509_PWM_CONFIG)
    {
-      .nOnTime       = g_pbI2cData[1],
-      .nOnIntensity  = g_pbI2cData[2],
-      .nOffTime      = g_pbI2cData[3] >> 3,
-      .nOffIntensity = g_pbI2cData[3] & 0x07,
-      .nFadeInTime   = g_pbI2cData[4],
-      .nFadeOutTime  = g_pbI2cData[5],
+      .nOnTime       = pbData[0],
+      .nOnIntensity  = pbData[1],
+      .nOffTime      = pbData[2] >> 3,
+      .nOffIntensity = pbData[2] & 0x07,
+      .nFadeInTime   = pbData[3],
+      .nFadeOutTime  = pbData[4],
    };
 }
 //-----------< FUNCTION: SX1509SetPwmConfig >--------------------------------
@@ -394,17 +370,19 @@ SX1509_PWM_CONFIG SX1509GetPwmConfig (UI8 nModule, UI8 nIo)
 //---------------------------------------------------------------------------
 VOID SX1509SetPwmConfig (UI8 nModule, UI8 nIo, SX1509_PWM_CONFIG config)
 {
-   I2cWait();
-   g_pbI2cData[0] = g_pnTOnRegs[nIo];
-   g_pbI2cData[1] = config.nOnTime;
-   g_pbI2cData[2] = config.nOnIntensity;
-   g_pbI2cData[3] = (config.nOffTime << 3) | (config.nOffIntensity & 0x07);
-   g_pbI2cData[4] = config.nFadeInTime;
-   g_pbI2cData[5] = config.nFadeOutTime;
+   BYTE pbData[6] = 
+   {
+      g_pnTOnRegs[nIo],
+      config.nOnTime,
+      config.nOnIntensity,
+      (config.nOffTime << 3) | (config.nOffIntensity & 0x07),
+      config.nFadeInTime,
+      config.nFadeOutTime
+   };
    if (g_pnTRiseRegs[nIo] != SX1509_REG_INVALID)
-      I2cSend(g_pI2cAddress[nModule], g_pbI2cData, 6);
+      I2cSend(g_pI2cAddress[nModule], pbData, 6);
    else
-      I2cSend(g_pI2cAddress[nModule], g_pbI2cData, 4);
+      I2cSend(g_pI2cAddress[nModule], pbData, 4);
 }
 //-----------< FUNCTION: SX1509Reset >---------------------------------------
 // Purpose:    resets the SX1509 to default register values

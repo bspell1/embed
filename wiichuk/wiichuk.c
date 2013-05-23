@@ -24,10 +24,10 @@
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "wiichuk.h"
+#include "uart.h"
 #include "i2cmast.h"
 #include "spimast.h"
 #include "nrf24.h"
-#include "uart.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -45,9 +45,9 @@ int main ()
    PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
 
+   UartInit();
    I2cInit();
    SpiInit();
-   UartInit();
 
    Nrf24Init(
       &(NRF24_CONFIG)
@@ -60,13 +60,10 @@ int main ()
    Nrf24DisableAck();
    Nrf24PowerOn(NRF24_MODE_SEND);
 
-   UartSend(TCNT0);
-   UartSend(TCNT0);
-
    for ( ; ; )
    {
       Nrf24Send(STR("Hello"), 5);
-      UartSend(0xC0);
+      UartSendStr(STR("Hello"));
       PinToggle(PIN_D4);
       _delay_ms(1000);
    }

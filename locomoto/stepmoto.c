@@ -100,7 +100,7 @@ static VOID SetDataReg (UI8 nMotor, UI8 nData)
 VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 {
    // initialize motor data
-   memzero(g_pMotors, sizeof(g_pMotors));
+   memzero((PVOID)g_pMotors, sizeof(g_pMotors));
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
    {
       // configure module/pin offsets

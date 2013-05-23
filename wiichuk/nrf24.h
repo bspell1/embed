@@ -40,19 +40,20 @@ typedef struct tagNrf24Config
 // NRF24 CONFIGURATION VALUES
 //===========================================================================
 // transceiver mode
-#define NRF24_MODE_SEND          0x2      // power up in transmit mode
-#define NRF24_MODE_RECV          0x3      // power up in receive mode
+#define NRF24_MODE_OFF           0x00     // power
+#define NRF24_MODE_SEND          0x02     // power up in transmit mode
+#define NRF24_MODE_RECV          0x03     // power up in receive mode
 // pipe configuration
 #define NRF24_PIPE_COUNT         6        // number of receive pipes
 #define NRF24_PIPE_UNKNOWN       0xFF     // for initialization
 #define NRF24_PIPE_NONE          0x00     // for pipe flags
 #define NRF24_PIPE_ALL           0x3F     // for pipe flags
-#define NRF24_PIPE0              0x0      // receive pipe #0
-#define NRF24_PIPE1              0x1      // receive pipe #1
-#define NRF24_PIPE2              0x2      // receive pipe #2
-#define NRF24_PIPE3              0x3      // receive pipe #3
-#define NRF24_PIPE4              0x4      // receive pipe #4
-#define NRF24_PIPE5              0x5      // receive pipe #5
+#define NRF24_PIPE0              0x00     // receive pipe #0
+#define NRF24_PIPE1              0x01     // receive pipe #1
+#define NRF24_PIPE2              0x02     // receive pipe #2
+#define NRF24_PIPE3              0x03     // receive pipe #3
+#define NRF24_PIPE4              0x04     // receive pipe #4
+#define NRF24_PIPE5              0x05     // receive pipe #5
 // buffer parameters
 #define NRF24_PACKET_MAX         32       // maximum send/receive length
 // interrupts
@@ -185,4 +186,13 @@ VOID     Nrf24FlushRecv          ();
 VOID     Nrf24PowerOn            (UI8 fMode);
 VOID     Nrf24PowerOff           ();
 VOID     Nrf24Send               (PVOID pvPacket, BSIZE cbPacket);
+// busy polling helpers
+inline BOOL Nrf24IsSendBusy ()
+   { return (Nrf24GetFifoStatus() & NRF24_FIFO_TX_FULL) ? TRUE : FALSE; }
+inline VOID Nrf24SendWait ()
+   { while (Nrf24IsSendBusy()); }
+inline BOOL Nrf24IsRecvBusy ()
+   { return (Nrf24GetFifoStatus() & NRF24_FIFO_RX_FULL) ? TRUE : FALSE; }
+inline VOID Nrf24RecvWait ()
+   { while (Nrf24IsRecvBusy()); }
 #endif // __NRF24_H  

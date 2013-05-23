@@ -1,11 +1,14 @@
-TARGETNAME = locomoto
-MODULES    = tlc5940 uart i2cmast sx1509 proto stepmoto locomoto
-DEVICE     = atmega328p
-F_CPU      = 16000000
+TARGETNAME  = 	locomoto
+MODULES     = 	tlc5940 uart i2cmast sx1509 proto stepmoto locomoto
+DEVICE      = 	atmega328p
+PARAMETERS	= 	F_CPU=16000000 															\
+				 	I2C_FREQUENCY=400000														\
+				 	I2C_BUFFER_SIZE=6
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
-			 -mint8 -O3 -funroll-loops -DF_CPU=$(F_CPU) -mmcu=$(DEVICE)
+			 -mint8 -O3 -funroll-loops -mmcu=$(DEVICE)								\
+			 $(PARAMETERS:%=-D% )
 LDFLAGS = -lc -lm
 
 all: bin\$(TARGETNAME).hex bin\$(TARGETNAME).eep

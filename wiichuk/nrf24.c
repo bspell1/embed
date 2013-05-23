@@ -72,7 +72,7 @@ static UI8  g_nSsPin       = PIN_INVALID;          // slave select pin
 static UI8  g_nCePin       = PIN_INVALID;          // chip enable pin
 static UI8  g_cbAddress    = 5;                    // address width
 static BOOL g_bTXRecvAck   = TRUE;                 // enable TX acks?
-static BOOL g_bPowerOn     = FALSE;                // powered up?
+static BOOL g_fPowerMode   = NRF24_MODE_OFF;       // powered up?
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: ReadRegister >--------------------------------------
@@ -195,6 +195,11 @@ UI8 Nrf24GetIrqMask ()
 {
    return ReadRegister8(REGISTER_CONFIG) & NRF24_IRQ_ALL;
 }
+//-----------< FUNCTION: Nrf24SetIrqMask >-----------------------------------
+// Purpose:    sets the currently masked IRQs in the CONFIG register
+// Parameters: fMask - IRQ mask value
+// Returns:    none
+//---------------------------------------------------------------------------
 VOID Nrf24SetIrqMask (UI8 fMask)
 {
    WriteRegister8(
@@ -212,6 +217,11 @@ UI8 Nrf24GetCrc ()
 {
    return ReadRegister8(REGISTER_CONFIG) & 0x0C;
 }
+//-----------< FUNCTION: Nrf24SetCrc >---------------------------------------
+// Purpose:    sets the CRC mode in the CONFIG register
+// Parameters: fCrc - CRC value (none, 8-bit, or 16-bit)
+// Returns:    none
+//---------------------------------------------------------------------------
 VOID Nrf24SetCrc (UI8 fCrc)
 {
    WriteRegister8(
@@ -653,11 +663,14 @@ VOID Nrf24FlushRecv ()
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOn (UI8 fMode)
 {
-   WriteRegister8(
-      REGISTER_CONFIG,
-      (ReadRegister8(REGISTER_CONFIG) & ~0x3) | (0x2) | (fMode & 0x1)
-   );
-   g_bPowerOn = TRUE;
+   if (fMode == NRF24_MODE_SEND || fMode == NRF24_MODE_RECV)
+   {
+      WriteRegister8(
+         REGISTER_CONFIG,
+         (ReadRegister8(REGISTER_CONFIG) & ~0x3) | (0x2) | (fMode & 0x1)
+      );
+      g_fPowerMode = TRUE;
+   }
 }
 //-----------< FUNCTION: Nrf24PowerOff >-------------------------------------
 // Purpose:    shuts down the transceiver
@@ -666,7 +679,7 @@ VOID Nrf24PowerOn (UI8 fMode)
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOff ()
 {
-   g_bPowerOn = FALSE;
+   g_fPowerMode = NRF24_MODE_OFF;
    WriteRegister8(
       REGISTER_CONFIG,
       ReadRegister8(REGISTER_CONFIG) & ~0x3
@@ -681,7 +694,7 @@ VOID Nrf24PowerOff ()
 VOID Nrf24Send (PVOID pvPacket, BSIZE cbPacket)
 {
    // TODO: trace failure
-   if (g_bPowerOn)
+   if (g_fPowerMode == NRF24_MODE_SEND)
    {
       // set CE high to move the transciever out of standby
       PinSetHi(g_nCePin);

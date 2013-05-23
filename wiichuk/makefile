@@ -5,7 +5,8 @@ PARAMETERS	= 	F_CPU=16000000 															\
 					SPI_BUFFER_SIZE=33														\
 				 	SPI_FREQUENCY=8000000													\
 				 	I2C_FREQUENCY=400000														\
-				 	I2C_BUFFER_SIZE=6
+				 	I2C_BUFFER_SIZE=6															\
+				 	UART_SEND=1
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
