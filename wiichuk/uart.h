@@ -71,5 +71,5 @@ UI8      UartRecv       (PVOID pvData, UI8 cbData);
 inline VOID UartSendStr (PCSTR pszData)
    { UartSend(pszData, strlen(pszData) + 1); }
 inline VOID UartRecvStr (PSTR pszData, UI8 cchData)
-   { pszData[UartRecv(pszData, cchData)] = '\0'; }
+   { pszData[UartRecv(pszData, cchData + 1)] = '\0'; }
 #endif // __UART_H
