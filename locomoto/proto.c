@@ -108,19 +108,19 @@ VOID ProtoInit ()
 {
    g_bAddress = eeprom_read_byte(&g_bEEAddress);
 }
-//-----------< INTERRUPT: USART_RX_vect >------------------------------------
-// Purpose:    responds to UART receive interrupts
-// Parameters: none
+//-----------< FUNCTION: ProtoRecvByte >-------------------------------------
+// Purpose:    dispatches an incoming protocol byte
+// Parameters: bRecv - the byte received
 // Returns:    none
 //---------------------------------------------------------------------------
-ISR(USART_RX_vect)
+VOID ProtoRecvByte (BYTE bRecv)
 {
    // disable recursive interrupts but
    // run the protocol interruptible
    RegSetLo(UCSR0B, RXCIE0);
    sei();
    // read and decode the protocol bytes
-   g_Receive.pbBuffer[g_Receive.cbBuffer++] = UartRecv();
+   g_Receive.pbBuffer[g_Receive.cbBuffer++] = bRecv;
    switch (g_Receive.cbBuffer)
    {
       case 1:     // signature byte
@@ -148,7 +148,6 @@ ISR(USART_RX_vect)
          break;
    }
    // re-enable UART interrupts
-   cli();
    RegSetHi(UCSR0B, RXCIE0);
 }
 //-----------< FUNCTION: DispatchPing >--------------------------------------
@@ -158,7 +157,7 @@ ISR(USART_RX_vect)
 //---------------------------------------------------------------------------
 static VOID DispatchPing ()
 {
-   UartSend(g_Receive.bParam0);
+   UartSendByte(g_Receive.bParam0);
 }
 //-----------< FUNCTION: DispatchSetAddress >--------------------------------
 // Purpose:    executes an address assignment command

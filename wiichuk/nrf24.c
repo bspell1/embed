@@ -669,7 +669,7 @@ VOID Nrf24PowerOn (UI8 fMode)
          REGISTER_CONFIG,
          (ReadRegister8(REGISTER_CONFIG) & ~0x3) | (0x2) | (fMode & 0x1)
       );
-      g_fPowerMode = TRUE;
+      g_fPowerMode = fMode;
    }
 }
 //-----------< FUNCTION: Nrf24PowerOff >-------------------------------------

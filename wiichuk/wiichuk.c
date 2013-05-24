@@ -32,6 +32,10 @@
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
+static VOID OnUartRecv (BYTE bRecv)
+{
+   UartSendByte(bRecv);
+}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -45,7 +49,13 @@ int main ()
    PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
 
-   UartInit();
+   UartInit(
+      &(UART_CONFIG)
+      { 
+         .pfnOnRecv = OnUartRecv, 
+         .pfnOnSend = NULL 
+      }
+   );
    I2cInit();
    SpiInit();
 
@@ -60,12 +70,12 @@ int main ()
    Nrf24DisableAck();
    Nrf24PowerOn(NRF24_MODE_SEND);
 
+   UartSendLine("well hello");
    for ( ; ; )
    {
-      Nrf24Send(STR("Hello"), 5);
-      UartSendStr(STR("Hello"));
-      PinToggle(PIN_D4);
-      _delay_ms(1000);
+      //Nrf24Send(STR("Hello"), 5);
+      //PinToggle(PIN_D4);
+      //_delay_ms(1000);
    }
 
    return 0;

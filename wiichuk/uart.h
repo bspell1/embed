@@ -22,6 +22,7 @@
 #define __UART_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <stdio.h>
 //-------------------[      Project Include Files      ]-------------------//
 #ifndef __AVRDEFS_H
 #include "avrdefs.h"
@@ -36,6 +37,7 @@
 // . UART_SEND_BUFFER_SIZE    sets the UART send buffer size, in bytes
 // . UART_RECV_BUFFER_SIZE    sets the UART receive buffer size, in bytes
 //===========================================================================
+// configuration properties
 #ifndef UART_SEND
 #  define UART_SEND                    (0)
 #endif
@@ -47,39 +49,53 @@
 #  define UART_BAUD_2X                 (0)
 #endif
 #if !UART_SEND
-#  define UART_SEND_BUFFER_SIZE        (0)
+#  define UART_SEND_BUFFER_SIZE        (1)
 #elif !defined(UART_SEND_BUFFER_SIZE)
 #  define UART_SEND_BUFFER_SIZE        (16)
 #endif
 #if !UART_RECV
-#  define UART_RECV_BUFFER_SIZE        (0)
+#  define UART_RECV_BUFFER_SIZE        (1)
 #elif !defined(UART_RECV_BUFFER_SIZE)
 #  define UART_RECV_BUFFER_SIZE        (16)
 #endif
+// UART callback
+typedef VOID (*UART_CALLBACK) (BYTE bData);
+// configuration structure
+typedef struct tagUartConfig
+{
+   UART_CALLBACK  pfnOnSend;           // send complete callback
+   UART_CALLBACK  pfnOnRecv;           // receive complete callback
+} UART_CONFIG, *PUART_CONFIG;
 //===========================================================================
 // UART INTERFACE
 //===========================================================================
 // UART API
-VOID     UartInit       ();
-BOOL     UartIsSendBusy ();
-VOID     UartSendWait   ();
-BOOL     UartIsRecvBusy ();
-VOID     UartRecvWait   ();
+VOID     UartInit       (PUART_CONFIG pConfig);
 VOID     UartSend       (PCVOID pvData, UI8 cbData);
-UI8      UartRecv       (PVOID pvData, UI8 cbData);
 VOID     UartSendDelim  (PCVOID pvData, UI8 cbData, BYTE bDelim);
-UI8      UartRecvDelim  (PVOID pvData, UI8 cbData, BYTE bDelim);
-// UART string API
+VOID     UartSendStr    (PCSTR psz, ...);
+VOID     UartSendLine   (PCSTR psz, ...);
+UI8      UartRecvReady  ();
+UI8      UartRecv       (PVOID pvData, UI8 cbData);
+// UART helpers
+inline VOID UartSendByte (BYTE b)
+   { UartSend(&b, 1); }
 inline VOID UartSendChar (CHAR ch)
    { UartSend(&ch, 1); }
-inline CHAR UartRecvChar ()
-   { CHAR ch = 0; UartRecv(&ch, 1); return ch; }
-inline VOID UartSendStr (PCSTR psz)
-   { UartSend(psz, strlen(psz)); }
-inline PSTR UartRecvStr (PSTR psz, UI8 cch)
-   { psz[UartRecv(psz, cch)] = '\0'; return psz; }
-inline VOID UartSendLine (PCSTR psz)
-   { UartSendDelim(psz, strlen(psz), '\n'); }
-inline PSTR UartRecvLine (PSTR psz, UI8 cch)
-   { psz[UartRecvDelim(psz, cch, '\n')] = '\0'; return psz; }
+inline VOID UartSendStrV (PCSTR psz, va_list args)
+   {
+      CHAR szBuffer[UART_SEND_BUFFER_SIZE + 1];
+      UI8 cchBuffer = vsnprintf(szBuffer, sizeof(szBuffer), psz, args);
+      cchBuffer = MIN(cchBuffer, UART_SEND_BUFFER_SIZE);
+      szBuffer[cchBuffer] = '\0';
+      UartSend(szBuffer, strlen(szBuffer));
+   }
+inline VOID UartSendLineV (PCSTR psz, va_list args)
+   {
+      CHAR szBuffer[UART_SEND_BUFFER_SIZE + 1];
+      UI8 cchBuffer = vsnprintf(szBuffer, sizeof(szBuffer), psz, args);
+      cchBuffer = MIN(cchBuffer, UART_SEND_BUFFER_SIZE);
+      szBuffer[cchBuffer] = '\0';
+      UartSendDelim(szBuffer, strlen(szBuffer), '\n');
+   }
 #endif // __UART_H

@@ -47,7 +47,13 @@ int main ()
    PinSetOutput(PIN_ARDUINO_LED);
    PinSetLo(PIN_ARDUINO_LED);
 
-   UartInit();
+   UartInit(
+      &(UART_CONFIG)
+      {
+         .pfnOnSend = NULL,
+         .pfnOnRecv = ProtoRecvByte
+      }
+   );
    I2cInit();
    SX1509Init();
    Tlc5940Init(
