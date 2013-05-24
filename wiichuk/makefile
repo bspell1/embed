@@ -10,6 +10,7 @@ PARAMETERS	= 	F_CPU=16000000 															\
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
+			 -Wno-missing-field-initializers 											\
 			 -O3 -funroll-loops 																\
 			 -mint8 -mmcu=$(DEVICE)															\
 			 $(PARAMETERS:%=-D% )

@@ -21,6 +21,7 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
@@ -85,6 +86,7 @@
 static volatile BYTE g_pbBuffer[I2C_BUFFER_SIZE + 1];    // address byte + I2C data
 static volatile UI8  g_cbSend = 0;                       // send count
 static volatile UI8  g_cbRecv = 0;                       // receive count
+static volatile I2C_CALLBACK g_pfnCallback = NULL;       // completion callback
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: I2cInit >-------------------------------------------
@@ -121,6 +123,61 @@ VOID I2cWait ()
    while (I2cIsBusy())
       ;
 }
+//-----------< FUNCTION: I2cBeginSendRecv >----------------------------------
+// Purpose:    starts a combined send/receive transaction on the I2C bus
+// Parameters: nSlaveAddr  - address of the slave to receive from
+//             pvSend      - send message buffer
+//             cbSend      - number of bytes to send
+//             cbRecv      - maximum number of bytes to receive
+//             pfnCallback - completion callback
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID I2cBeginSendRecv (
+   UI8          nSlaveAddr, 
+   PCVOID       pvSend, 
+   BSIZE        cbSend,
+   BSIZE        cbRecv,
+   I2C_CALLBACK pfnCallback)
+{
+   I2cWait();
+   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+   {
+      // validate parameters
+      cbSend = MIN(cbSend, I2C_BUFFER_SIZE);
+      cbRecv = MIN(cbRecv, I2C_BUFFER_SIZE);
+      // set up I2C state
+      if (cbSend == 0)
+         g_pbBuffer[0] = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
+      else
+      {
+         g_pbBuffer[0] = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
+         memcpy((PBYTE)g_pbBuffer + 1, pvSend, cbSend);
+      }
+      g_cbSend = cbSend + 1;
+      g_cbRecv = cbRecv;
+      g_pfnCallback = pfnCallback;
+      // start the data transfer
+      TWCR = CONTROL_START;
+   }
+}
+//-----------< FUNCTION: I2cEndSendRecv >------------------------------------
+// Purpose:    completes a send/receive I2C transaction
+// Parameters: nSlaveAddr  - address of the slave to receive from
+//             pvRecv      - return the received bytes via here
+//             cbRecv      - maximum number of bytes to receive
+// Returns:    actual number of bytes received
+//---------------------------------------------------------------------------
+UI8 I2cEndSendRecv (PVOID pvRecv, UI8 cbRecv)
+{
+   I2cWait();
+   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+   {
+      cbRecv = MIN(cbRecv, g_cbRecv);
+      if (pvRecv != NULL)
+         memcpy(pvRecv, (PVOID)g_pbBuffer, cbRecv);
+   }
+   return cbRecv;
+}
 //-----------< FUNCTION: I2cSendRecv >---------------------------------------
 // Purpose:    executes a combined send/receive transaction on the I2C bus
 // Parameters: nSlaveAddr - address of the slave to receive from
@@ -137,29 +194,13 @@ UI8 I2cSendRecv (
    PVOID  pvRecv, 
    BSIZE  cbRecv)
 {
-   I2cWait();
-   // validate parameters
-   cbSend = MIN(cbSend, I2C_BUFFER_SIZE);
-   cbRecv = MIN(cbRecv, I2C_BUFFER_SIZE);
-   // set up I2C state
-   if (cbSend == 0)
-      g_pbBuffer[0] = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
-   else
-   {
-      g_pbBuffer[0] = (nSlaveAddr << 1) & BitUnmask(ADDR_READ_BIT);
-      memcpy((PBYTE)g_pbBuffer + 1, pvSend, cbSend);
-   }
-   g_cbSend = cbSend + 1;
-   g_cbRecv = cbRecv;
-   // start the data transfer
-   TWCR = CONTROL_START;
-   // if receiving, wait for the transfer to complete
-   if (cbRecv != 0)
+   I2cBeginSendRecv(nSlaveAddr, pvSend, cbSend, cbRecv, NULL);
+   if (pvRecv != NULL)
    {
       I2cWait();
-      memcpy(pvRecv, (PBYTE)g_pbBuffer + 1, g_cbRecv);
+      return I2cEndSendRecv(pvRecv, cbRecv);
    }
-   return g_cbRecv;
+   return 0;
 }
 //-----------< INTERRUPT: TWI_vect >-----------------------------------------
 // Purpose:    responds to I2C events
@@ -194,6 +235,8 @@ ISR(TWI_vect)
             // send complete, so stop
             TWDR = 0xFF;
             TWCR = CONTROL_STOP;
+            if (g_pfnCallback != NULL)
+               g_pfnCallback();
          }
          break;
       case STATUS_ARB_LOST:                        // arbitration lost, restart
@@ -212,10 +255,12 @@ ISR(TWI_vect)
             TWCR = CONTROL_SEND_NACK;
          break;
       case STATUS_MRX_DATA_NACK:                   // data byte received, NACK transmitted
-         g_pbBuffer[g_cbOffset++] = TWDR;
          g_cbRecv = g_cbOffset;
+         g_pbBuffer[g_cbOffset++] = TWDR;
          TWDR = 0xFF;
          TWCR = CONTROL_STOP;
+         if (g_pfnCallback != NULL)
+            g_pfnCallback();
          break;
       case STATUS_MTX_ADR_NACK:                    // error - NACK was received after address
       case STATUS_MTX_DATA_NACK:                   // error - NACK was received after data
@@ -225,6 +270,8 @@ ISR(TWI_vect)
          g_cbRecv = 0;
          TWDR = 0xFF;
          TWCR = CONTROL_ABORT;
+         if (g_pfnCallback != NULL)
+            g_pfnCallback();
          break;
    }
 }

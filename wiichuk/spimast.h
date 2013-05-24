@@ -53,18 +53,31 @@
 //===========================================================================
 // SPI INTERFACE
 //===========================================================================
+// SPI callback
+typedef VOID (*SPI_CALLBACK)  ();
 // SPI API
-VOID     SpiInit        ();
-BOOL     SpiIsBusy      ();
-VOID     SpiWait        ();
-VOID     SpiSendRecv    (UI8    nSsPin, 
-                         PCVOID pvSend, 
-                         BSIZE  cbSend,
-                         PVOID  pvRecv, 
-                         BSIZE  cbRecv);
+VOID     SpiInit           ();
+BOOL     SpiIsBusy         ();
+VOID     SpiWait           ();
+VOID     SpiBeginSendRecv  (UI8          nSsPin, 
+                            PCVOID       pvSend, 
+                            BSIZE        cbSend,
+                            BSIZE        cbRecv,
+                            SPI_CALLBACK pfnCallback);
+UI8      SpiEndSendRecv    (PVOID        pvRecv, 
+                            UI8          cbRecv);
+UI8      SpiSendRecv       (UI8          nSsPin, 
+                            PCVOID       pvSend, 
+                            BSIZE        cbSend,
+                            PVOID        pvRecv, 
+                            BSIZE        cbRecv);
 // SPI one-way helpers
 inline VOID SpiSend (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend)
    { SpiSendRecv(nSsPin, pvSend, cbSend, NULL, 0); }
-inline VOID SpiRecv (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv)
-   { SpiSendRecv(nSsPin, NULL, 0, pvRecv, cbRecv); }
+inline VOID SpiBeginRecv (UI8 nSsPin, BSIZE cbRecv, SPI_CALLBACK pfnCallback)
+   { SpiBeginSendRecv(nSsPin, NULL, 0, cbRecv, pfnCallback); }
+inline UI8 SpiEndRecv (PVOID pvRecv, BSIZE cbRecv)
+   { return SpiEndSendRecv(pvRecv, cbRecv); }
+inline UI8 SpiRecv (UI8 nSsPin, PVOID pvRecv, BSIZE cbRecv)
+   { return SpiSendRecv(nSsPin, NULL, 0, pvRecv, cbRecv); }
 #endif // __SPIMAST_H
