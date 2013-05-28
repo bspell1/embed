@@ -37,10 +37,11 @@ typedef struct tagFifo
    UI8   cbOffset;
    UI8   cbLength;
    BYTE  pbBuffer[1];
-} FIFO, *PFIFO;
+} FIFO;
+typedef volatile FIFO* PFIFO;
 // FIFO declaration
 #define DECLARE_FIFO(name, size)                                           \
-   static union                                                            \
+   static volatile union                                                   \
    {                                                                       \
       FIFO Fifo;                                                           \
       BYTE pbBuffer[sizeof(FIFO) + size - 1];                              \
@@ -50,6 +51,8 @@ typedef struct tagFifo
 //===========================================================================
 // FIFO API
 //===========================================================================
+inline UI8 FifoSize (PFIFO pFifo)
+   { return pFifo-> cbBuffer; }
 inline UI8 FifoCount (PFIFO pFifo)
    { return pFifo->cbLength; }
 inline BOOL FifoIsEmpty (PFIFO pFifo)

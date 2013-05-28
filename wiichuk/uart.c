@@ -20,9 +20,6 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
-#include <util/atomic.h>
-#include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "uart.h"
 #include "fifo.h"
@@ -55,6 +52,15 @@ VOID UartInit (PUART_CONFIG pConfig)
             (0<<USBS0) |                              // set 1 stop bit
             (0<<UPM00) | (0<<UPM01);                  // set 0 parity bits
 }
+//-----------< FUNCTION: UartSendReady >-------------------------------------
+// Purpose:    retrieves the number of bytes waiting to be sent
+// Parameters: none
+// Returns:    the number of bytes in the send FIFO
+//---------------------------------------------------------------------------
+UI8 UartSendReady ()
+{
+   return FifoCount(g_pSendFifo);
+}
 //-----------< FUNCTION: UartSend >------------------------------------------
 // Purpose:    sends a message on the UART interface
 // Parameters: pbData - the message to send
@@ -63,12 +69,22 @@ VOID UartInit (PUART_CONFIG pConfig)
 //---------------------------------------------------------------------------
 VOID UartSend (PCVOID pvData, UI8 cbData)
 {
-   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+   // transfer the entire buffer, blocking if the FIFO becomes full
+   PCBYTE pbData = (PCBYTE)pvData;
+   while (cbData > 0)
    {
-      BOOL bStart = FifoIsEmpty(g_pSendFifo);
-      FifoWriteBlock(g_pSendFifo, pvData, cbData);
-      if (bStart)
-         UDR0 = FifoRead(g_pSendFifo);
+      UI8 cbSent = 0;
+      ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+      {
+         BOOL bStart = FifoIsEmpty(g_pSendFifo);
+         cbSent = MIN(cbData, FifoSize(g_pSendFifo) - FifoCount(g_pSendFifo));
+         FifoWriteBlock(g_pSendFifo, pbData, cbSent);
+         // if this is the first byte, start the UART transfer
+         if (bStart)
+            UDR0 = FifoRead(g_pSendFifo);
+      }
+      pbData += cbSent;
+      cbData -= cbSent;
    }
 }
 //-----------< FUNCTION: UartSendDelim >-------------------------------------

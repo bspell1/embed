@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  wiichuk.c
-// Purpose: Nintendo Wii nunchuk pair reader program entry point
+// Module:  avrlab.c
+// Purpose: AVR test program
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -21,11 +21,7 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "wiichuk.h"
-#include "uart.h"
-#include "i2cmast.h"
-#include "spimast.h"
-#include "nrf24.h"
+#include "avrlab.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -38,31 +34,13 @@
 //---------------------------------------------------------------------------
 int main ()
 {
-   _delay_ms(1000);
-
    sei();
 
-   PinSetLo(PIN_B0);
+   PinSetHi(PIN_B0);
    PinSetOutput(PIN_B0);
-
-   UartInit(&(UART_CONFIG) { 0 });
-   I2cInit();
-   SpiInit();
-
-   Nrf24Init(
-      &(NRF24_CONFIG)
-      {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_B1
-      }
-   );
-   Nrf24SetTXAddress("Wii00");
-   Nrf24DisableAck();
-   Nrf24PowerOn(NRF24_MODE_SEND);
 
    for ( ; ; )
    {
-      Nrf24Send(STR("Hello"), 5);
       PinToggle(PIN_B0);
       _delay_ms(1000);
    }

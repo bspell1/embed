@@ -55,6 +55,15 @@ VOID UartInit (PUART_CONFIG pConfig)
             (0<<USBS0) |                              // set 1 stop bit
             (0<<UPM00) | (0<<UPM01);                  // set 0 parity bits
 }
+//-----------< FUNCTION: UartSendReady >-------------------------------------
+// Purpose:    retrieves the number of bytes waiting to be sent
+// Parameters: none
+// Returns:    the number of bytes in the send FIFO
+//---------------------------------------------------------------------------
+UI8 UartSendReady ()
+{
+   return FifoCount(g_pSendFifo);
+}
 //-----------< FUNCTION: UartSend >------------------------------------------
 // Purpose:    sends a message on the UART interface
 // Parameters: pbData - the message to send

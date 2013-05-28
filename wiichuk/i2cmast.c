@@ -20,8 +20,6 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
-#include <util/atomic.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//

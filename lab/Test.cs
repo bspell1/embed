@@ -37,6 +37,31 @@ namespace Lab
 
       public void Run ()
       {
+         Boolean done = false;
+         /*
+         var thread = new Thread(
+            () =>
+            {
+               using (var wii = new Nrf24("/dev/spidev0.1", 18))
+               {
+                  wii.Features = new Nrf24.FeatureRegister(wii.Features)
+                  {
+                     DisableAck = true
+                  };
+                  wii.TXAddress = "Wii00";
+                  wii.Config = new Nrf24.ConfigRegister(wii.Config) 
+                     { Mode = Nrf24.Mode.Transmit};
+                  while (!done)
+                  {
+                     wii.TransmitPacket(Encoding.ASCII.GetBytes("Hello"));
+                     Thread.Sleep(1000);
+                  }
+               }
+            }
+         );
+         thread.Start();
+         Thread.Sleep(1000);
+         */
          using (var wii = new Nrf24("/dev/spidev0.0", 17))
          {
             wii.RXAddress0 = "Wii00";
@@ -50,7 +75,7 @@ namespace Lab
                wii.BeginReceivePacket();
                try
                {
-                  Console.Write("{0:h:mm:ss tt}: Receiving...", DateTime.Now);
+                  Console.Write("{0:h:mm:ss tt}: Receiving (carrier = {1})...", DateTime.Now, wii.CarrierDetect);
                   var result = Encoding.ASCII.GetString(wii.EndReceivePacket(5));
                   Console.WriteLine("done ({0}).", result);
                }
@@ -63,6 +88,8 @@ namespace Lab
                   break;
             }
          }
+         done = true;
+         //thread.Join();
 
 #if false
          var path = Directory.GetFiles("/dev", "ttyUSB*").Single();

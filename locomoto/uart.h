@@ -71,6 +71,7 @@ typedef struct tagUartConfig
 //===========================================================================
 // UART API
 VOID     UartInit       (PUART_CONFIG pConfig);
+UI8      UartSendReady  ();
 VOID     UartSend       (PCVOID pvData, UI8 cbData);
 VOID     UartSendDelim  (PCVOID pvData, UI8 cbData, BYTE bDelim);
 VOID     UartSendStr    (PCSTR psz, ...);
@@ -98,4 +99,6 @@ inline VOID UartSendLineV (PCSTR psz, va_list args)
       szBuffer[cchBuffer] = '\0';
       UartSendDelim(szBuffer, strlen(szBuffer), '\n');
    }
+// UART tracing
+#define UartTrace UartSendStr
 #endif // __UART_H

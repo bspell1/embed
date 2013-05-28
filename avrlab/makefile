@@ -1,13 +1,7 @@
-TARGETNAME 	= 	wiichuk
-MODULES    	= 	spimast i2cmast uart nrf24 wiichuk
+TARGETNAME 	= 	avrlab
+MODULES    	= 	avrlab
 DEVICE     	= 	atmega328p
-PARAMETERS	= 	F_CPU=16000000 															\
-					DEBUG_TRACE=UartTrace													\
-					SPI_BUFFER_SIZE=33														\
-				 	SPI_FREQUENCY=8000000													\
-				 	I2C_FREQUENCY=400000														\
-				 	I2C_BUFFER_SIZE=6															\
-				 	UART_SEND=1
+PARAMETERS	= 	F_CPU=16000000
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
@@ -39,10 +33,10 @@ write-eeprom: bin bin\$(TARGETNAME).eep
 bin:
 	mkdir bin
 
-bin\\%.o: %.c bin makefile avrdefs.h debug.h $(MODULES:%=%.h)
+bin\\%.o: %.c bin makefile avrdefs.h $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -c -o $@ $<
 
-bin\\%.S: %.c bin makefile avrdefs.h debug.h $(MODULES:%=%.h)
+bin\\%.S: %.c bin makefile avrdefs.h $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin\\%.elf: $(MODULES:%=bin\\%.o)

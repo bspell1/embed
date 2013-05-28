@@ -25,7 +25,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
+#include <util/atomic.h>
 //-------------------[      Project Include Files      ]-------------------//
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
@@ -93,6 +97,12 @@ typedef const CHAR*           PCSTR;
 #endif
 #ifndef MAX
 #  define MAX(x, y)        (((x) > (y)) ? (x) : (y))
+#endif
+//===========================================================================
+// MEMORY OPERATIONS
+//===========================================================================
+#ifndef memzero
+#  define memzero(pv, cb)     memset((pv), 0, (cb))
 #endif
 //===========================================================================
 // AVR PINS
@@ -236,9 +246,8 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define PinPulseLoHi(p)       PinSetLo(p); PinSetHi(p)
 #define PinPulse(p)           PinPulseHiLo(p)
 //===========================================================================
-// MEMORY OPERATIONS
+// AVR OPERATIONS
 //===========================================================================
-#ifndef memzero
-#  define memzero(pv, cb)     memset((pv), 0, (cb))
-#endif
+inline VOID AvrAbort ()
+   { cli(); wdt_enable(WDTO_1S); for ( ; ; ) { } }
 #endif // __AVRDEFS_H

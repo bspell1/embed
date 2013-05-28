@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  wiichuk.c
-// Purpose: Nintendo Wii nunchuk pair reader program entry point
+// Module:  avrlab.h
+// Purpose: AVR test program
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,54 +18,13 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
+#ifndef __AVRLAB_H
+#define __AVRLAB_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "wiichuk.h"
-#include "uart.h"
-#include "i2cmast.h"
-#include "spimast.h"
-#include "nrf24.h"
+#ifndef __AVRDEFS_H
+#include "avrdefs.h"
+#endif
 //-------------------[       Module Definitions        ]-------------------//
-//-------------------[        Module Variables         ]-------------------//
-//-------------------[        Module Prototypes        ]-------------------//
-//-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
-//---------------------------------------------------------------------------
-int main ()
-{
-   _delay_ms(1000);
-
-   sei();
-
-   PinSetLo(PIN_B0);
-   PinSetOutput(PIN_B0);
-
-   UartInit(&(UART_CONFIG) { 0 });
-   I2cInit();
-   SpiInit();
-
-   Nrf24Init(
-      &(NRF24_CONFIG)
-      {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_B1
-      }
-   );
-   Nrf24SetTXAddress("Wii00");
-   Nrf24DisableAck();
-   Nrf24PowerOn(NRF24_MODE_SEND);
-
-   for ( ; ; )
-   {
-      Nrf24Send(STR("Hello"), 5);
-      PinToggle(PIN_B0);
-      _delay_ms(1000);
-   }
-
-   return 0;
-}
+#endif // __AVRLAB_H

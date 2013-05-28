@@ -90,6 +90,7 @@ namespace NPi
       private SpiDevice spi;
       private Gpio cePin;
       private Byte[] buffer;
+      private FeatureRegister features;
 
       public Nrf24 (String path, Int32 cePin)
       {
@@ -502,12 +503,12 @@ namespace NPi
       {
          get
          {
-            ReadRegister(RegAddressFeature, 1);
-            return new FeatureRegister(this.buffer[1]);
+            return this.features;
          }
          set
          {
             WriteRegister(RegAddressFeature, value.Encode());
+            this.features = value;
          }
       }
       #endregion
@@ -520,7 +521,9 @@ namespace NPi
       public void TransmitPacket (Byte[] data)
       {
          // TODO: validate packet length
-         this.buffer[0] = CommandTXWritePacket;
+         this.buffer[0] = (this.Features.DisableAck) ? 
+            CommandTXWriteNoAck : 
+            CommandTXWritePacket;
          for (var i = 0; i < data.Length; i++)
             this.buffer[i + 1] = data[i];
          ReadWrite(data.Length);
