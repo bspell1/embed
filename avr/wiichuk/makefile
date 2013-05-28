@@ -1,58 +1,61 @@
 TARGETNAME 	= 	wiichuk
-MODULES    	= 	spimast i2cmast uart nrf24 wiichuk
+MODULES    	= 	wiichuk
+FWMODULES	=  i2cmast spimast nrf24
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000 															\
-					DEBUG_TRACE=UartTrace													\
 					SPI_BUFFER_SIZE=33														\
 				 	SPI_FREQUENCY=8000000													\
 				 	I2C_FREQUENCY=400000														\
-				 	I2C_BUFFER_SIZE=6															\
-				 	UART_SEND=1
+				 	I2C_BUFFER_SIZE=6
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -Wno-missing-field-initializers 											\
 			 -O3 -funroll-loops 																\
 			 -mint8 -mmcu=$(DEVICE)															\
+			 -I..\fw																				\
 			 $(PARAMETERS:%=-D% )
 LDFLAGS = -lc -lm -flto
 
-all: bin\$(TARGETNAME).hex bin\$(TARGETNAME).eep
+all: bin bin/$(TARGETNAME).hex bin/$(TARGETNAME).eep
 
-debug: PARAMETERS+=DEBUG UART_SEND_BUFFER_SIZE=128
+debug: PARAMETERS+=DEBUG
 debug: all
 
 clean: ; rm -fr bin/*
 
 rebuild: clean all
 
-asm: $(MODULES:%=bin\\%.S)
+asm: $(MODULES:%=bin/%.S)
 
-dump-size: bin\$(TARGETNAME).elf
+dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
-write-flash:  bin bin\$(TARGETNAME).hex
+write-flash:  bin bin/$(TARGETNAME).hex
 	avrdude -q -patmega328p -cusbtiny -B 1 -U  flash:w:bin/$(TARGETNAME).hex
-write-eeprom: bin bin\$(TARGETNAME).eep
+write-eeprom: bin bin/$(TARGETNAME).eep
 	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 
 bin:
 	mkdir bin
 
-bin\\%.o: %.c bin makefile avrdefs.h debug.h $(MODULES:%=%.h)
+bin/fw%.o: ../fw/%.c makefile ../fw/%.h
 	$(CC) $(CCFLAGS) -c -o $@ $<
 
-bin\\%.S: %.c bin makefile avrdefs.h debug.h $(MODULES:%=%.h)
+bin/%.o: %.c makefile $(MODULES:%=%.h)
+	$(CC) $(CCFLAGS) -c -o $@ $<
+
+bin/%.S: %.c makefile $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
-bin\\%.elf: $(MODULES:%=bin\\%.o)
+bin/%.elf: $(FWMODULES:%=bin/fw%.o) $(MODULES:%=bin/%.o)
 	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
 
-bin\\%.hex: bin\%.elf
-	avr-objcopy -j .text -j .data -O ihex $(<:bin\\%=bin/%) $(@:bin\\%=bin/%)
+bin/%.hex: bin/%.elf
+	avr-objcopy -j .text -j .data -O ihex $< $@
 
-bin\\%.eep: bin\%.elf
-	avr-objcopy -j .eeprom -O ihex $(<:bin\\%=bin/%) $(@:bin\\%=bin/%)
+bin/%.eep: bin/%.elf
+	avr-objcopy -j .eeprom -O ihex $< $@
 
 # override make to keep intermediate files for incremental
 .SECONDARY: 

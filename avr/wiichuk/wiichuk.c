@@ -22,8 +22,7 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "wiichuk.h"
-#include "uart.h"
-#include "i2cmast.h"
+#include "i2cmast.h" 
 #include "spimast.h"
 #include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
@@ -45,7 +44,6 @@ int main ()
    PinSetLo(PIN_B0);
    PinSetOutput(PIN_B0);
 
-   UartInit(&(UART_CONFIG) { 0 });
    I2cInit();
    SpiInit();
 

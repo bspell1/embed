@@ -24,12 +24,12 @@
 #include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "locomoto.h"
-#include "uart.h"
-#include "i2cmast.h"
-#include "tlc5940.h"
-#include "sx1509.h"
 #include "stepmoto.h"
 #include "proto.h"
+#include "uart.h"
+#include "i2cmast.h"
+#include "sx1509.h"
+#include "tlc5940.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
