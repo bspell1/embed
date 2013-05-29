@@ -26,8 +26,16 @@
 #include "spimast.h"
 #include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
+#define WIICHUK_ADDRESS             0x52           // I2C address for Wii chuks
+#define WIICHUK_SELECT_PIN          PC3            // chuk chip select pin
+#define WIICHUK_MESSAGE_SIZE        12             // protocol message size
 //-------------------[        Module Variables         ]-------------------//
+static const BYTE g_pbWiiChukInit[] = { 0x40, 0x00 };
+static BYTE       g_pbWiiChukMsg[WIICHUK_MESSAGE_SIZE];
 //-------------------[        Module Prototypes        ]-------------------//
+static VOID WiiChukInit ();
+static VOID WiiChukRead ();
+static VOID WiiChukSend ();
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -37,16 +45,29 @@
 //---------------------------------------------------------------------------
 int main ()
 {
-   _delay_ms(1000);
+   WiiChukInit();
+   for ( ; ; )
+   {
+      Nrf24Send(STR("Hello"), 5);
+      _delay_ms(1000);
+      WiiChukRead();
+      WiiChukSend();
+      _delay_ms(1000);
+   }
 
+   return 0;
+}
+//-----------< FUNCTION: WiiChukInit >---------------------------------------
+// Purpose:    initializes the WiiChuk pair over I2C
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID WiiChukInit ()
+{
    sei();
-
-   PinSetLo(PIN_B0);
-   PinSetOutput(PIN_B0);
-
+   // initialize communication
    I2cInit();
    SpiInit();
-
    Nrf24Init(
       &(NRF24_CONFIG)
       {
@@ -57,13 +78,49 @@ int main ()
    Nrf24SetTXAddress("Wii00");
    Nrf24DisableAck();
    Nrf24PowerOn(NRF24_MODE_SEND);
-
-   for ( ; ; )
-   {
-      Nrf24Send(STR("Hello"), 5);
-      PinToggle(PIN_B0);
-      _delay_ms(1000);
-   }
-
-   return 0;
+   // initialize the Wii nunchuks
+   PinSetOutput(WIICHUK_SELECT_PIN);
+   PinSetLo(WIICHUK_SELECT_PIN);
+   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit, sizeof(g_pbWiiChukInit));
+   I2cWait();
+   PinSetHi(WIICHUK_SELECT_PIN);
+   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit, sizeof(g_pbWiiChukInit));
+   I2cWait();
+}
+//-----------< FUNCTION: WiiChukRead >----------------------------------------
+// Purpose:    samples the state of the WiiChuk pair over I2C
+//             stores the results in g_pbWiiChukMsg for transmission
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID WiiChukRead ()
+{
+   BYTE pbAddress[] = { 0x00 };
+   // read chuk 0
+   PinSetLo(WIICHUK_SELECT_PIN);
+   I2cSendRecv(
+      WIICHUK_ADDRESS, 
+      pbAddress, 
+      sizeof(pbAddress),
+      g_pbWiiChukMsg, 
+      WIICHUK_MESSAGE_SIZE / 2
+   );
+   // read chuk 1
+   PinSetHi(WIICHUK_SELECT_PIN);
+   I2cSendRecv(
+      WIICHUK_ADDRESS, 
+      pbAddress, 
+      sizeof(pbAddress),
+      g_pbWiiChukMsg + WIICHUK_MESSAGE_SIZE / 2, 
+      WIICHUK_MESSAGE_SIZE / 2
+   );
+}
+//-----------< FUNCTION: WiiChukSend >----------------------------------------
+// Purpose:    sends the current WiiChuk message out over the NRF24
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID WiiChukSend ()
+{
+   Nrf24Send(g_pbWiiChukMsg, WIICHUK_MESSAGE_SIZE);
 }

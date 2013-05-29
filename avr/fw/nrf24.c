@@ -690,7 +690,7 @@ VOID Nrf24PowerOff ()
 //             cbPacket - number of bytes to transfer
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID Nrf24Send (PVOID pvPacket, BSIZE cbPacket)
+VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
 {
    // TODO: trace failure
    if (g_fPowerMode == NRF24_MODE_SEND)

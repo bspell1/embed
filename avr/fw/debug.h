@@ -34,7 +34,7 @@
 #ifndef DEBUG_TRACE
 #  define DebugTrace(psz, ...)
 #else
-#  define DebugTrace(psz, ...)      DEBUG_TRACE(psz __VA_ARGS__)
+#  define DebugTrace(psz, ...)      DEBUG_TRACE(psz, __VA_ARGS__)
 #endif
 //===========================================================================
 // TRACING
@@ -42,7 +42,7 @@
 #ifndef DEBUG
 #  define Trace(psz, ...)
 #else
-#  define Trace(psz, ...)           DebugTrace(psz __VA_ARGS__)
+#  define Trace(psz, ...)           DebugTrace(psz, __VA_ARGS__)
 #endif
 //===========================================================================
 // ASSERTIONS
@@ -50,15 +50,16 @@
 #ifndef DEBUG
 #  define Assert(b)
 #else
-#  define Assert(b)                 if (!(b))                              \
-                                    {                                      \
-                                       Trace(                              \
-                                          "Assert:%s():%d %s\n",           \
-                                          __FUNCTION__,                    \
-                                          (UI16)__LINE__,                  \
-                                          #b                               \
-                                       );                                  \
-                                       AvrAbort();                         \
-                                    }
+#  define Assert(b)                                                        \
+      if (!(b))                                                            \
+      {                                                                    \
+         Trace(                                                            \
+            "Assert:%s():%d %s\n",                                         \
+            __FUNCTION__,                                                  \
+            (UI16)__LINE__,                                                \
+            #b                                                             \
+         );                                                                \
+         AvrAbort();                                                       \
+      }
 #endif
 #endif // __DEBUG_H

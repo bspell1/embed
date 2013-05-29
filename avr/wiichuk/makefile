@@ -3,7 +3,7 @@ MODULES    	= 	wiichuk
 FWMODULES	=  i2cmast spimast nrf24
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000 															\
-					SPI_BUFFER_SIZE=33														\
+					SPI_BUFFER_SIZE=12														\
 				 	SPI_FREQUENCY=8000000													\
 				 	I2C_FREQUENCY=400000														\
 				 	I2C_BUFFER_SIZE=6
@@ -49,7 +49,7 @@ bin/%.S: %.c makefile $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin/%.elf: $(FWMODULES:%=bin/fw%.o) $(MODULES:%=bin/%.o)
-	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ $^
 
 bin/%.hex: bin/%.elf
 	avr-objcopy -j .text -j .data -O ihex $< $@

@@ -1,13 +1,15 @@
 TARGETNAME 	= 	avrlab
 MODULES    	= 	avrlab
-FWMODULES   = 	
+FWMODULES   = 	uart
 DEVICE     	= 	atmega328p
-PARAMETERS	= 	F_CPU=16000000
+PARAMETERS	= 	F_CPU=16000000																\
+					DEBUG_TRACE=UartTrace													\
+					UART_SEND=1
 
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -Wno-missing-field-initializers 											\
-			 -O3 -funroll-loops 																\
+			 -O3 -funroll-loops																\
 			 -mint8 -mmcu=$(DEVICE)															\
 			 -I..\fw																				\
 			 $(PARAMETERS:%=-D% )

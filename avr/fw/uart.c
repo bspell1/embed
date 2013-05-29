@@ -99,7 +99,7 @@ VOID UartSendDelim (PCVOID pvData, UI8 cbData, BYTE bDelim)
    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
       UartSend(pvData, cbData);
-      FifoWrite(g_pSendFifo, bDelim);
+      UartSend(&bDelim, 1);
    }
 }
 //-----------< FUNCTION: UartSendStr >---------------------------------------

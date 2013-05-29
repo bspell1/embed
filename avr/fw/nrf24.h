@@ -185,7 +185,7 @@ VOID     Nrf24FlushSend          ();
 VOID     Nrf24FlushRecv          ();
 VOID     Nrf24PowerOn            (UI8 fMode);
 VOID     Nrf24PowerOff           ();
-VOID     Nrf24Send               (PVOID pvPacket, BSIZE cbPacket);
+VOID     Nrf24Send               (PCVOID pvPacket, BSIZE cbPacket);
 // busy polling helpers
 inline BOOL Nrf24IsSendBusy ()
    { return (Nrf24GetFifoStatus() & NRF24_FIFO_TX_FULL) ? TRUE : FALSE; }

@@ -22,6 +22,8 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "avrlab.h"
+#include "debug.h"
+#include "uart.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -36,13 +38,17 @@ int main ()
 {
    sei();
 
-   PinSetHi(PIN_B0);
-   PinSetOutput(PIN_B0);
+   UartInit(&(UART_CONFIG) { 0 });
+
+   _delay_ms(1000);
+   //Assert(FALSE);
+   //UartSendStr("Assert:%s(): %s\n", __FUNCTION__, (UI16)__LINE__, "FALSE");                                                                
+   //AvrAbort();                                                       
 
    for ( ; ; )
    {
-      PinToggle(PIN_B0);
       _delay_ms(1000);
+      UartSendByte(0xC0);
    }
 
    return 0;
