@@ -12,11 +12,11 @@ PARAMETERS	= 	F_CPU=16000000																\
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -Wno-missing-field-initializers 											\
-			 -O3 -funroll-loops																\
+			 -O3 -funroll-loops -fdata-sections -ffunction-sections				\
 			 -mint8 -mmcu=$(DEVICE)															\
 			 -I..\fw																				\
 			 $(PARAMETERS:%=-D% )
-LDFLAGS = -lc -lm -flto
+LDFLAGS = -flto -Wl,--gc-sections,--relax
 
 all: bin bin/$(TARGETNAME).hex bin/$(TARGETNAME).eep
 
