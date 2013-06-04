@@ -93,11 +93,115 @@ namespace NPi
          }
       }
 
+      public void ReadWrite (Byte[] txBuffer, Byte[] rxBuffer)
+      {
+         ReadWrite(txBuffer, 0, rxBuffer, 0);
+      }
+
+      public void ReadWrite (
+         Byte[] txBuffer,
+         Int32 txOffset,
+         Byte[] rxBuffer,
+         Int32 rxOffset)
+      {
+         if (txBuffer == null)
+            throw new ArgumentNullException("txBuffer");
+         if (rxBuffer == null)
+            throw new ArgumentNullException("rxBuffer");
+         if (txOffset < 0 || txOffset >= txBuffer.Length)
+            throw new ArgumentException("txOffset");
+         if (txOffset < 0 || rxOffset >= rxBuffer.Length)
+            throw new ArgumentException("rxOffset");
+         ReadWrite(
+            txBuffer,
+            txOffset,
+            txBuffer.Length,
+            rxBuffer,
+            rxOffset,
+            rxBuffer.Length
+         );
+      }
+
+      public void ReadWrite (
+         Byte[] txBuffer,
+         Int32 txOffset,
+         Int32 txCount,
+         Byte[] rxBuffer,
+         Int32 rxOffset,
+         Int32 rxCount)
+      {
+         if (txBuffer == null)
+            throw new ArgumentNullException("txBuffer");
+         if (rxBuffer == null)
+            throw new ArgumentNullException("rxBuffer");
+         if (txOffset < 0)
+            throw new ArgumentOutOfRangeException("txOffset");
+         if (rxOffset < 0)
+            throw new ArgumentOutOfRangeException("rxOffset");
+         if (txCount <= 0)
+            throw new ArgumentOutOfRangeException("txCount");
+         if (rxCount <= 0)
+            throw new ArgumentOutOfRangeException("rxCount");
+         if (txOffset + txCount > txBuffer.Length)
+            throw new ArgumentException("txOffset");
+         if (rxOffset + rxCount > rxBuffer.Length)
+            throw new ArgumentException("rxOffset");
+         GCHandle? hTx = null, hRx = null;
+         try
+         {
+            IntPtr pTx = IntPtr.Zero;
+            IntPtr pRx = IntPtr.Zero;
+            if (txBuffer != null)
+            {
+               hTx = GCHandle.Alloc(txBuffer, GCHandleType.Pinned);
+               pTx = hTx.Value.AddrOfPinnedObject();
+            }
+            if (rxBuffer != null)
+            {
+               hRx = GCHandle.Alloc(rxBuffer, GCHandleType.Pinned);
+               pRx = hRx.Value.AddrOfPinnedObject();
+            }
+            if (SetSlave(this.fd, this.SlaveAddress) < 0)
+               throw new Win32Exception();
+            if (SendReceive(
+                  this.fd, 
+                  this.SlaveAddress, 
+                  pTx, 
+                  txOffset, 
+                  txCount, 
+                  pRx, 
+                  rxOffset, 
+                  rxCount) < 0)
+               throw new Win32Exception();
+         }
+         finally
+         {
+            if (hTx != null)
+               hTx.Value.Free();
+            if (hRx != null)
+               hRx.Value.Free();
+         }
+      }
+
       #region Native Methods
       [DllImport("monoext", EntryPoint = "I2cSetSlave", SetLastError = true)]
       private static extern Int32 SetSlave (
          Int32 fd, 
          Int32 address
+      );
+      [DllImport(
+         "monoext", 
+         EntryPoint = "I2cSendReceive",
+         SetLastError = true )]
+      private static extern Int32 SendReceive (
+         Int32  fd, 
+         Int32  addr,
+         IntPtr pTxBuffer, 
+         Int32  cbTxOffset,
+         Int32  cbTxLength,
+         IntPtr pRxBuffer, 
+         Int32  cbRxOffset,
+         Int32  cbRxLength
       );
       #endregion
    }

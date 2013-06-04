@@ -37,36 +37,45 @@ namespace Lab
 
       public void Run ()
       {
-         Boolean done = false;
-         /*
-         var thread = new Thread(
-            () =>
+#if false
+         using (var chuk = new WiiChuk("/dev/i2c-1", 25, false))
+         {
+            for (; ; )
             {
-               using (var wii = new Nrf24("/dev/spidev0.1", 18))
-               {
-                  wii.Features = new Nrf24.FeatureRegister(wii.Features)
-                  {
-                     DisableAck = true
-                  };
-                  wii.TXAddress = "Wii00";
-                  wii.Config = new Nrf24.ConfigRegister(wii.Config) 
-                     { Mode = Nrf24.Mode.Transmit};
-                  while (!done)
-                  {
-                     wii.TransmitPacket(Encoding.ASCII.GetBytes("Hello"));
-                     Thread.Sleep(1000);
-                  }
-               }
+               chuk.Read();
+               Console.WriteLine(new String('-', 78));
+               Console.WriteLine("Time:           {0:h:mm:ss tt}", DateTime.Now);
+               Console.WriteLine("JoystickX:      {0}", chuk.JoystickX);
+               Console.WriteLine("JoystickY:      {0}", chuk.JoystickY);
+               Console.WriteLine("AccelerometerX: {0}", chuk.AccelerometerX);
+               Console.WriteLine("AccelerometerY: {0}", chuk.AccelerometerY);
+               Console.WriteLine("AccelerometerZ: {0}", chuk.AccelerometerZ);
+               Console.WriteLine("CButton:        {0}", chuk.CButton);
+               Console.WriteLine("ZButton:        {0}", chuk.ZButton);
+               Console.WriteLine("LastCButton:    {0}", chuk.LastCButton);
+               Console.WriteLine("LastZButton:    {0}", chuk.LastZButton);
+               Thread.Sleep(1000);
+               if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                  break;
             }
-         );
-         thread.Start();
-         Thread.Sleep(1000);
-         */
+         }
+#endif
+
+#if true
          using (var wii = new Nrf24("/dev/spidev0.0", 17))
          {
             wii.RXAddress0 = "Wii00";
-            wii.RXLength0 = 5;
+            wii.RXLength0 = 12;
             // start up the transmitter/receiver
+            wii.Config = new Nrf24.ConfigRegister(wii.Config)
+            {
+               Crc = Nrf24.Crc.None
+            };
+            wii.RFChannel = 60;
+            wii.RFConfig = new Nrf24.RFConfigRegister(wii.RFConfig)
+            {
+               BitRate = Nrf24.BitRate.OneMbps
+            };
             wii.Config = new Nrf24.ConfigRegister(wii.Config)
                { Mode = Nrf24.Mode.Receive };
             Console.WriteLine(wii.DumpRegisters());
@@ -76,8 +85,8 @@ namespace Lab
                try
                {
                   Console.Write("{0:h:mm:ss tt}: Receiving (carrier = {1})...", DateTime.Now, wii.CarrierDetect);
-                  var result = Encoding.ASCII.GetString(wii.EndReceivePacket(5));
-                  Console.WriteLine("done ({0}).", result);
+                  var result = wii.EndReceivePacket(12);
+                  Console.WriteLine("done ({0}).", BitConverter.ToString(result));
                }
                catch (TimeoutException)
                {
@@ -88,8 +97,7 @@ namespace Lab
                   break;
             }
          }
-         done = true;
-         //thread.Join();
+#endif
 
 #if false
          var path = Directory.GetFiles("/dev", "ttyUSB*").Single();

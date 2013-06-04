@@ -47,6 +47,7 @@
     <Compile Include="NPi\SpiDevice.cs" />
     <Compile Include="NPi\Stepper.cs" />
     <Compile Include="NPi\VC0706Camera.cs" />
+    <Compile Include="NPi\WiiChuk.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Test.cs" />

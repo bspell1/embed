@@ -100,5 +100,5 @@ inline VOID UartSendLineV (PCSTR psz, va_list args)
       UartSendDelim(szBuffer, strlen(szBuffer), '\n');
    }
 // UART tracing
-#define UartTrace UartSendStr
+#define UartTrace UartSendLine
 #endif // __UART_H

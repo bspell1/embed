@@ -5,7 +5,7 @@ DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000 															\
 					SPI_BUFFER_SIZE=12														\
 				 	SPI_FREQUENCY=8000000													\
-				 	I2C_FREQUENCY=400000														\
+					I2C_FREQUENCY=100000														\
 				 	I2C_BUFFER_SIZE=6
 
 CC      = avr-gcc
@@ -35,6 +35,8 @@ write-flash:  bin bin/$(TARGETNAME).hex
 	avrdude -q -patmega328p -cusbtiny -B 1 -U  flash:w:bin/$(TARGETNAME).hex
 write-eeprom: bin bin/$(TARGETNAME).eep
 	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
+write-fuses:
+	avrdude -q -patmega328p -cusbtiny -B 1 -U lfuse:w:0xFF:m -U hfuse:w:0xDA:m -U efuse:w:0xFF:m
 
 bin:
 	mkdir bin

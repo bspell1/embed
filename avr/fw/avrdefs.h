@@ -249,5 +249,5 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 // AVR OPERATIONS
 //===========================================================================
 inline VOID AvrAbort ()
-   { cli(); wdt_enable(WDTO_1S); for ( ; ; ) { } }
+   { wdt_enable(WDTO_1S); for ( ; ; ) { } }
 #endif // __AVRDEFS_H

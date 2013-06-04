@@ -153,12 +153,12 @@ int SpiSetClockSpeed (int fd, uint32_t nClockSpeed)
 }
 //-----------< FUNCTION: SpiSendReceive >-------------------------------------
 // Purpose:    exchanges a byte stream with the SPI device
-// Parameters: fd        - SPI device file descriptor
-//             tx_buffer - send buffer (null to receive only)
-//             tx_offset - send buffer offset
-//             rx_buffer - receive buffer (null to send only)
-//             rx_offset - receive buffer offset
-//             count     - the number of bytes to send/receive
+// Parameters: fd         - SPI device file descriptor
+//             pTxBuffer  - send buffer (null to receive only)
+//             cbTxOffset - send buffer offset
+//             pRxBuffer  - receive buffer (null to send only)
+//             cbRxOffset - receive buffer offset
+//             cbXfer     - the number of bytes to send/receive
 // Returns:    0 if successful
 //             -1 otherwise 
 // Usage:      
@@ -172,22 +172,27 @@ int SpiSetClockSpeed (int fd, uint32_t nClockSpeed)
 //       Int32  txOffset,
 //       IntPtr rxBuffer, 
 //       Int32  rxOffset,
-//       Int32  count
+//       Int32  cbXfer
 //    );
 //---------------------------------------------------------------------------
 int SpiSendReceive (
    int      fd, 
-   void*    tx_buffer, 
-   int32_t  tx_offset,
-   void*    rx_buffer, 
-   int32_t  rx_offset,
-   int32_t  count)
+   void*    pTxBuffer, 
+   int32_t  cbTxOffset,
+   void*    pRxBuffer, 
+   int32_t  cbRxOffset,
+   int32_t  cbXfer)
 {
-   if (count > 0) {
-	   struct spi_ioc_transfer msg; memset(&msg, 0, sizeof(msg));
-      msg.tx_buf = (unsigned long)tx_buffer + tx_offset;
-      msg.rx_buf = (unsigned long)rx_buffer + rx_offset;
-      msg.len = count;
-	   return ioctl(fd, SPI_IOC_MESSAGE(1), &msg);
-   }
+   return cbXfer > 0 ? 
+      ioctl(
+         fd, 
+         SPI_IOC_MESSAGE(1), 
+         &(struct spi_ioc_transfer)
+         {
+            .tx_buf = (unsigned long)pTxBuffer + cbTxOffset,
+            .rx_buf = (unsigned long)pRxBuffer + cbRxOffset,
+            .len    = cbXfer
+         }
+      ) : 
+      0;
 }

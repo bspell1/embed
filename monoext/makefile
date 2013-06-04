@@ -6,7 +6,9 @@ MODULES    = spi i2c
 CC = gcc
 LD = gcc
 CP = sudo cp
-CCFLAGS = -c 
+CCFLAGS = -Wall -Wextra -Winline 														\
+			 -Wno-missing-field-initializers 											\
+			 -O3 -funroll-loops
 LDFLAGS = -shared -Wl,-soname=$(@:bin/%.so.$(TARGETVER)=%.so) -o$@ -lc
 
 all: bin/ bin/lib$(TARGETNAME).so.$(TARGETVER)
@@ -19,7 +21,7 @@ bin/: ; mkdir bin/
 
 %.c: monoext.h
 
-bin/%.o: %.c ; $(CC) $(CCFLAGS) $? -o $@
+bin/%.o: %.c ; $(CC) $(CCFLAGS) -c $? -o $@
 
 bin/lib$(TARGETNAME).so.$(TARGETVER) : $(MODULES:%=bin/%.o) ; \
    $(LD) $(LDFLAGS) $(MODULES:%=bin/%.o) ; \

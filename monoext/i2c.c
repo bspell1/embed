@@ -22,6 +22,7 @@
 //-------------------[      Library Include Files      ]-------------------//
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <linux/i2c.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "monoext.h"
 //-------------------[       Module Definitions        ]-------------------//
@@ -47,4 +48,66 @@
 int I2cSetSlave (int fd, int addr)
 {
    return ioctl(fd, I2C_SLAVE, addr);
+}
+//-----------< FUNCTION: I2cSendReceive >--------------------------------------
+// Purpose:    performs a combination read/write I2C transaction
+// Parameters: fd         - I2C device file descriptor
+//             addr       - I2C slave address, required for ioctl
+//             pTxBuffer  - transmit buffer
+//             cbTxOffset - offset into transmit buffer
+//             cbTxLength - number of bytes to transmit
+//             pRxBuffer  - receive buffer
+//             cbRxOffset - offset into receive buffer
+//             cbRxLength - number of bytes to receive
+// Returns:    0 if successful
+//             -1 otherwise 
+// Usage:      
+//    [DllImport(
+//       "monoext", 
+//       EntryPoint = "I2cSendReceive",
+//       SetLastError = true )]
+//    private static extern Int32 SendReceive (
+//       Int32  fd, 
+//       Int32  addr,
+//       IntPtr pTxBuffer, 
+//       Int32  cbTxOffset,
+//       Int32  cbTxLength,
+//       IntPtr pRxBuffer, 
+//       Int32  cbRxOffset,
+//       Int32  cbRxLength
+//    );
+//---------------------------------------------------------------------------
+int I2cSendReceive (
+   int     fd, 
+   int     addr,
+   void*   pTxBuffer, 
+   int32_t cbTxOffset,
+   int32_t cbTxLength,
+   void*   pRxBuffer, 
+   int32_t cbRxOffset,
+   int32_t cbRxLength)
+{
+   return ioctl(
+      fd, 
+      I2C_RDWR, 
+      &(struct i2c_rdwr_ioctl_data)
+      {
+         .nmsgs = 2,
+         .msgs  = (struct i2c_msg[])
+         {
+            {
+               .addr  = addr,
+               .flags = 0,
+               .len   = cbTxLength,
+               .buf   = (uint8_t*)pTxBuffer + cbTxOffset
+            },
+            {
+               .addr  = addr,
+               .flags = I2C_M_RD,
+               .len   = cbRxLength,
+               .buf   = (uint8_t*)pRxBuffer + cbRxOffset
+            }
+         }
+      }
+   );
 }

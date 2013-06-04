@@ -42,10 +42,13 @@ VOID UartInit (PUART_CONFIG pConfig)
 {
    g_pfnOnSend = pConfig->pfnOnSend;
    g_pfnOnRecv = pConfig->pfnOnRecv;
-   UBRR0  = (F_CPU / (UART_BAUD * 16) - 1);           // set base baud rate
+#if (UART_BAUD_2X)                                  // set base baud rate
+   UBRR0  = (UI16)((double)F_CPU / ((double)UART_BAUD * 8) - 1);
+#else
+   UBRR0  = (UI16)((double)F_CPU / ((double)UART_BAUD * 16) - 1);
+#endif
    UCSR0A = (UART_BAUD_2X << U2X0);                   // set 2x multiplier
    UCSR0B = (UART_SEND << TXEN0) |                    // enable TX
-            (UART_SEND << TXCIE0) |                   // enable TX interrupt
             (UART_RECV << RXEN0) |                    // enable RX
             (UART_RECV << RXCIE0);                    // enable RX interrupt
    UCSR0C = (3<<UCSZ00) |                             // set 8 data bits
@@ -69,19 +72,23 @@ UI8 UartSendReady ()
 //---------------------------------------------------------------------------
 VOID UartSend (PCVOID pvData, UI8 cbData)
 {
-   // transfer the entire buffer, blocking if the FIFO becomes full
+   // transfer the entire buffer, spinning when the FIFO becomes full
    PCBYTE pbData = (PCBYTE)pvData;
    while (cbData > 0)
    {
       UI8 cbSent = 0;
       ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
       {
-         BOOL bStart = FifoIsEmpty(g_pSendFifo);
+         BOOL bStart = !RegGet(UCSR0B, UDRIE0);
+         // fill the send FIFO
          cbSent = MIN(cbData, FifoSize(g_pSendFifo) - FifoCount(g_pSendFifo));
          FifoWriteBlock(g_pSendFifo, pbData, cbSent);
-         // if this is the first byte, start the UART transfer
-         if (bStart)
+         // if the FIFO was empty, start the UART transfer
+         if (cbSent > 0 && bStart)
+         {
             UDR0 = FifoRead(g_pSendFifo);
+            RegSetHi(UCSR0B, UDRIE0);
+         }
       }
       pbData += cbSent;
       cbData -= cbSent;
@@ -146,14 +153,16 @@ UI8 UartRecv (PVOID pvData, UI8 cbData)
       cbRecv = FifoReadBlock(g_pRecvFifo, pvData, cbData);
    return cbRecv;
 }
-//-----------< INTERRUPT: USART_TX_vect >------------------------------------
-// Purpose:    responds to UART transmit complete events
+//-----------< INTERRUPT: USART_UDRE_vect >----------------------------------
+// Purpose:    responds to UART data register empty complete events
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-ISR(USART_TX_vect)
+ISR(USART_UDRE_vect)
 {
-   if (!FifoIsEmpty(g_pSendFifo))
+   if (FifoIsEmpty(g_pSendFifo))
+      RegSetLo(UCSR0B, UDRIE0);
+   else
    {
       BYTE bSend = FifoRead(g_pSendFifo);;
       UDR0 = bSend;

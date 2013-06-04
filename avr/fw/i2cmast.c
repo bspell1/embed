@@ -152,7 +152,7 @@ VOID I2cBeginSendRecv (
          memcpy((PBYTE)g_pbBuffer + 1, pvSend, cbSend);
       }
       g_cbSend = cbSend + 1;
-      g_cbRecv = cbRecv;
+      g_cbRecv = cbRecv + 1;
       g_pfnCallback = pfnCallback;
       // start the data transfer
       TWCR = CONTROL_START;
@@ -172,7 +172,7 @@ UI8 I2cEndSendRecv (PVOID pvRecv, UI8 cbRecv)
    {
       cbRecv = MIN(cbRecv, g_cbRecv);
       if (pvRecv != NULL)
-         memcpy(pvRecv, (PVOID)g_pbBuffer, cbRecv);
+         memcpy(pvRecv, (PBYTE)g_pbBuffer + 1, cbRecv);
    }
    return cbRecv;
 }
@@ -194,10 +194,7 @@ UI8 I2cSendRecv (
 {
    I2cBeginSendRecv(nSlaveAddr, pvSend, cbSend, cbRecv, NULL);
    if (pvRecv != NULL)
-   {
-      I2cWait();
       return I2cEndSendRecv(pvRecv, cbRecv);
-   }
    return 0;
 }
 //-----------< INTERRUPT: TWI_vect >-----------------------------------------
@@ -221,7 +218,7 @@ ISR(TWI_vect)
             TWDR = g_pbBuffer[g_cbOffset++];
             TWCR = CONTROL_XFER_DATA;
          }
-         else if (g_cbRecv != 0)
+         else if (g_cbRecv != 1)
          {
             // send complete, but combination
             // transaction, so restart in read mode
@@ -239,7 +236,7 @@ ISR(TWI_vect)
          break;
       case STATUS_ARB_LOST:                        // arbitration lost, restart
          // combination send/receive transaction,
-         // so clear the read bit ad restart
+         // so clear the read bit and restart
          if (g_cbSend != 1)
             g_pbBuffer[0] &= BitUnmask(ADDR_READ_BIT);
          TWCR = CONTROL_START;
@@ -254,7 +251,7 @@ ISR(TWI_vect)
          break;
       case STATUS_MRX_DATA_NACK:                   // data byte received, NACK transmitted
          g_cbRecv = g_cbOffset;
-         g_pbBuffer[g_cbOffset++] = TWDR;
+         g_pbBuffer[g_cbOffset] = TWDR;
          TWDR = 0xFF;
          TWCR = CONTROL_STOP;
          if (g_pfnCallback != NULL)
