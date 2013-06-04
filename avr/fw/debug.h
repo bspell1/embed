@@ -29,7 +29,7 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // DEBUG CONFIGURATION
-// DEBUG_TRACE:   debug trace handler (UART, etc)
+// DEBUG_TRACE:   debug trace handler (UartTrace, etc)
 //===========================================================================
 #ifndef DEBUG_TRACE
 #  define DebugTrace(psz, ...)

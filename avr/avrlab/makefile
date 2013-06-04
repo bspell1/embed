@@ -1,6 +1,6 @@
 TARGETNAME 	= 	avrlab
 MODULES    	= 	avrlab
-FWMODULES   = 	uart i2cmast
+FWMODULES   =	uart i2cmast
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					DEBUG_TRACE=UartTrace													\
@@ -20,12 +20,12 @@ LDFLAGS = -flto -Wl,--gc-sections,--relax
 
 all: bin bin/$(TARGETNAME).hex bin/$(TARGETNAME).eep
 
-debug: PARAMETERS+=DEBUG
-debug: all
-
 clean: ; rm -fr bin/*
 
 rebuild: clean all
+
+debug:
+	$(MAKE) PARAMETERS='$(PARAMETERS) DEBUG' FWMODULES='$(FWMODULES) debug'
 
 asm: $(MODULES:%=bin/%.S)
 

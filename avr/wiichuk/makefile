@@ -19,12 +19,12 @@ LDFLAGS = -flto -Wl,--gc-sections,--relax
 
 all: bin bin/$(TARGETNAME).hex bin/$(TARGETNAME).eep
 
-debug: PARAMETERS+=DEBUG
-debug: all
-
 clean: ; rm -fr bin/*
 
 rebuild: clean all
+
+debug:
+	$(MAKE) PARAMETERS='$(PARAMETERS) DEBUG' FWMODULES='$(FWMODULES) debug'
 
 asm: $(MODULES:%=bin/%.S)
 
