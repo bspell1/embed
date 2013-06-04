@@ -75,7 +75,9 @@ UI8      UartSendReady  ();
 VOID     UartSend       (PCVOID pvData, UI8 cbData);
 VOID     UartSendDelim  (PCVOID pvData, UI8 cbData, BYTE bDelim);
 VOID     UartSendStr    (PCSTR psz, ...);
+VOID     UartSendStrV   (PCSTR psz, va_list args);
 VOID     UartSendLine   (PCSTR psz, ...);
+VOID     UartSendLineV  (PCSTR psz, va_list args);
 UI8      UartRecvReady  ();
 UI8      UartRecv       (PVOID pvData, UI8 cbData);
 // UART helpers
@@ -83,22 +85,6 @@ inline VOID UartSendByte (BYTE b)
    { UartSend(&b, 1); }
 inline VOID UartSendChar (CHAR ch)
    { UartSend(&ch, 1); }
-inline VOID UartSendStrV (PCSTR psz, va_list args)
-   {
-      CHAR szBuffer[UART_SEND_BUFFER_SIZE + 1];
-      UI8 cchBuffer = vsnprintf(szBuffer, sizeof(szBuffer), psz, args);
-      cchBuffer = MIN(cchBuffer, UART_SEND_BUFFER_SIZE);
-      szBuffer[cchBuffer] = '\0';
-      UartSend(szBuffer, strlen(szBuffer));
-   }
-inline VOID UartSendLineV (PCSTR psz, va_list args)
-   {
-      CHAR szBuffer[UART_SEND_BUFFER_SIZE + 1];
-      UI8 cchBuffer = vsnprintf(szBuffer, sizeof(szBuffer), psz, args);
-      cchBuffer = MIN(cchBuffer, UART_SEND_BUFFER_SIZE);
-      szBuffer[cchBuffer] = '\0';
-      UartSendDelim(szBuffer, strlen(szBuffer), '\n');
-   }
 // UART tracing
-#define UartTrace UartSendLine
+#define UartTrace UartSendStr
 #endif // __UART_H

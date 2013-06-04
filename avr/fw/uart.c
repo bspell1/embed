@@ -103,11 +103,8 @@ VOID UartSend (PCVOID pvData, UI8 cbData)
 //---------------------------------------------------------------------------
 VOID UartSendDelim (PCVOID pvData, UI8 cbData, BYTE bDelim)
 {
-   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-   {
-      UartSend(pvData, cbData);
-      UartSend(&bDelim, 1);
-   }
+   UartSend(pvData, cbData);
+   UartSend(&bDelim, 1);
 }
 //-----------< FUNCTION: UartSendStr >---------------------------------------
 // Purpose:    sends a formatted string over UART
@@ -120,6 +117,20 @@ VOID UartSendStr (PCSTR psz, ...)
    UartSendStrV(psz, args);
    va_end(args);
 }
+//-----------< FUNCTION: UartSendStrV >--------------------------------------
+// Purpose:    sends a formatted string over UART
+// Parameters: psz  - the format string
+//             args - variable format string arguments
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID UartSendStrV (PCSTR psz, va_list args)
+{
+   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args) + 1;
+   CHAR szBuffer[cchBuffer + 1];
+   vsnprintf(szBuffer, cchBuffer, psz, args);
+   szBuffer[cchBuffer] = '\0';
+   UartSend(szBuffer, cchBuffer);
+}
 //-----------< FUNCTION: UartSendLine >--------------------------------------
 // Purpose:    sends a formatted, line-terminated string over UART
 // Parameters: psz - the format string
@@ -130,6 +141,20 @@ VOID UartSendLine (PCSTR psz, ...)
    va_list args; va_start(args, psz);
    UartSendLineV(psz, args);
    va_end(args);
+}
+//-----------< FUNCTION: UartSendLineV >-------------------------------------
+// Purpose:    sends a formatted, line-terminated string over UART
+// Parameters: psz  - the format string
+//             args - variable format string arguments
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID UartSendLineV (PCSTR psz, va_list args)
+{
+   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args) + 1;
+   CHAR szBuffer[cchBuffer + 1];
+   vsnprintf(szBuffer, cchBuffer, psz, args);
+   szBuffer[cchBuffer] = '\0';
+   UartSendDelim(szBuffer, cchBuffer, '\n');
 }
 //-----------< FUNCTION: UartRecvReady >-------------------------------------
 // Purpose:    retrieves the number of bytes available to receive

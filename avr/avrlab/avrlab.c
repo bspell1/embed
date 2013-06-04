@@ -24,7 +24,6 @@
 #include "avrlab.h"
 #include "debug.h"
 #include "uart.h"
-#include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -40,45 +39,15 @@ int main ()
    sei();
 
    PinSetOutput(PIN_B0);
-   PinSetOutput(PIN_C3);
+   PinSetLo(PIN_B0);
+   _delay_ms(2000);
 
    UartInit(&(UART_CONFIG) { 0 });
-   I2cInit();
 
-   UartSendByte(0xC0);
+   PinSetHi(PIN_B0);
+   _delay_ms(2000);
 
-   BYTE pbInit1[] = { 0xF0, 0x55 };
-   BYTE pbInit2[] = { 0xFB, 0x00 };
+   Assert(FALSE);
 
-   PinSetHi(PIN_C3);
-   I2cSend(0x52, pbInit1, sizeof(pbInit1));
-   _delay_ms(1);
-   I2cSend(0x52, pbInit2, sizeof(pbInit2));
-   _delay_ms(1);
-   
-   PinSetLo(PIN_C3);
-   I2cSend(0x52, pbInit1, sizeof(pbInit1));
-   _delay_ms(1);
-   I2cSend(0x52, pbInit2, sizeof(pbInit2));
-   _delay_ms(1);
-
-   for ( ; ; )
-   {
-      BYTE pbMessage[6];
-
-      PinSetHi(PIN_C3);
-      I2cSend(0x52, (BYTE[]) { 0x00 }, 1);
-      _delay_ms(1);
-      I2cRecv(0x52, pbMessage, 6);
-      UartSend(pbMessage, sizeof(pbMessage));
-
-      PinSetLo(PIN_C3);
-      I2cSend(0x52, (BYTE[]) { 0x00 }, 1);
-      _delay_ms(1);
-      I2cRecv(0x52, pbMessage, 6);
-      UartSend(pbMessage, sizeof(pbMessage));
-
-      _delay_ms(1000);
-   }
    return 0;
 }

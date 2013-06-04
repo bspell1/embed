@@ -37,6 +37,6 @@ __attribute__((used))
 __attribute__((section(".init8")))
 void DebugInit ()
 {  
-   MCUSR &= ~(1 << WDRF);
-   wdt_disable(); 
+   MCUSR &= ~(1 << WDRF);        // turn off WDT reset
+   wdt_disable();                // turn off the watchdog timer
 }
