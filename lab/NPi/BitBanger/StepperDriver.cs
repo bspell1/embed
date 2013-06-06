@@ -40,7 +40,7 @@ namespace NPi.BitBanger
             throw new ArgumentException("yellowPin");
          this.pins = new Gpio.Array(
             new[] { pinkPin, orangePin, bluePin, yellowPin }, 
-            Gpio.Mode.Write
+            Gpio.Mode.Output
          );
          this.StepsPerCycle = stepsPerCycle;
       }

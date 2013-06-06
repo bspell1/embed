@@ -97,7 +97,7 @@ VOID SpiWait ()
 //             pfnCallback - completion callback
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID SpiBeginSendRecv  (
+VOID SpiBeginSendRecv (
    UI8          nSsPin, 
    PCVOID       pvSend, 
    BSIZE        cbSend,
@@ -134,6 +134,7 @@ VOID SpiBeginSendRecv  (
 //---------------------------------------------------------------------------
 UI8 SpiEndSendRecv (PVOID pvRecv, UI8 cbRecv)
 {
+   SpiWait();
    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
       cbRecv = MIN(cbRecv, g_cbBuffer);
@@ -160,10 +161,7 @@ UI8 SpiSendRecv (
 {
    SpiBeginSendRecv(nSsPin, pvSend, cbSend, cbRecv, NULL);
    if (pvRecv != NULL)
-   {
-      SpiWait();
       return SpiEndSendRecv(pvRecv, cbRecv);
-   }
    return 0;
 }
 //-----------< INTERRUPT: SPI_STC_vect >-------------------------------------

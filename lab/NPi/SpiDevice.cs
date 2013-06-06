@@ -57,7 +57,7 @@ namespace NPi
                throw new Win32Exception();
             if (ssPin != -1)
             {
-               this.ss = new Gpio(ssPin, Gpio.Mode.Write);
+               this.ss = new Gpio(ssPin, Gpio.Mode.Output);
                this.ss.Value = true;
             }
             this.Mode = SpiMode.Mode0;
@@ -86,13 +86,13 @@ namespace NPi
          get
          { 
             Byte value;
-            if (GetMode(this.fd, out value) < 0)
+            if (Native.SpiGetMode(this.fd, out value) < 0)
                throw new Win32Exception();
             return (SpiMode)value;
          }
          set
          {
-            if (SetMode(this.fd, (Byte)value) < 0)
+            if (Native.SpiSetMode(this.fd, (Byte)value) < 0)
                throw new Win32Exception();
          }
       }
@@ -102,13 +102,13 @@ namespace NPi
          get
          {
             Byte value;
-            if (GetBitsPerWord(this.fd, out value) < 0)
+            if (Native.SpiGetBitsPerWord(this.fd, out value) < 0)
                throw new Win32Exception();
             return value;
          }
          set
          {
-            if (SetBitsPerWord(this.fd, (Byte)value) < 0)
+            if (Native.SpiSetBitsPerWord(this.fd, (Byte)value) < 0)
                throw new Win32Exception();
          }
       }
@@ -118,13 +118,13 @@ namespace NPi
          get
          {
             Int32 value;
-            if (GetClockSpeed(this.fd, out value) < 0)
+            if (Native.SpiGetClockSpeed(this.fd, out value) < 0)
                throw new Win32Exception();
             return value;
          }
          set
          {
-            if (SetClockSpeed(this.fd, value) < 0)
+            if (Native.SpiSetClockSpeed(this.fd, value) < 0)
                throw new Win32Exception();
          }
       }
@@ -179,7 +179,7 @@ namespace NPi
                }
                if (this.ss != null)
                   this.ss.Value = false;
-               if (SendReceive(this.fd, pTx, txOffset, pRx, rxOffset, count) < 0)
+               if (Native.SpiSendReceive(this.fd, pTx, txOffset, pRx, rxOffset, count) < 0)
                   throw new Win32Exception();
                if (rxBuffer != null && this.LsbFirst && rxBuffer != txBuffer)
                   for (var i = 0; i < count; i++)
@@ -279,47 +279,5 @@ namespace NPi
             throw new ArgumentNullException("buffer");
          ReadWrite(buffer, 0, null, 0, buffer.Length);
       }
-
-      #region Native Methods
-      [DllImport("monoext", EntryPoint = "SpiGetMode", SetLastError = true)]
-      private static extern Int32 GetMode (
-         Int32 fd,
-         out Byte pbMode
-      );
-      [DllImport("monoext", EntryPoint = "SpiSetMode", SetLastError = true)]
-      private static extern Int32 SetMode (
-         Int32 fd, 
-         Byte bMode
-      );
-      [DllImport("monoext", EntryPoint = "SpiGetBitsPerWord", SetLastError = true)]
-      private static extern Int32 GetBitsPerWord (
-         Int32 fd,
-         out Byte pbBitsPerWord
-      );
-      [DllImport("monoext", EntryPoint = "SpiSetBitsPerWord", SetLastError = true)]
-      private static extern Int32 SetBitsPerWord (
-         Int32 fd,
-         Byte bBitsPerWord
-      );
-      [DllImport("monoext", EntryPoint = "SpiGetClockSpeed", SetLastError = true)]
-      private static extern Int32 GetClockSpeed (
-         Int32 fd,
-         out Int32 pnClockSpeed
-      );
-      [DllImport("monoext", EntryPoint = "SpiSetClockSpeed", SetLastError = true)]
-      private static extern Int32 SetClockSpeed (
-         Int32 fd,
-         Int32 nClockSpeed
-      );
-      [DllImport("monoext", EntryPoint = "SpiSendReceive", SetLastError = true)]
-      private static extern Int32 SendReceive (
-         Int32 fd, 
-         IntPtr txBuffer, 
-         Int32 txOffset,
-         IntPtr rxBuffer, 
-         Int32 rxOffset,
-         Int32 count
-      );
-      #endregion
    }
 }

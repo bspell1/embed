@@ -45,7 +45,7 @@ namespace NPi
          GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
          try
          {
-            if (SetSlave(this.fd, this.SlaveAddress) < 0)
+            if (Native.I2cSetSlave(this.fd, this.SlaveAddress) < 0)
                throw new Win32Exception();
             var result = Syscall.read(
                this.fd, 
@@ -77,7 +77,7 @@ namespace NPi
          GCHandle hBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
          try
          {
-            if (SetSlave(this.fd, this.SlaveAddress) < 0)
+            if (Native.I2cSetSlave(this.fd, this.SlaveAddress) < 0)
                throw new Win32Exception();
             var result = Syscall.write(
                this.fd,
@@ -161,9 +161,9 @@ namespace NPi
                hRx = GCHandle.Alloc(rxBuffer, GCHandleType.Pinned);
                pRx = hRx.Value.AddrOfPinnedObject();
             }
-            if (SetSlave(this.fd, this.SlaveAddress) < 0)
+            if (Native.I2cSetSlave(this.fd, this.SlaveAddress) < 0)
                throw new Win32Exception();
-            if (SendReceive(
+            if (Native.I2cSendReceive(
                   this.fd, 
                   this.SlaveAddress, 
                   pTx, 
@@ -182,27 +182,5 @@ namespace NPi
                hRx.Value.Free();
          }
       }
-
-      #region Native Methods
-      [DllImport("monoext", EntryPoint = "I2cSetSlave", SetLastError = true)]
-      private static extern Int32 SetSlave (
-         Int32 fd, 
-         Int32 address
-      );
-      [DllImport(
-         "monoext", 
-         EntryPoint = "I2cSendReceive",
-         SetLastError = true )]
-      private static extern Int32 SendReceive (
-         Int32  fd, 
-         Int32  addr,
-         IntPtr pTxBuffer, 
-         Int32  cbTxOffset,
-         Int32  cbTxLength,
-         IntPtr pRxBuffer, 
-         Int32  cbRxOffset,
-         Int32  cbRxLength
-      );
-      #endregion
    }
 }

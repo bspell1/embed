@@ -89,7 +89,9 @@ namespace NPi
 
       private SpiDevice spi;
       private Gpio cePin;
+      private Gpio irqPin;
       private Byte[] buffer;
+      private ConfigRegister config;
       private FeatureRegister features;
 
       public Nrf24 (String path, Int32 cePin)
@@ -103,7 +105,7 @@ namespace NPi
                ClockSpeed = 8000000,
                LsbFirst = false
             };
-            this.cePin = new Gpio(cePin, Gpio.Mode.Write);
+            this.cePin = new Gpio(cePin, Gpio.Mode.Output);
             this.buffer = new Byte[33];
             // initialize register defaults
             this.cePin.Value = false;
@@ -140,6 +142,22 @@ namespace NPi
          }
       }
 
+      public Nrf24 (String path, Int32 cePin, Int32 irqPin, Reactor reactor)
+         : this(path, cePin)
+      {
+         this.irqPin = new Gpio(irqPin, Gpio.TriggerEdge.Falling, reactor);
+         this.irqPin.Triggered += this.OnInterrupt;
+      }
+
+      public Nrf24 (String path, Int32 cePin, Reactor reactor)
+         : this(path, cePin)
+      {
+         reactor.Poll(
+            () => this.Status.Interrupts != Interrupt.None,
+            this.OnInterrupt
+         );
+      }
+
       public void Dispose ()
       {
          if (this.spi != null)
@@ -148,19 +166,27 @@ namespace NPi
          if (this.cePin != null)
             this.cePin.Dispose();
          this.cePin = null;
+         if (this.irqPin != null)
+            this.irqPin.Dispose();
+         this.irqPin = null;
       }
+
+      public event Action<StatusRegister> IrqTriggered;
+      public event Action<StatusRegister> RXDataReady;
+      public event Action<StatusRegister> TXDataSent;
+      public event Action<StatusRegister> TXRetryFailed;
 
       #region Registers
       public ConfigRegister Config
       {
          get
          {
-            ReadRegister(RegAddressConfig, 1);
-            return new ConfigRegister(this.buffer[1]);
+            return this.config;
          }
          set
          {
             WriteRegister(RegAddressConfig, value.Encode());
+            this.config = value;
          }
       }
 
@@ -397,87 +423,33 @@ namespace NPi
       }
       public Int32 RXLength0
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength0, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength0");
-            WriteRegister(RegAddressRXLength0, (Byte)value);
-         }
+         get { return GetRXLength(0); }
+         set { SetRXLength(0, value); }
       }
       public Int32 RXLength1
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength1, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength1");
-            WriteRegister(RegAddressRXLength1, (Byte)value);
-         }
+         get { return GetRXLength(1); }
+         set { SetRXLength(1, value); }
       }
       public Int32 RXLength2
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength2, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength2");
-            WriteRegister(RegAddressRXLength2, (Byte)value);
-         }
+         get { return GetRXLength(2); }
+         set { SetRXLength(2, value); }
       }
       public Int32 RXLength3
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength3, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength3");
-            WriteRegister(RegAddressRXLength3, (Byte)value);
-         }
+         get { return GetRXLength(3); }
+         set { SetRXLength(3, value); }
       }
       public Int32 RXLength4
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength4, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength4");
-            WriteRegister(RegAddressRXLength4, (Byte)value);
-         }
+         get { return GetRXLength(4); }
+         set { SetRXLength(4, value); }
       }
       public Int32 RXLength5
       {
-         get
-         {
-            ReadRegister(RegAddressRXLength5, 1);
-            return this.buffer[1];
-         }
-         set
-         {
-            if (value < 0 || value > 32)
-               throw new ArgumentOutOfRangeException("RXLength5");
-            WriteRegister(RegAddressRXLength5, (Byte)value);
-         }
+         get { return GetRXLength(5); }
+         set { SetRXLength(5, value); }
       }
       public FifoStatusRegister FifoStatus
       {
@@ -514,18 +486,49 @@ namespace NPi
       #endregion
 
       #region Operations
-      public void ClearInterrupts (Interrupt interrupt = Interrupt.All)
+      private void OnInterrupt ()
+      {
+         var status = ClearInterrupts();
+         if (this.IrqTriggered != null)
+            this.IrqTriggered(status);
+         if (status.Interrupts.HasFlag(Interrupt.RXDataReady))
+            if (this.RXDataReady != null)
+               this.RXDataReady(status);
+         if (status.Interrupts.HasFlag(Interrupt.TXDataSent))
+            if (this.TXDataSent != null)
+               this.TXDataSent(status);
+         if (status.Interrupts.HasFlag(Interrupt.TXRetryFailed))
+            if (this.TXRetryFailed != null)
+               this.TXRetryFailed(status);
+      }
+      public Int32 GetRXLength (Int32 pipe)
+      {
+         if (pipe < 0 || pipe > 5)
+            throw new ArgumentOutOfRangeException("pipe");
+         ReadRegister(RegAddressRXLength0 + pipe, 1);
+         return (Int32)this.buffer[1];
+      }
+      public void SetRXLength (Int32 pipe, Int32 length)
+      {
+         if (pipe < 0 || pipe > 5)
+            throw new ArgumentOutOfRangeException("pipe");
+         if (length < 0 || length > 32)
+            throw new ArgumentOutOfRangeException("length");
+         WriteRegister(RegAddressRXLength0 + pipe, (Byte)length);
+      }
+      public StatusRegister ClearInterrupts (Interrupt interrupt = Interrupt.All)
       {
          WriteRegister(RegAddressStatus, (Byte)((Byte)interrupt << 4));
+         return new StatusRegister(this.buffer[0]);
       }
       public void TransmitPacket (Byte[] data)
       {
-         // TODO: validate packet length
+         if (this.config.Mode != Mode.Transmit)
+            throw new InvalidOperationException("Transciever not configured for transmit");
          this.buffer[0] = (this.Features.DisableAck) ? 
             CommandTXWriteNoAck : 
             CommandTXWritePacket;
-         for (var i = 0; i < data.Length; i++)
-            this.buffer[i + 1] = data[i];
+         Array.Copy(data, 0, this.buffer, 1, data.Length);
          ReadWrite(data.Length);
          this.cePin.Value = true;
          this.cePin.Value = false;
@@ -535,32 +538,71 @@ namespace NPi
          this.buffer[0] = CommandTXFlush;
          ReadWrite(0);
       }
-      public void BeginReceivePacket ()
+      public void Listen ()
       {
+         if (this.config.Mode != Mode.Receive)
+            throw new InvalidOperationException("The transciever is not configured for receive");
          this.cePin.Value = true;
       }
-      public Byte[] EndReceivePacket (Int32 length)
+      public void Unlisten ()
       {
-         var timeout = 2000;
-         for ( ; ; )
-         {
-            if (this.Status.Interrupts.HasFlag(Interrupt.RXDataReady))
-               break;
-            if (--timeout == 0)
-               throw new TimeoutException();
-            Thread.Sleep(1);
-         }
+         if (this.config.Mode != Mode.Receive)
+            throw new InvalidOperationException("The transciever is not configured for receive");
          this.cePin.Value = false;
-         Byte[] result = new Byte[length];
+      }
+      public Byte[] ReceivePacket (Byte[] buffer)
+      {
+         if (this.config.Mode != Mode.Receive)
+            throw new InvalidOperationException("The transciever is not configured for receive");
          this.buffer[0] = CommandRXReadPacket;
-         ReadWrite(length);
-         Array.Copy(this.buffer, 1, result, 0, length);
-         return result;
+         ReadWrite(buffer.Length);
+         Array.Copy(this.buffer, 1, buffer, 0, buffer.Length);
+         return buffer;
+      }
+      public Byte[] ReceivePacket (Int32 pipe)
+      {
+         var length = GetRXLength(pipe);
+         return ReceivePacket(new Byte[length]);
       }
       public void FlushReceive ()
       {
          this.buffer[0] = CommandRXFlush;
          ReadWrite(0);
+      }
+      public void Validate ()
+      {
+         var addrLength = this.AddressWidth;
+         switch (this.config.Mode)
+         {
+            case Mode.Transmit:
+               if (this.TXAddress.Length != addrLength)
+                  throw new InvalidOperationException("Invalid TX address length");
+               break;
+            case Mode.Receive:
+               var rxEnabled = this.RXEnabled;
+               var addrs = new[]
+               { 
+                  this.RXAddress0, 
+                  this.RXAddress1,
+                  this.RXAddress2,
+                  this.RXAddress3,
+                  this.RXAddress4,
+                  this.RXAddress5
+               };
+               if (rxEnabled[0] && addrs[1].Length != addrLength)
+                  throw new InvalidOperationException("Invalid RX0 address length");
+               if (rxEnabled[1] && addrs[2].Length != addrLength)
+                  throw new InvalidOperationException("Invalid RX1 address length");
+               for (var i = 0; i < addrs.Length; i++)
+                  for (var j = i + 1; j < addrs.Length; j++)
+                     if (rxEnabled[i] && rxEnabled[j] && addrs[i].Last() == addrs[j].Last())
+                        throw new InvalidOperationException(
+                           String.Format("Duplicate active RX address LSB: {0}", addrs[i])
+                        );
+               break;
+            default:
+               throw new InvalidOperationException("Invalid TX/RX mode");
+         }
       }
       public String DumpRegisters ()
       {

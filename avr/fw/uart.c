@@ -125,9 +125,9 @@ VOID UartSendStr (PCSTR psz, ...)
 //---------------------------------------------------------------------------
 VOID UartSendStrV (PCSTR psz, va_list args)
 {
-   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args) + 1;
+   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args);
    CHAR szBuffer[cchBuffer + 1];
-   vsnprintf(szBuffer, cchBuffer, psz, args);
+   vsnprintf(szBuffer, cchBuffer + 1, psz, args);
    szBuffer[cchBuffer] = '\0';
    UartSend(szBuffer, cchBuffer);
 }
@@ -150,9 +150,9 @@ VOID UartSendLine (PCSTR psz, ...)
 //---------------------------------------------------------------------------
 VOID UartSendLineV (PCSTR psz, va_list args)
 {
-   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args) + 1;
+   UI8 cchBuffer = vsnprintf(NULL, 0, psz, args);
    CHAR szBuffer[cchBuffer + 1];
-   vsnprintf(szBuffer, cchBuffer, psz, args);
+   vsnprintf(szBuffer, cchBuffer + 1, psz, args);
    szBuffer[cchBuffer] = '\0';
    UartSendDelim(szBuffer, cchBuffer, '\n');
 }

@@ -15,9 +15,9 @@ namespace NPi
 
       private void Main ()
       {
-         using (rs = new Gpio(17, Gpio.Mode.Write))
-         using (en = new Gpio(18, Gpio.Mode.Write))
-         using (da = new Gpio.Array(new[] { 22, 23, 24, 25 }, Gpio.Mode.Write))
+         using (rs = new Gpio(17, Gpio.Mode.Output))
+         using (en = new Gpio(18, Gpio.Mode.Output))
+         using (da = new Gpio.Array(new[] { 22, 23, 24, 25 }, Gpio.Mode.Output))
          {
             rs.Value = en.Value = false;
             da.Value = 0;

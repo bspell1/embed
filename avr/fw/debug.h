@@ -54,10 +54,9 @@
       if (!(b))                                                            \
       {                                                                    \
          Trace(                                                            \
-            "Assert:%s():%d %s\n",                                         \
+            "Assert:%s():%d\n",                                            \
             __FUNCTION__,                                                  \
-            (UI16)__LINE__,                                                \
-            #b                                                             \
+            (UI16)__LINE__                                                 \
          );                                                                \
          AvrAbort();                                                       \
       }

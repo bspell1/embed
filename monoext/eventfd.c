@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  avrlab.c
-// Purpose: AVR test program
+// Module:  eventfd.c
+// Purpose: eventfd system calls
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -20,33 +20,27 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <sys/eventfd.h>
 //-------------------[      Project Include Files      ]-------------------//
-#include "avrlab.h"
-#include "debug.h"
-#include "uart.h"
+#include "monoext.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
+//-----------< FUNCTION: EventFDCreate >-------------------------------------
+// Purpose:    creates a new eventfd handle
+// Parameters: value - the initial eventfd value
+//             flags - eventfd flags
+// Returns:    the new event file descriptor if successful
+//             -1 otherwise
+// Usage:      
+//    [DllImport("monoext", EntryPoint = "EventFDCreate", SetLastError = true)]
+//    public static extern Int32 EventFDCreate (
+//       Int32 value,
+//       Int32 flags
+//    );
 //---------------------------------------------------------------------------
-int main ()
+int EventFDCreate (int value, int flags)
 {
-   sei();
-
-   PinSetLo(PIN_B0);
-   PinSetOutput(PIN_B0);
-
-   UartInit(&(UART_CONFIG) { 0 });
-
-   for ( ; ; )
-   {
-      
-   }
-
-   return 0;
+   return eventfd(value, flags);
 }

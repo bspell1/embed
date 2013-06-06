@@ -38,6 +38,30 @@ namespace Lab
       public void Run ()
       {
 #if false
+         var evt = new EventFD();
+         var reactor = new Reactor();
+         reactor.Select(evt.FD, () => Console.WriteLine("signaled"));
+         reactor.Start();
+         Thread.Sleep(100);
+         Console.WriteLine("incrementing");
+         evt.Increment();
+         Thread.Sleep(100);
+         Console.WriteLine("incrementing");
+         evt.Increment();
+         Thread.Sleep(100);
+         Console.WriteLine("decrementing");
+         evt.Decrement();
+         Thread.Sleep(100);
+         Console.WriteLine("decrementing");
+         evt.Decrement();
+         Thread.Sleep(100);
+         Console.WriteLine("incrementing");
+         evt.Increment();
+         Thread.Sleep(100);
+         reactor.Join();
+#endif
+
+#if false
          using (var chuk = new WiiChuk("/dev/i2c-1", 25, false))
          {
             for (; ; )
@@ -62,40 +86,60 @@ namespace Lab
 #endif
 
 #if true
-         using (var wii = new Nrf24("/dev/spidev0.0", 17))
+         using (var reactor = new Reactor())
+         using (var rx = new Nrf24("/dev/spidev0.0", 17, reactor))
+         using (var tx = new Nrf24("/dev/spidev0.1", 18))
          {
-            wii.RXAddress0 = "Wii00";
-            wii.RXLength0 = 12;
+            rx.RXAddress0 = tx.TXAddress = "Wii00";
+            rx.RXLength0 = 12;
             // start up the transmitter/receiver
-            wii.Config = new Nrf24.ConfigRegister(wii.Config)
+            rx.Config = new Nrf24.ConfigRegister(rx.Config)
             {
-               Crc = Nrf24.Crc.None
+               Mode = Nrf24.Mode.Receive,
+               Crc = Nrf24.Crc.TwoByte
             };
-            wii.RFChannel = 60;
-            wii.RFConfig = new Nrf24.RFConfigRegister(wii.RFConfig)
+            tx.Config = new Nrf24.ConfigRegister(tx.Config)
             {
-               BitRate = Nrf24.BitRate.OneMbps
+               Mode = Nrf24.Mode.Transmit,
+               Crc = Nrf24.Crc.TwoByte
             };
-            wii.Config = new Nrf24.ConfigRegister(wii.Config)
-               { Mode = Nrf24.Mode.Receive };
-            Console.WriteLine(wii.DumpRegisters());
+            tx.Features = new Nrf24.FeatureRegister(tx.Features)
+            {
+               DisableAck = true
+            };
+            tx.Validate();
+            rx.Validate();
+            Boolean received = false;
+            rx.RXDataReady += status =>
+            {
+               received = true;
+               while (!rx.FifoStatus.RXEmpty)
+                  Console.WriteLine(
+                     "{0:h:mm:ss tt}: Received {1}", 
+                     DateTime.Now, 
+                     BitConverter.ToString(rx.ReceivePacket(new Byte[rx.RXLength0]))
+                  );
+            };
+            reactor.Start();
+            rx.Listen();
             for (; ; )
             {
-               wii.BeginReceivePacket();
-               try
+               //tx.TransmitPacket(Enumerable.Repeat(0, 12).Select((e, i) => (Byte)i).ToArray());
+               if (!received)
                {
-                  Console.Write("{0:h:mm:ss tt}: Receiving (carrier = {1})...", DateTime.Now, wii.CarrierDetect);
-                  var result = wii.EndReceivePacket(12);
-                  Console.WriteLine("done ({0}).", BitConverter.ToString(result));
+                  Console.WriteLine(
+                     "{0:h:mm:ss tt}: Carrier: {1}",
+                     DateTime.Now,
+                     rx.CarrierDetect
+                  );
+                  Console.WriteLine(rx.DumpRegisters());
                }
-               catch (TimeoutException)
-               {
-                  Console.WriteLine("timeout.");
-               }
-               wii.ClearInterrupts();
+               received = false;
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
+               Thread.Sleep(500);
             }
+            reactor.Join();
          }
 #endif
 

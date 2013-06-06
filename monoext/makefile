@@ -1,7 +1,7 @@
 TARGETPATH = /usr/local/lib
 TARGETNAME = monoext
 TARGETVER  = 1.0.1
-MODULES    = spi i2c
+MODULES    = spi i2c eventfd
 
 CC = gcc
 LD = gcc

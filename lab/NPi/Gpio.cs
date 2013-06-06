@@ -10,8 +10,17 @@ namespace NPi
    {
       public enum Mode
       {
-         Read,
-         Write
+         Input,
+         Output
+      }
+
+      [Flags]
+      public enum TriggerEdge
+      {
+         None = 0,
+         Rising = 1,
+         Falling = 2,
+         Both = Rising | Falling
       }
 
       public const Boolean Hi = true;
@@ -19,7 +28,7 @@ namespace NPi
 
       private const String RootPath = "/sys/class/gpio";
       private Int32 pin;
-      private Stream stream;
+      private FileStream stream;
 
       public Gpio (Int32 pin, Mode mode)
       {
@@ -34,16 +43,47 @@ namespace NPi
             var dirPath = Path.Combine(pinPath, "direction");
             using (var dir = new FileStream(dirPath, FileMode.Open, FileAccess.Write))
             using (var writer = new StreamWriter(dir, Encoding.ASCII))
-               writer.Write(mode == Mode.Write ? "out" : "in");
+               writer.Write(mode == Mode.Output ? "out" : "in");
             var valPath = Path.Combine(pinPath, "value");
             this.stream = new FileStream(
                valPath,
                FileMode.Open,
-               mode == Mode.Write ? FileAccess.Write : FileAccess.Read,
+               mode == Mode.Output ? FileAccess.Write : FileAccess.Read,
                FileShare.Read,
                1,
                FileOptions.WriteThrough
             );
+         }
+         catch
+         {
+            Dispose();
+            throw;
+         }
+      }
+
+      public Gpio (Int32 pin, TriggerEdge edge, Reactor reactor)
+         : this(pin, Mode.Input)
+      {
+         try
+         {
+            var edgePath = Path.Combine(
+               RootPath, 
+               String.Format("gpio{0}", pin), 
+               "edge"
+            );
+            using (var edgeFile = new FileStream(edgePath, FileMode.Open, FileAccess.Write))
+            using (var writer = new StreamWriter(edgeFile, Encoding.ASCII))
+               writer.Write(edge.ToString().ToLower());
+            var h = this.stream.SafeFileHandle;
+            reactor.Select(
+               h.DangerousGetHandle().ToInt32(),
+               () =>
+               {
+                  if (this.Triggered != null)
+                     this.Triggered();
+               }
+            );
+            h.SetHandleAsInvalid();
          }
          catch
          {
@@ -75,6 +115,8 @@ namespace NPi
          }
          this.pin = 0;
       }
+
+      public event Action Triggered;
 
       public Boolean Value
       {
@@ -139,8 +181,8 @@ namespace NPi
             get
             {
                var value = 0;
-               for (var i = this.pins.Length - 1; i >= 0; i--)
-                  value = (value << 1) & (this.pins[i].Value ? 1 : 0);
+               for (var i = 0; i < this.pins.Length; i++)
+                  value |= (this.pins[i].Value ? 1 : 0) << i;
                return value;
             }
             set
