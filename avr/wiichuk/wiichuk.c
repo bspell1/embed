@@ -20,18 +20,26 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <avr/eeprom.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "wiichuk.h"
 #include "i2cmast.h" 
 #include "spimast.h"
 #include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
-#define WIICHUK_ADDRESS             0x52           // I2C address for Wii chuks
+#define WIICHUK_ADDRESS_LENGTH      6              // NRF address buffer length
+#define WIICHUK_ADDRESS_DEFAULT     "Wii00"        // default NRF address
+#define WIICHUK_I2C_ADDRESS         0x52           // I2C address for Wii chuks
 #define WIICHUK_SELECT_PIN          PIN_C3         // chuk chip select pin
 #define WIICHUK_MESSAGE_SIZE        12             // protocol message size
 //-------------------[        Module Variables         ]-------------------//
+// NRF address SRAM/EEPROM
+static CHAR       g_szAddress[WIICHUK_ADDRESS_LENGTH];
+static CHAR EEMEM g_szEEAddress[WIICHUK_ADDRESS_LENGTH] = WIICHUK_ADDRESS_DEFAULT;
+// Wii nunchuk initialization protocol data
 static const BYTE g_pbWiiChukInit1[] = { 0xF0, 0x55 };
 static const BYTE g_pbWiiChukInit2[] = { 0xFB, 0x00 };
+// WiiChuk data transfer buffer
 static BYTE       g_pbWiiChukMsg[WIICHUK_MESSAGE_SIZE];
 //-------------------[        Module Prototypes        ]-------------------//
 static VOID WiiChukInit ();
@@ -46,7 +54,6 @@ static VOID WiiChukSend ();
 //---------------------------------------------------------------------------
 int main ()
 {
-   PinSetOutput(PIN_B0);
    WiiChukInit();
    for ( ; ; )
    {
@@ -63,7 +70,16 @@ int main ()
 VOID WiiChukInit ()
 {
    sei();
+   // load the transceiver address from EEPROM
+   eeprom_read_block(g_szAddress, g_szEEAddress, WIICHUK_ADDRESS_LENGTH);
    // initialize communication
+   // . initialize I2C for the Wii nunchuks and SPI for the NRF24
+   // . initialize the NRF24
+   //   - SPI slave select pin on B2
+   //   - chip enable on B1
+   //   - 16-bit CRC
+   //   - transciever address ffrom EEPROM
+   //   - transmit mode with no acknowledgements
    I2cInit();
    SpiInit();
    Nrf24Init(
@@ -74,20 +90,29 @@ VOID WiiChukInit ()
       }
    );
    Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24SetTXAddress("Wii00");
+   Nrf24SetTXAddress(g_szAddress);
    Nrf24DisableAck();
    Nrf24PowerOn(NRF24_MODE_SEND);
-   // initialize the Wii nunchuks
+   // initialize chuk 0
+   // . set the chip select pin low to trigger the chuk 0 PNP transistor
+   // . send the first initialization command
+   // . wait for 1ms, per the Wii nunchuk protocol
+   // . send the second initialization command
    PinSetOutput(WIICHUK_SELECT_PIN);
    PinSetLo(WIICHUK_SELECT_PIN);
-   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit1, sizeof(g_pbWiiChukInit1));
+   I2cSend(WIICHUK_I2C_ADDRESS, g_pbWiiChukInit1, sizeof(g_pbWiiChukInit1));
    _delay_ms(1);
-   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit2, sizeof(g_pbWiiChukInit2));
+   I2cSend(WIICHUK_I2C_ADDRESS, g_pbWiiChukInit2, sizeof(g_pbWiiChukInit2));
    _delay_ms(1);
+   // initialize chuk 1
+   // . set the chip select pin high to trigger the chuk 1 NPN transistor
+   // . send the first initialization command
+   // . wait for 1ms, per the Wii nunchuk protocol
+   // . send the second initialization command
    PinSetHi(WIICHUK_SELECT_PIN);
-   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit1, sizeof(g_pbWiiChukInit1));
+   I2cSend(WIICHUK_I2C_ADDRESS, g_pbWiiChukInit1, sizeof(g_pbWiiChukInit1));
    _delay_ms(1);
-   I2cSend(WIICHUK_ADDRESS, g_pbWiiChukInit2, sizeof(g_pbWiiChukInit2));
+   I2cSend(WIICHUK_I2C_ADDRESS, g_pbWiiChukInit2, sizeof(g_pbWiiChukInit2));
    _delay_ms(1);
 }
 //-----------< FUNCTION: WiiChukRead >----------------------------------------
@@ -100,29 +125,40 @@ VOID WiiChukRead ()
 {
    BYTE pbRegAddress[] = { 0x00 };
    // read chuk 0
+   // . set the chip select pin low to trigger the chuk 0 PNP transistor
+   // . send the I2C read address (0)
+   // . wait for 1ms, per the Wii nunchuk protocol
+   // . receive the 6-byte data from the chuk
+   // . note that send/recv cannot be combined into a single transaction
    PinSetLo(WIICHUK_SELECT_PIN);
    I2cSend(
-      WIICHUK_ADDRESS, 
+      WIICHUK_I2C_ADDRESS, 
       pbRegAddress, 
       sizeof(pbRegAddress)
    );
    _delay_ms(1);
    I2cRecv(
-      WIICHUK_ADDRESS, 
+      WIICHUK_I2C_ADDRESS, 
       g_pbWiiChukMsg, 
       WIICHUK_MESSAGE_SIZE / 2
    );
+   // hold the select pin low while the I2C transaction completes
    _delay_us(10);
    // read chuk 1
+   // . set the chip select pin high to trigger the chuk 1 NPN transistor
+   // . send the I2C read address (0)
+   // . wait for 1ms, per the Wii nunchuk protocol
+   // . receive the 6-byte data from the chuk
+   // . note that send/recv cannot be combined into a single transaction
    PinSetHi(WIICHUK_SELECT_PIN);
    I2cSend(
-      WIICHUK_ADDRESS, 
+      WIICHUK_I2C_ADDRESS, 
       pbRegAddress, 
       sizeof(pbRegAddress)
    );
    _delay_ms(1);
    I2cRecv(
-      WIICHUK_ADDRESS, 
+      WIICHUK_I2C_ADDRESS, 
       g_pbWiiChukMsg + WIICHUK_MESSAGE_SIZE / 2, 
       WIICHUK_MESSAGE_SIZE / 2
    );
