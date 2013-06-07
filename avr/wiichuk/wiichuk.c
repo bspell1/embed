@@ -71,7 +71,7 @@ VOID WiiChukInit ()
 {
    sei();
    // load the transceiver address from EEPROM
-   eeprom_read_block(g_szAddress, g_szEEAddress, WIICHUK_ADDRESS_LENGTH);
+   eeprom_read_block(&g_szAddress, &g_szEEAddress, WIICHUK_ADDRESS_LENGTH);
    // initialize communication
    // . initialize I2C for the Wii nunchuks and SPI for the NRF24
    // . initialize the NRF24

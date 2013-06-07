@@ -298,109 +298,33 @@ namespace NPi
       }
       public String RXAddress0
       {
-         get
-         {
-            ReadRegister(RegAddressRXAddress0, 5);
-            return Encoding.ASCII.GetString(
-               this.buffer.Skip(1).Take(5).Reverse().ToArray()
-            );
-         }
-         set
-         {
-            if (value == null || value.Length < 3 || value.Length > 5)
-               throw new ArgumentException("RXAddress0");
-            WriteRegister(
-               RegAddressRXAddress0, 
-               Encoding.ASCII.GetBytes(value).Reverse().ToArray()
-            );
-         }
+         get { return GetRXAddress(0); }
+         set { SetRXAddress(0, value); }
       }
       public String RXAddress1
       {
-         get
-         {
-            ReadRegister(RegAddressRXAddress1, 5);
-            return Encoding.ASCII.GetString(
-               this.buffer.Skip(1).Take(5).Reverse().ToArray()
-            );
-         }
-         set
-         {
-            if (value == null || value.Length < 3 || value.Length > 5)
-               throw new ArgumentException("RXAddress1");
-            WriteRegister(
-               RegAddressRXAddress1,
-               Encoding.ASCII.GetBytes(value).Reverse().ToArray()
-            );
-         }
+         get { return GetRXAddress(1); }
+         set { SetRXAddress(1, value); }
       }
       public String RXAddress2
       {
-         get
-         {
-            var prefix = this.RXAddress1;
-            prefix = prefix.Substring(0, prefix.Length - 1);
-            ReadRegister(RegAddressRXAddress2, 1);
-            return prefix + Encoding.ASCII.GetChars(this.buffer, 1, 1)[0];
-         }
-         set
-         {
-            WriteRegister(
-               RegAddressRXAddress2, 
-               Encoding.ASCII.GetBytes(new[] { value.Last() })
-            );
-         }
+         get { return GetRXAddress(2); }
+         set { SetRXAddress(2, value); }
       }
       public String RXAddress3
       {
-         get
-         {
-            var prefix = this.RXAddress1;
-            prefix = prefix.Substring(0, prefix.Length - 1);
-            ReadRegister(RegAddressRXAddress3, 1);
-            return prefix + Encoding.ASCII.GetChars(this.buffer, 1, 1)[0];
-         }
-         set
-         {
-            WriteRegister(
-               RegAddressRXAddress3,
-               Encoding.ASCII.GetBytes(new[] { value.Last() })
-            );
-         }
+         get { return GetRXAddress(3); }
+         set { SetRXAddress(3, value); }
       }
       public String RXAddress4
       {
-         get
-         {
-            var prefix = this.RXAddress1;
-            prefix = prefix.Substring(0, prefix.Length - 1);
-            ReadRegister(RegAddressRXAddress4, 1);
-            return prefix + Encoding.ASCII.GetChars(this.buffer, 1, 1)[0];
-         }
-         set
-         {
-            WriteRegister(
-               RegAddressRXAddress4,
-               Encoding.ASCII.GetBytes(new[] { value.Last() })
-            );
-         }
+         get { return GetRXAddress(4); }
+         set { SetRXAddress(4, value); }
       }
       public String RXAddress5
       {
-         get
-         {
-            var prefix = this.RXAddress1;
-            prefix = prefix.Substring(0, prefix.Length - 1);
-            ReadRegister(RegAddressRXAddress5, 1);
-            return prefix + Encoding.ASCII.GetChars(this.buffer, 1, 1)[0];
-         }
-         set
-         {
-            WriteRegister(
-               RegAddressRXAddress5,
-               Encoding.ASCII.GetBytes(new[] { value.Last() })
-            );
-         }
+         get { return GetRXAddress(5); }
+         set { SetRXAddress(5, value); }
       }
       public String TXAddress
       {
@@ -500,6 +424,57 @@ namespace NPi
          if (status.Interrupts.HasFlag(Interrupt.TXRetryFailed))
             if (this.TXRetryFailed != null)
                this.TXRetryFailed(status);
+      }
+      public String GetRXAddress (Int32 pipe)
+      {
+         if (pipe < 0 || pipe > 5)
+            throw new ArgumentOutOfRangeException("pipe");
+         var address = "";
+         if (pipe == 0)
+         {
+            ReadRegister(RegAddressRXAddress0, 5);
+            address = Encoding.ASCII.GetString(
+               this.buffer.Skip(1).Take(5).Reverse().ToArray()
+            );
+         }
+         else
+         {
+            ReadRegister(RegAddressRXAddress1, 5);
+            address = Encoding.ASCII.GetString(
+               this.buffer.Skip(1).Take(5).Reverse().ToArray()
+            );
+            if (pipe > 1)
+            {
+               address = address.Substring(0, address.Length - 1);
+               ReadRegister(RegAddressRXAddress0 + pipe, 1);
+               address += Encoding.ASCII.GetChars(this.buffer, 1, 1)[0];
+            }
+         }
+         return address;
+      }
+      public void SetRXAddress (Int32 pipe, String address)
+      {
+         if (pipe < 0 || pipe > 5)
+            throw new ArgumentOutOfRangeException("pipe");
+         if (address == null || address.Length < 3 || address.Length > 5)
+            throw new ArgumentException("address");
+         if (pipe == 0)
+            WriteRegister(
+               RegAddressRXAddress0,
+               Encoding.ASCII.GetBytes(address).Reverse().ToArray()
+            );
+         else
+         {
+            WriteRegister(
+               RegAddressRXAddress1,
+               Encoding.ASCII.GetBytes(address).Reverse().ToArray()
+            );
+            if (pipe > 1)
+               WriteRegister(
+                  RegAddressRXAddress0 + pipe,
+                  Encoding.ASCII.GetBytes(new[] { address.Last() })
+               );
+         }
       }
       public Int32 GetRXLength (Int32 pipe)
       {

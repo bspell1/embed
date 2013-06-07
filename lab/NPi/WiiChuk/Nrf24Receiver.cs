@@ -10,11 +10,11 @@ namespace NPi.WiiChuk
       private Int32 pipe;
       private Byte[] buffer;
 
-      public Nrf24Receiver (Nrf24 receiver, Int32 pipe = 0)
+      public Nrf24Receiver (Nrf24 receiver, String address, Int32 pipe = 0)
       {
-         this.Count = 1;
          this.pipe = pipe;
          this.receiver = receiver;
+         this.receiver.SetRXAddress(pipe, address);
          this.receiver.RXDataReady += status =>
          {
             while (status.RXReadyPipe == this.pipe)
@@ -25,6 +25,7 @@ namespace NPi.WiiChuk
                status = this.receiver.Status;
             }
          };
+         this.Count = 1;
       }
 
       #region IWiiChukReceiver Implementation
@@ -36,7 +37,7 @@ namespace NPi.WiiChuk
          }
          set
          {
-            if (value != this.buffer.Length / WiiChukState.EncodedSize)
+            if (this.buffer == null || value != this.buffer.Length / WiiChukState.EncodedSize)
             {
                this.receiver.SetRXLength(
                   this.pipe, 

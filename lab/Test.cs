@@ -16,6 +16,7 @@ using Mono.Unix;
 using Mono.Unix.Native;
 
 using NPi;
+using NPi.WiiChuk;
 
 namespace Lab
 {
@@ -87,59 +88,46 @@ namespace Lab
 
 #if true
          using (var reactor = new Reactor())
-         using (var rx = new Nrf24("/dev/spidev0.0", 17, reactor))
-         using (var tx = new Nrf24("/dev/spidev0.1", 18))
+         using (var rx = new Nrf24("/dev/spidev0.0", 17, 25, reactor))
+         using (var wii = new WiiChukPair(new Nrf24Receiver(rx, "Wii00")))
          {
-            rx.RXAddress0 = tx.TXAddress = "Wii00";
-            rx.RXLength0 = 12;
-            // start up the transmitter/receiver
             rx.Config = new Nrf24.ConfigRegister(rx.Config)
             {
                Mode = Nrf24.Mode.Receive,
                Crc = Nrf24.Crc.TwoByte
             };
-            tx.Config = new Nrf24.ConfigRegister(tx.Config)
-            {
-               Mode = Nrf24.Mode.Transmit,
-               Crc = Nrf24.Crc.TwoByte
-            };
-            tx.Features = new Nrf24.FeatureRegister(tx.Features)
-            {
-               DisableAck = true
-            };
-            tx.Validate();
             rx.Validate();
-            Boolean received = false;
-            rx.RXDataReady += status =>
+            wii.Updated += (left, right) =>
             {
-               received = true;
-               while (!rx.FifoStatus.RXEmpty)
-                  Console.WriteLine(
-                     "{0:h:mm:ss tt}: Received {1}", 
-                     DateTime.Now, 
-                     BitConverter.ToString(rx.ReceivePacket(new Byte[rx.RXLength0]))
-                  );
+               Console.Write(
+                  "\r{0:h:mm:ss tt}: left Jx:{1:0.00,5} Jy:{2:0.00,5} Ax:{3:0.00,5} Ay:{4:0.00,5} Az:{5:0.00,5} C:{6,5} Z:{7,5} right Jx:{8:0.00,5} Jy:{9:0.00,5} Ax:{10:0.00,5} Ay:{11:0.00,5} Az:{12:0.00,5} C:{13,5} Z:{14,5}", 
+                  DateTime.Now,
+                  left.JoystickX,
+                  left.JoystickY,
+                  left.AcceleroX,
+                  left.AcceleroY,
+                  left.AcceleroZ,
+                  left.CButton,
+                  left.ZButton,
+                  right.JoystickX,
+                  right.JoystickY,
+                  right.AcceleroX,
+                  right.AcceleroY,
+                  right.AcceleroZ,
+                  right.CButton,
+                  right.ZButton
+               );
             };
             reactor.Start();
             rx.Listen();
             for (; ; )
             {
-               //tx.TransmitPacket(Enumerable.Repeat(0, 12).Select((e, i) => (Byte)i).ToArray());
-               if (!received)
-               {
-                  Console.WriteLine(
-                     "{0:h:mm:ss tt}: Carrier: {1}",
-                     DateTime.Now,
-                     rx.CarrierDetect
-                  );
-                  Console.WriteLine(rx.DumpRegisters());
-               }
-               received = false;
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
                Thread.Sleep(500);
             }
             reactor.Join();
+            Console.WriteLine();
          }
 #endif
 

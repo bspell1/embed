@@ -32,11 +32,11 @@ dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
 write-flash:  bin bin/$(TARGETNAME).hex
-	avrdude -q -patmega328p -cusbtiny -B 1 -U  flash:w:bin/$(TARGETNAME).hex
+	avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
 write-eeprom: bin bin/$(TARGETNAME).eep
 	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 write-fuses:
-	avrdude -q -patmega328p -cusbtiny -B 1 -U lfuse:w:0xFF:m -U hfuse:w:0xDA:m -U efuse:w:0xFF:m
+	avrdude -q -patmega328p -cusbtiny -B 1 -U lfuse:w:0xFF:m -U hfuse:w:0xD2:m -U efuse:w:0xFF:m
 
 bin:
 	mkdir bin

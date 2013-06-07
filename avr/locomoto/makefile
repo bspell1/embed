@@ -33,7 +33,7 @@ dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
 write-flash:  bin bin/$(TARGETNAME).hex
-	avrdude -q -patmega328p -cusbtiny -B 1 -U  flash:w:bin/$(TARGETNAME).hex
+	avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
 write-eeprom: bin bin/$(TARGETNAME).eep
 	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 
