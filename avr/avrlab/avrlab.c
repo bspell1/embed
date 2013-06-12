@@ -24,6 +24,7 @@
 #include "avrlab.h"
 #include "debug.h"
 #include "uart.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -38,14 +39,32 @@ int main ()
 {
    sei();
 
-   PinSetLo(PIN_B0);
+   PinSetOutput(PIN_ARDUINO_LED);
+   PinSetLo(PIN_ARDUINO_LED);
+
    PinSetOutput(PIN_B0);
+   PinSetLo(PIN_B0);
+   PinSetInput(PIN_D7);
 
    UartInit(&(UART_CONFIG) { 0 });
 
+   ShiftRegInit(
+      &(SHIFTREG_CONFIG)
+      {
+         .nShiftClockPin = PIN_D2,
+         .nStoreClockPin = PIN_D3,
+         .nDataOutputPin = PIN_D4
+      }
+   );
+
+   ShiftRegWrite8(0, 0xA4);
    for ( ; ; )
    {
-      
+      ShiftRegWrite8(0, ~ShiftRegRead8(0));
+      _delay_ms(1000);
+      PinToggle(PIN_B0);
+      _delay_us(1);
+      UartSendByte(PinRead(PIN_D7));
    }
 
    return 0;

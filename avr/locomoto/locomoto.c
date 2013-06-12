@@ -47,6 +47,7 @@ int main ()
    PinSetOutput(PIN_ARDUINO_LED);
    PinSetLo(PIN_ARDUINO_LED);
 
+
    UartInit(
       &(UART_CONFIG)
       {
@@ -56,6 +57,7 @@ int main ()
    );
    I2cInit();
    SX1509Init();
+   /*
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
@@ -66,16 +68,17 @@ int main ()
          .nPinGSClk = PIN_OC0A                     // arduino 6
       }
    );
+   */
    StepMotorInit(
       (STEPMOTOR_CONFIG[STEPMOTO_COUNT])
       {
          { 
-            .n1509Module = 0,                         // TLC5940 module 0
-            .n1509Offset = 0                          // TLC5940 pins 0-3
+            .n1509Module = 0,                         // SX1509 module 0
+            .n1509Offset = 0                          // SX1509 pins 0-3
          },
          { 
-            .n1509Module = 0,                         // TLC5940 module 0
-            .n1509Offset = 4                          // TLC5940 pins 4-7
+            .n1509Module = 0,                         // SX1509 module 0
+            .n1509Offset = 4                          // SX1509 pins 4-7
          }
       }
    );
@@ -84,6 +87,7 @@ int main ()
    for ( ; ; )
    {
       _delay_ms(1000);
+      PinToggle(PIN_ARDUINO_LED);
    }
 
    return 0;

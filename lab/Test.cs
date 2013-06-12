@@ -38,85 +38,44 @@ namespace Lab
 
       public void Run ()
       {
-#if false
-         var evt = new EventFD();
-         var reactor = new Reactor();
-         reactor.Select(evt.FD, () => Console.WriteLine("signaled"));
-         reactor.Start();
-         Thread.Sleep(100);
-         Console.WriteLine("incrementing");
-         evt.Increment();
-         Thread.Sleep(100);
-         Console.WriteLine("incrementing");
-         evt.Increment();
-         Thread.Sleep(100);
-         Console.WriteLine("decrementing");
-         evt.Decrement();
-         Thread.Sleep(100);
-         Console.WriteLine("decrementing");
-         evt.Decrement();
-         Thread.Sleep(100);
-         Console.WriteLine("incrementing");
-         evt.Increment();
-         Thread.Sleep(100);
-         reactor.Join();
-#endif
-
-#if false
-         using (var chuk = new WiiChuk("/dev/i2c-1", 25, false))
+         using (var port = new SerialPort(Directory.GetFiles("/dev", "ttyUSB*").Single(), 57600, Parity.None, 8, StopBits.One))
          {
+            port.Open();
             for (; ; )
             {
-               chuk.Read();
-               Console.WriteLine(new String('-', 78));
-               Console.WriteLine("Time:           {0:h:mm:ss tt}", DateTime.Now);
-               Console.WriteLine("JoystickX:      {0}", chuk.JoystickX);
-               Console.WriteLine("JoystickY:      {0}", chuk.JoystickY);
-               Console.WriteLine("AccelerometerX: {0}", chuk.AccelerometerX);
-               Console.WriteLine("AccelerometerY: {0}", chuk.AccelerometerY);
-               Console.WriteLine("AccelerometerZ: {0}", chuk.AccelerometerZ);
-               Console.WriteLine("CButton:        {0}", chuk.CButton);
-               Console.WriteLine("ZButton:        {0}", chuk.ZButton);
-               Console.WriteLine("LastCButton:    {0}", chuk.LastCButton);
-               Console.WriteLine("LastZButton:    {0}", chuk.LastZButton);
-               Thread.Sleep(1000);
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
+               while (port.BytesToRead > 0)
+                  Console.Write("\r{0:hh:mm:ss}: {1,3}", DateTime.Now, port.ReadByte().ToString("X"));
+               //Thread.Sleep(100);
             }
          }
-#endif
-
-#if true
+#if false
+         var locoPath = Directory.GetFiles("/dev", "ttyUSB*").Single();
          using (var reactor = new Reactor())
+         using (var loco = new LocoMoto.Driver(locoPath, LocoMoto.Driver.UnknownAddress))
          using (var rx = new Nrf24("/dev/spidev0.0", 17, 25, reactor))
          using (var wii = new WiiChukPair(new Nrf24Receiver(rx, "Wii00")))
+         using (var alarm = new Gpio(24, Gpio.Mode.Output))
          {
+            alarm.Value = false;
+            var lMoto = loco.CreateStepper(0);
+            var rMoto = loco.CreateStepper(1);
+            lMoto.StepsPerCycle = rMoto.StepsPerCycle = 64;
+            lMoto.Reverse = true;
+            lMoto.Stop();
+            rMoto.Stop();
             rx.Config = new Nrf24.ConfigRegister(rx.Config)
             {
                Mode = Nrf24.Mode.Receive,
                Crc = Nrf24.Crc.TwoByte
             };
             rx.Validate();
-            wii.Updated += (left, right) =>
+            wii.Updated += (l, r) =>
             {
-               Console.Write(
-                  "\r{0:h:mm:ss tt}: left Jx:{1:0.00,5} Jy:{2:0.00,5} Ax:{3:0.00,5} Ay:{4:0.00,5} Az:{5:0.00,5} C:{6,5} Z:{7,5} right Jx:{8:0.00,5} Jy:{9:0.00,5} Ax:{10:0.00,5} Ay:{11:0.00,5} Az:{12:0.00,5} C:{13,5} Z:{14,5}", 
-                  DateTime.Now,
-                  left.JoystickX,
-                  left.JoystickY,
-                  left.AcceleroX,
-                  left.AcceleroY,
-                  left.AcceleroZ,
-                  left.CButton,
-                  left.ZButton,
-                  right.JoystickX,
-                  right.JoystickY,
-                  right.AcceleroX,
-                  right.AcceleroY,
-                  right.AcceleroZ,
-                  right.CButton,
-                  right.ZButton
-               );
+               lMoto.Rpm = (Int32)(l.JoystickY * Stepper.MaxRpm);
+               rMoto.Rpm = (Int32)(r.JoystickY * Stepper.MaxRpm);
+               alarm.Value = r.ZButton;
             };
             reactor.Start();
             rx.Listen();
@@ -124,76 +83,18 @@ namespace Lab
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Thread.Sleep(500);
+               if (Math.Abs(lMoto.Rpm) < Stepper.MaxRpm / 10)
+                  lMoto.Stop();
+               else
+                  lMoto.Run();
+               if (Math.Abs(rMoto.Rpm) < Stepper.MaxRpm / 10)
+                  rMoto.Stop();
+               else
+                  rMoto.Run();
+               Thread.Sleep(100);
             }
             reactor.Join();
             Console.WriteLine();
-         }
-#endif
-
-#if false
-         var path = Directory.GetFiles("/dev", "ttyUSB*").Single();
-         Console.WriteLine("Connecting to locomoto on {0}.", path);
-         using (var loco = new LocoMoto.Driver(path, LocoMoto.Driver.UnknownAddress))
-         {
-            var motor0 = loco.CreateStepper(0);
-            var motor1 = loco.CreateStepper(1);
-            motor0.StepsPerCycle = motor1.StepsPerCycle = 128;
-            motor0.Rpm = motor1.Rpm = Stepper.MinRpm;
-            motor1.Reverse = true;
-            motor0.Stop();
-            motor1.Stop();
-            var rpm0 = 0;
-            var rpm1 = 0;
-            var rpmi = 10;
-            for (; ; )
-            {
-               var key = Console.ReadKey().Key;
-               switch (key)
-               {
-                  case ConsoleKey.W:
-                     rpm0 = Math.Min(Math.Max(rpm0 + rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
-                     motor0.Rpm = Math.Min(Math.Max(Math.Abs(rpm0), Stepper.MinRpm), Stepper.MaxRpm);
-                     break;
-                  case ConsoleKey.S:
-                     rpm0 = Math.Min(Math.Max(rpm0 - rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
-                     motor0.Rpm = Math.Min(Math.Max(Math.Abs(rpm0), Stepper.MinRpm), Stepper.MaxRpm);
-                     break;
-                  case ConsoleKey.O:
-                     rpm1 = Math.Min(Math.Max(rpm1 + rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
-                     motor1.Rpm = Math.Min(Math.Max(Math.Abs(rpm1), Stepper.MinRpm), Stepper.MaxRpm);
-                     break;
-                  case ConsoleKey.L:
-                     rpm1 = Math.Min(Math.Max(rpm1 - rpmi, -Stepper.MaxRpm), Stepper.MaxRpm);
-                     motor1.Rpm = Math.Min(Math.Max(Math.Abs(rpm1), Stepper.MinRpm), Stepper.MaxRpm);
-                     break;
-                  case ConsoleKey.Spacebar:
-                     motor0.Stop();
-                     motor1.Stop();
-                     rpm0 = rpm1 = 0;
-                     break;
-                  default:
-                     break;
-               }
-               if (key == ConsoleKey.W || key == ConsoleKey.S)
-               {
-                  if (rpm0 == 0)
-                     motor0.Stop();
-                  else if (rpm0 > 0)
-                     motor0.Run();
-                  else
-                     motor0.RunReverse();
-               }
-               if (key == ConsoleKey.O || key == ConsoleKey.L)
-               {
-                  if (rpm1 == 0)
-                     motor1.Stop();
-                  else if (rpm1 > 0)
-                     motor1.Run();
-                  else
-                     motor1.RunReverse();
-               }
-            }
          }
 #endif
 

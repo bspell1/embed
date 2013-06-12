@@ -547,6 +547,7 @@ namespace NPi
       public void Validate ()
       {
          var addrLength = this.AddressWidth;
+         var rxEnabled = this.RXEnabled;
          switch (this.config.Mode)
          {
             case Mode.Transmit:
@@ -554,7 +555,6 @@ namespace NPi
                   throw new InvalidOperationException("Invalid TX address length");
                break;
             case Mode.Receive:
-               var rxEnabled = this.RXEnabled;
                var addrs = new[]
                { 
                   this.RXAddress0, 
@@ -578,66 +578,9 @@ namespace NPi
             default:
                throw new InvalidOperationException("Invalid TX/RX mode");
          }
-      }
-      public String DumpRegisters ()
-      {
-         var separator = new String('-', 78);
-         StringBuilder str = new StringBuilder();
-         str.AppendLine(separator);
-         str.AppendLine("Config");
-         str.Append(this.Config.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("AutoAck");
-         str.Append(this.AutoAck.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("RXEnabled");
-         str.Append(this.RXEnabled.ToString());
-         str.AppendLine(separator);
-         str.AppendLine(String.Format("AddressWidth:  {0}", this.AddressWidth));
-         str.AppendLine(separator);
-         str.AppendLine("AutoRetry");
-         str.Append(this.AutoRetry.ToString());
-         str.AppendLine(separator);
-         str.AppendLine(String.Format("RFChannel:     {0}", this.RFChannel));
-         str.AppendLine(separator);
-         str.AppendLine("RFConfig");
-         str.Append(this.RFConfig.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("Status");
-         str.Append(this.Status.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("TXStats");
-         str.Append(this.TXStats.ToString());
-         str.AppendLine(separator);
-         str.AppendLine(String.Format("CarrierDetect: {0}", this.CarrierDetect));
-         str.AppendLine(separator);
-         str.AppendLine("RXAddress ");
-         str.AppendLine(String.Format("Pipe0:         {0}", this.RXAddress0));
-         str.AppendLine(String.Format("Pipe1:         {0}", this.RXAddress1));
-         str.AppendLine(String.Format("Pipe2:         {0}", this.RXAddress2));
-         str.AppendLine(String.Format("Pipe3:         {0}", this.RXAddress3));
-         str.AppendLine(String.Format("Pipe4:         {0}", this.RXAddress4));
-         str.AppendLine(String.Format("Pipe5:         {0}", this.RXAddress5));
-         str.AppendLine(separator);
-         str.AppendLine(String.Format("TXAddress:     {0}", this.TXAddress));
-         str.AppendLine(separator);
-         str.AppendLine("RXLength");
-         str.AppendLine(String.Format("Pipe0:         {0}", this.RXLength0));
-         str.AppendLine(String.Format("Pipe1:         {0}", this.RXLength1));
-         str.AppendLine(String.Format("Pipe2:         {0}", this.RXLength2));
-         str.AppendLine(String.Format("Pipe3:         {0}", this.RXLength3));
-         str.AppendLine(String.Format("Pipe4:         {0}", this.RXLength4));
-         str.AppendLine(String.Format("Pipe5:         {0}", this.RXLength5));
-         str.AppendLine(separator);
-         str.AppendLine("FifoStatus");
-         str.Append(this.FifoStatus.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("DynPayload");
-         str.Append(this.DynPayload.ToString());
-         str.AppendLine(separator);
-         str.AppendLine("Features");
-         str.Append(this.Features.ToString());
-         return str.ToString();
+         if (this.RFConfig.BitRate != BitRate.OneMbps)
+            if ((rxEnabled & ~this.AutoAck).HasAny)
+               throw new InvalidOperationException("Bit rate must be 1mbps with auto ack disabled");
       }
       #endregion
 
@@ -703,21 +646,26 @@ namespace NPi
       }
       public struct PipeFlagRegister
       {
-         private Byte data;
-
-         public static readonly PipeFlagRegister AutoAckDefault =
+         public static readonly PipeFlagRegister None =
+            new PipeFlagRegister(0);
+         public static readonly PipeFlagRegister All =
             new PipeFlagRegister(0x3F);
+         public static readonly PipeFlagRegister AutoAckDefault = 
+            All;
          public static readonly PipeFlagRegister RXEnabledDefault =
             new PipeFlagRegister(0x03);
-         public static readonly PipeFlagRegister DynPayloadDefault =
-            new PipeFlagRegister(0x00);
+         public static readonly PipeFlagRegister DynPayloadDefault = 
+            None;
+
+         private Byte data;
+
          public PipeFlagRegister (PipeFlagRegister other)
             : this(other.Encode())
          {
          }
          public PipeFlagRegister (Byte data)
          {
-            this.data = data;
+            this.data = (Byte)(data & 0x3F);
          }
          public Byte Encode ()
          {
@@ -738,6 +686,14 @@ namespace NPi
                   this.data &= (Byte)~(1 << pipe);
             }
          }
+         public Boolean HasAny
+         {
+            get { return this.data != 0; }
+         }
+         public Boolean HasAll
+         {
+            get { return this.data == 0x3F; }
+         }
 
          public Boolean Pipe0 { get { return this[0]; } set { this[0] = value; } }
          public Boolean Pipe1 { get { return this[1]; } set { this[1] = value; } }
@@ -756,6 +712,23 @@ namespace NPi
             str.AppendLine(String.Format("Pipe4:         {0}", this.Pipe4));
             str.AppendLine(String.Format("Pipe5:         {0}", this.Pipe5));
             return str.ToString();
+         }
+
+         public static PipeFlagRegister operator ~ (PipeFlagRegister r)
+         {
+            return new PipeFlagRegister((Byte)~r.data);
+         }
+         public static PipeFlagRegister operator & (PipeFlagRegister r1, PipeFlagRegister r2)
+         {
+            return new PipeFlagRegister((Byte)(r1.data & r2.data));
+         }
+         public static PipeFlagRegister operator | (PipeFlagRegister r1, PipeFlagRegister r2)
+         {
+            return new PipeFlagRegister((Byte)(r1.data | r2.data));
+         }
+         public static PipeFlagRegister operator ^ (PipeFlagRegister r1, PipeFlagRegister r2)
+         {
+            return new PipeFlagRegister((Byte)(r1.data ^ r2.data));
          }
       }
       public struct AutoRetryRegister

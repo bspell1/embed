@@ -50,7 +50,7 @@ bin/%.S: %.c makefile $(MODULES:%=%.h)
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin/%.elf: $(FWMODULES:%=bin/fw%.o) $(MODULES:%=bin/%.o)
-	$(CC) $(CCFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ $^
 
 bin/%.hex: bin/%.elf
 	avr-objcopy -j .text -j .data -O ihex $< $@

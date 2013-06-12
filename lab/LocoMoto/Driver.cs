@@ -26,11 +26,6 @@ namespace LocoMoto
       public Driver (String device, Int32 address)
       {
          this.port = new SerialPort(device, 57600, Parity.None, 8, StopBits.One);
-         this.port.DataReceived += (o, a) =>
-         {
-            while (this.port.BytesToRead > 0)
-               Console.WriteLine(this.port.ReadByte().ToString("X"));
-         };
          this.port.Open();
          this.address = address;
       }
@@ -44,6 +39,8 @@ namespace LocoMoto
 
       private void Send (Command command, params Int32[] data)
       {
+         while (port.BytesToRead > 0)
+            Console.Write("\r{0}", port.ReadByte().ToString("X"));
          var message = new Byte[data.Length + 3];
          message[0] = (Byte)Signature;
          message[1] = (Byte)this.address;
@@ -97,7 +94,10 @@ namespace LocoMoto
             else if (steps <= Int16.MinValue)
                throw new ArgumentOutOfRangeException("steps");
             if (rpm < 0)
+            {
                steps *= -1;
+               rpm *= -1;
+            }
             var delay = 600000 / (rpm * this.StepsPerCycle * 4);
             this.driver.Send(Command.StepMotor, this.motor, delay, steps >> 8, steps);
          }
