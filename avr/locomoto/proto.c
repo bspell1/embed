@@ -48,16 +48,14 @@ static BYTE EEMEM    g_bEEAddress = PROTO_ADDRESS_UNKNOWN;
 // protocol command map
 #define PROTO_COMMAND_PING          (0x00)
 #define PROTO_COMMAND_SETADDRESS    (0x01)
-#define PROTO_COMMAND_SETOUTPUT     (0x02)
-#define PROTO_COMMAND_SETSERVO      (0x03)
-#define PROTO_COMMAND_STEPMOTOR     (0x04)
-#define PROTO_COMMAND_STOPMOTOR     (0x05)
+#define PROTO_COMMAND_SETPWM        (0x02)
+#define PROTO_COMMAND_STEPMOTOR     (0x03)
+#define PROTO_COMMAND_STOPMOTOR     (0x04)
 #define PROTO_COMMAND_MAX           (sizeof(g_pParamMap) / sizeof(*g_pParamMap) - 1)
 // protocol command dispatchers
 static VOID    DispatchPing         ();
 static VOID    DispatchSetAddress   ();
-static VOID    DispatchSetOutput    ();
-static VOID    DispatchSetServo     ();
+static VOID    DispatchSetPwm       ();
 static VOID    DispatchStepMotor    ();
 static VOID    DispatchStopMotor    ();
 // command dispatch mapping
@@ -69,8 +67,7 @@ static const struct
 {
    { 1, DispatchPing },
    { 1, DispatchSetAddress },
-   { 2, DispatchSetOutput },
-   { 3, DispatchSetServo },
+   { 3, DispatchSetPwm },
    { 4, DispatchStepMotor },
    { 1, DispatchStopMotor }
 };
@@ -169,33 +166,18 @@ static VOID DispatchSetAddress ()
    g_bAddress = g_Receive.bParam0;
    eeprom_write_byte(&g_bEEAddress, g_bAddress);
 }
-//-----------< FUNCTION: DispatchSetOutput >---------------------------------
-// Purpose:    sets an output pin value on the SX1509
+//-----------< FUNCTION: DispatchSetPwm >------------------------------------
+// Purpose:    sets a PWM duty cycle value on the TLC5940
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-static VOID DispatchSetOutput ()
+static VOID DispatchSetPwm ()
 {
-   // decode the output channel (0-64)
-   // decode the output value bit
-   UI8 nChannel = g_Receive.bParam0;
-   BIT bValue   = g_Receive.bParam1 & 0x01;
-   // enable interrupts for I2C read/write
-   // write the output data
-   SX1509SetDataBit(nChannel / 16, nChannel % 16, bValue);
-}
-//-----------< FUNCTION: DispatchSetServo >----------------------------------
-// Purpose:    sets a servo duty cycle value on the TLC5940
-// Parameters: none
-// Returns:    none
-//---------------------------------------------------------------------------
-static VOID DispatchSetServo ()
-{
-   // decode the servo channel
+   // decode the PWM channel
    // decode the duty cyle
    UI8  nChannel = g_Receive.bParam0;
    UI16 nDuty    = ((UI16)g_Receive.bParam1 << 8) | g_Receive.bParam2;
-   // update the servo driver
+   // update the PWM driver
    Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);             
 }
 //-----------< FUNCTION: DispatchStepMotor >---------------------------------

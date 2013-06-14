@@ -27,9 +27,8 @@
 #include "stepmoto.h"
 #include "proto.h"
 #include "uart.h"
-#include "i2cmast.h"
-#include "sx1509.h"
 #include "tlc5940.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -44,9 +43,8 @@ int main ()
 {
    sei();
 
-   PinSetOutput(PIN_ARDUINO_LED);
-   PinSetLo(PIN_ARDUINO_LED);
-
+   PinSetOutput(PIN_B0);
+   PinSetLo(PIN_B0);
 
    UartInit(
       &(UART_CONFIG)
@@ -55,31 +53,31 @@ int main ()
          .pfnOnRecv = ProtoRecvByte
       }
    );
-   I2cInit();
-   SX1509Init();
+   ShiftRegInit(
+      &(SHIFTREG_CONFIG)
+      {
+         .nShiftClockPin = PIN_D2,
+         .nStoreClockPin = PIN_D3,
+         .nDataOutputPin = PIN_D4
+      }
+   );
    /*
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
-         .nPinBlank = PIN_D2,                      // arduino 2
-         .nPinSClk  = PIN_D3,                      // arduino 3
-         .nPinSIn   = PIN_D4,                      // arduino 4
-         .nPinXlat  = PIN_D5,                      // arduino 5
-         .nPinGSClk = PIN_OC0A                     // arduino 6
+         .nPinBlank = PIN_D2,
+         .nPinSClk  = PIN_D3,
+         .nPinSIn   = PIN_D4,
+         .nPinXlat  = PIN_D5,
+         .nPinGSClk = PIN_OC0A
       }
    );
    */
    StepMotorInit(
       (STEPMOTOR_CONFIG[STEPMOTO_COUNT])
       {
-         { 
-            .n1509Module = 0,                         // SX1509 module 0
-            .n1509Offset = 0                          // SX1509 pins 0-3
-         },
-         { 
-            .n1509Module = 0,                         // SX1509 module 0
-            .n1509Offset = 4                          // SX1509 pins 4-7
-         }
+         { .nSRNibble = 0 },
+         { .nSRNibble = 1 },
       }
    );
    ProtoInit();
@@ -87,7 +85,7 @@ int main ()
    for ( ; ; )
    {
       _delay_ms(1000);
-      PinToggle(PIN_ARDUINO_LED);
+      PinToggle(PIN_B0);
    }
 
    return 0;

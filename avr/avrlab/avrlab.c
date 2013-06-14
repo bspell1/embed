@@ -40,11 +40,7 @@ int main ()
    sei();
 
    PinSetOutput(PIN_ARDUINO_LED);
-   PinSetLo(PIN_ARDUINO_LED);
-
    PinSetOutput(PIN_B0);
-   PinSetLo(PIN_B0);
-   PinSetInput(PIN_D7);
 
    UartInit(&(UART_CONFIG) { 0 });
 
@@ -57,14 +53,14 @@ int main ()
       }
    );
 
-   ShiftRegWrite8(0, 0xA4);
+   ShiftRegWrite8(0, 0xAA);
+   ShiftRegWrite8(1, 0xAA);
    for ( ; ; )
    {
       ShiftRegWrite8(0, ~ShiftRegRead8(0));
-      _delay_ms(1000);
+      ShiftRegWrite8(1, ~ShiftRegRead8(1));
+      _delay_ms(500);
       PinToggle(PIN_B0);
-      _delay_us(1);
-      UartSendByte(PinRead(PIN_D7));
    }
 
    return 0;

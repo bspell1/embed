@@ -39,8 +39,7 @@
 //===========================================================================
 typedef struct tagStepMotorConfig
 {
-   UI8   n1509Module;                              // SX1509 module numbers
-   UI8   n1509Offset;                              // SX1509 starting pins
+   UI8   nSRNibble;                    // shift register offset, in nibbles
 } STEPMOTOR_CONFIG, *PSTEPMOTOR_CONFIG;
 //===========================================================================
 // STEPPER MOTOR PARAMETERS

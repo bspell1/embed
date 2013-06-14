@@ -20,77 +20,46 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "stepmoto.h"
-#include "sx1509.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 // motor state data
 static volatile struct
 {
-   UI8   n1509Module;                              // SX1509 module number
-   UI8   n1509Offset;                              // SX1509 starting pin (pink)
-   UI8   nDelay;                                   // stage delay, in 0.1ms units
-   UI8   nTimer;                                   // stage timer
-   I16   nSteps;                                   // number of steps (+/-) to run
-   UI8   nStage;                                   // current step stage (0-3)
+   UI8   nSRNibble;                       // shift register offset, in nibbles
+   UI8   nDelay;                          // stage delay, in 0.1ms units
+   UI8   nTimer;                          // stage timer
+   I16   nSteps;                          // number of steps (+/-) to run
+   UI8   nStage;                          // current step stage (0-3)
 } g_pMotors[STEPMOTO_COUNT];
 // motor forward step stages
 static const UI8 g_pStages[] = 
 {
-   0x0A,                                           // 1010, pink/blue on
-   0x06,                                           // 0110, orange/blue on
-   0x05,                                           // 0101, orange/yellow on
-   0x09                                            // 1001, pink/yellow
+   0xA,                                   // 1010, pink/blue on
+   0x6,                                   // 0110, orange/blue on
+   0x5,                                   // 0101, orange/yellow on
+   0x9                                    // 1001, pink/yellow on
 };
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: SetDirReg >-----------------------------------------
-// Purpose:    sets the direction register for a stepper motor
-// Parameters: nMotor - motor to assign
-//             nDir   - SX1509 pin direction to assign
-// Returns:    none
-//---------------------------------------------------------------------------
-static VOID SetDirReg (UI8 nMotor, UI8 nDir)
-{
-   if (g_pMotors[nMotor].n1509Offset < 8)
-   {
-      UI8 nRegData = SX1509GetDirA(g_pMotors[nMotor].n1509Module);
-      nRegData &= ~(0x0F << (g_pMotors[nMotor].n1509Offset % 8));
-      nRegData |=  (nDir << (g_pMotors[nMotor].n1509Offset % 8));
-      SX1509SetDirA(g_pMotors[nMotor].n1509Module, nRegData);
-   }
-   else
-   {
-      UI8 nRegData = SX1509GetDirB(g_pMotors[nMotor].n1509Module);
-      nRegData &= ~(0x0F << (g_pMotors[nMotor].n1509Offset % 8));
-      nRegData |=  (nDir << (g_pMotors[nMotor].n1509Offset % 8));
-      SX1509SetDirB(g_pMotors[nMotor].n1509Module, nRegData);
-   }
-}
-//-----------< FUNCTION: SetDataReg >----------------------------------------
-// Purpose:    sets the data register for a stepper motor
+//-----------< FUNCTION: SetShiftRegister >----------------------------------
+// Purpose:    sets the shift register for a stepper motor
 // Parameters: nMotor - motor to assign
 //             nData  - motor data to assign
 // Returns:    none
 //---------------------------------------------------------------------------
-static VOID SetDataReg (UI8 nMotor, UI8 nData)
+static VOID SetShiftRegister (UI8 nMotor, UI8 nData)
 {
-   if (g_pMotors[nMotor].n1509Offset < 8)
-   {
-      UI8 nRegData = SX1509GetDataA(g_pMotors[nMotor].n1509Module);
-      nRegData &= ~(0x0F  << (g_pMotors[nMotor].n1509Offset % 8));
-      nRegData |=  (nData << (g_pMotors[nMotor].n1509Offset % 8));
-      SX1509SetDataA(g_pMotors[nMotor].n1509Module, nRegData);
-   }
-   else
-   {
-      UI8 nRegData = SX1509GetDataB(g_pMotors[nMotor].n1509Module);
-      nRegData &= ~(0x0F  << (g_pMotors[nMotor].n1509Offset % 8));
-      nRegData |=  (nData << (g_pMotors[nMotor].n1509Offset % 8));
-      SX1509SetDataB(g_pMotors[nMotor].n1509Module, nRegData);
-   }
+   UI8 nRegNibble = g_pMotors[nMotor].nSRNibble;
+   UI8 nRegNumber = nRegNibble / 2;
+   ShiftRegWrite8(
+      nRegNumber,
+      nRegNibble % 2 == 0 ? 
+         (ShiftRegRead8(nRegNumber) & 0xF0) | (nData & 0x0F) :
+         (ShiftRegRead8(nRegNumber) & 0x0F) | (nData << 4)
+   );
 }
 //-----------< FUNCTION: StepMotorInit >-------------------------------------
 // Purpose:    initializes the stepper motor module
@@ -102,14 +71,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
    // initialize motor data
    memzero((PVOID)g_pMotors, sizeof(g_pMotors));
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
-   {
-      // configure module/pin offsets
-      g_pMotors[nMotor].n1509Module = pConfig[nMotor].n1509Module;
-      g_pMotors[nMotor].n1509Offset = pConfig[nMotor].n1509Offset;
-      // enable output on motor pins
-      SetDataReg(nMotor, 0);
-      SetDirReg(nMotor, 0);
-   }
+      g_pMotors[nMotor].nSRNibble = pConfig[nMotor].nSRNibble;
    // 8-bit clock 2, software, 10kHz
    RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
    RegSetHi(TCCR2B, CS22);                               // prescale = 64 (250kHz)
@@ -213,7 +175,7 @@ ISR(TIMER2_COMPB_vect)
                   if (g_pMotors[nMotor].nSteps != I16_MAX)
                      g_pMotors[nMotor].nSteps--;
                }
-               SetDataReg(nMotor, nRegData);
+               SetShiftRegister(nMotor, nRegData);
             }
             else if (g_pMotors[nMotor].nSteps < 0)
             {
@@ -226,7 +188,7 @@ ISR(TIMER2_COMPB_vect)
                   if (g_pMotors[nMotor].nSteps != I16_MIN)
                      g_pMotors[nMotor].nSteps++;
                }
-               SetDataReg(nMotor, nRegData);
+               SetShiftRegister(nMotor, nRegData);
             }
             if (g_pMotors[nMotor].nSteps != 0)
                g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;

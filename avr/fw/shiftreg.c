@@ -37,8 +37,8 @@ static BYTE g_pbBuffer[SHIFTREG_SIZE];    // shift register buffer
 //---------------------------------------------------------------------------
 static VOID WriteRegister ()
 {
-   // shift in all bytes, LSB first
-   for (UI8 i = 0; i < SHIFTREG_SIZE; i++)
+   // shift in all bytes, MSB first
+   for (I8 i = SHIFTREG_SIZE - 1; i >= 0; i--)
    {
       // shift in all bits, MSB first
       for (I8 j = 7; j >= 0; j--)
@@ -65,7 +65,7 @@ VOID ShiftRegInit (PSHIFTREG_CONFIG pConfig)
    PinSetOutput(g_nShiftClockPin);
    PinSetOutput(g_nStoreClockPin);
    PinSetOutput(g_nDataOutputPin);
-   memzero(g_pbBuffer, SHIFTREG_SIZE);
+   memzero(g_pbBuffer, sizeof(g_pbBuffer));
    WriteRegister();
 }
 //-----------< FUNCTION: ShiftRegRead8 >-------------------------------------

@@ -14,10 +14,9 @@ namespace LocoMoto
       {
          Ping = 0,
          SetAddress = 1,
-         SetOutput = 2,
-         SetServo = 3,
-         StepMotor = 4,
-         StopMotor = 5
+         SetPwm = 2,
+         StepMotor = 3,
+         StopMotor = 4
       };
 
       private SerialPort port;

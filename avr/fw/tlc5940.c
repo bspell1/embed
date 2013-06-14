@@ -101,10 +101,7 @@ UI16 Tlc5940GetDuty (UI8 nModule, UI8 nChannel)
 //---------------------------------------------------------------------------
 VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 {
-   // decode the control value from the data buffer
-   // . each control value is 12 bits wide, stored big endian
-   // . channel values are stored in reverse order (channel 15 first)
-   // . output channels are active low, so subtract from 4095
+   // encode the control value into the data buffer
    UI8  cbModule = (TLC5940_COUNT - nModule) * 24;
    UI8  cbOffset = 23 - nChannel * 3 / 2 - 1;
    UI8* pb       = Tlc5940.pbGsData + cbModule + cbOffset;
@@ -128,7 +125,7 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 //---------------------------------------------------------------------------
 ISR(TIMER2_COMPA_vect)
 {
-   // servo cycle is 20ms
+   // pwm cycle is 20ms, clock ticks at 0.1ms
    static volatile UI16 fms = 0;
    if (fms++ % 200 == 0)
    {

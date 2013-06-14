@@ -38,19 +38,6 @@ namespace Lab
 
       public void Run ()
       {
-         using (var port = new SerialPort(Directory.GetFiles("/dev", "ttyUSB*").Single(), 57600, Parity.None, 8, StopBits.One))
-         {
-            port.Open();
-            for (; ; )
-            {
-               if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                  break;
-               while (port.BytesToRead > 0)
-                  Console.Write("\r{0:hh:mm:ss}: {1,3}", DateTime.Now, port.ReadByte().ToString("X"));
-               //Thread.Sleep(100);
-            }
-         }
-#if false
          var locoPath = Directory.GetFiles("/dev", "ttyUSB*").Single();
          using (var reactor = new Reactor())
          using (var loco = new LocoMoto.Driver(locoPath, LocoMoto.Driver.UnknownAddress))
@@ -61,7 +48,7 @@ namespace Lab
             alarm.Value = false;
             var lMoto = loco.CreateStepper(0);
             var rMoto = loco.CreateStepper(1);
-            lMoto.StepsPerCycle = rMoto.StepsPerCycle = 64;
+            lMoto.StepsPerCycle = rMoto.StepsPerCycle = 128;
             lMoto.Reverse = true;
             lMoto.Stop();
             rMoto.Stop();
@@ -91,87 +78,12 @@ namespace Lab
                   rMoto.Stop();
                else
                   rMoto.Run();
+               Console.Write("\r{0:3} {1:3}", lMoto.Rpm, rMoto.Rpm);
                Thread.Sleep(100);
             }
             reactor.Join();
             Console.WriteLine();
          }
-#endif
-
-#if false
-         using (var i2c = new I2CDevice("/dev/i2c-1"))
-         {
-            i2c.SlaveAddress = 0x3E;
-            i2c.Write(new Byte[] { 0x0F, 0 });
-            i2c.Write(new Byte[] { 0x11, 0xFF });
-         }
-#endif
-
-#if false
-         var tx = Encoding.ASCII.GetBytes("0123456789ABCDEF");
-         var rx = new Byte[tx.Length];
-         using (var spi = new SpiDevice("/dev/spidev0.0"))
-         {
-            spi.ReadWrite(tx, rx);
-            Console.Write(Encoding.ASCII.GetString(rx));
-         }
-#endif
-
-#if false
-         Thread.CurrentThread.Priority = ThreadPriority.Highest;
-         using (var motor = new StepperMotor(512, 22, 23, 24, 25))
-         {
-            // TODO: deal with linux signals
-            motor.Rpm = 40;
-            motor.Rotate(8 * Math.PI);
-         }
-#endif
-
-#if false
-         for (; ; )
-         {
-            try
-            {
-               Console.Write("Connecting to the camera...");
-               using (var camera = new VC0706Camera("/dev/ttyAMA0"))
-               {
-                  Console.WriteLine("done.");
-                  Console.WriteLine("Camera version: {0}", camera.Version);
-
-                  var frameBuffer = new Byte[65536];
-                  var basePath = "/mnt/liono-temp";
-                  var camPath = Path.Combine(basePath, "camera0.jpg");
-                  var frameLen = camera.BeginCaptureImage();
-                  for (; ; )
-                  {
-                     camera.EndCaptureImage(frameBuffer, frameLen);
-                     Console.WriteLine("{0:mm/dd hh:mm:ss}: Got image,  {1} bytes", DateTime.Now, frameLen);
-                     var nextFrameLen = camera.BeginCaptureImage();
-                     var tmpPath = Path.Combine(basePath, Path.GetRandomFileName());
-                     if (File.Exists(camPath))
-                     {
-                        File.Move(camPath, tmpPath);
-                        File.Delete(tmpPath);
-                        tmpPath = Path.Combine(basePath, Path.GetRandomFileName());
-                     }
-                     try
-                     {
-                        using (var f = File.Create(tmpPath))
-                           f.Write(frameBuffer, 0, frameLen);
-                        File.Move(tmpPath, camPath);
-                     }
-                     catch
-                     {
-                        File.Delete(tmpPath);
-                        throw;
-                     }
-                     frameLen = nextFrameLen;
-                  }
-               }
-            }
-            catch (TimeoutException) { }
-         }
-#endif
       }
    }
 }
