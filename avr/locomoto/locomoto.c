@@ -45,6 +45,7 @@ int main ()
 
    PinSetOutput(PIN_B0);
    PinSetLo(PIN_B0);
+   PinSetHi(PIN_B0);
 
    UartInit(
       &(UART_CONFIG)
@@ -82,10 +83,12 @@ int main ()
    );
    ProtoInit();
 
+   _delay_ms(1000);
+   PinSetLo(PIN_B0);
+
    for ( ; ; )
    {
       _delay_ms(1000);
-      PinToggle(PIN_B0);
    }
 
    return 0;

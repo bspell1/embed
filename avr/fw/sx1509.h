@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  sx1509.h
-// Purpose: AVR SX1509 GPIO expander driver
+// Purpose: SX1509 GPIO expander driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.

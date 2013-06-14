@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  shiftreg.c
-// Purpose: AVR 74HC595 shift register driver
+// Purpose: 74HC595 shift register driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.

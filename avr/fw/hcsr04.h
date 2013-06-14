@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  shiftreg.h
-// Purpose: 74HC595 shift register driver
+// Module:  hcsr04.h
+// Purpose: HCSR04 ultrasonic ranging module driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __SHIFTREG_H
-#define __SHIFTREG_H
+#ifndef __HCSR04_H
+#define __HCSR04_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -28,27 +28,29 @@
 #endif
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
-// SHIFT REGISTER CONFIGURATION
-// . SHIFTREG_SIZE:           size of the shift register array, in bytes
+// RANGING MODULE CONFIGURATION
+// . HCSR04_COUNT:            number of components attached
+// . HCSR04_PCINT0:           enable the interrupt vector for PCINT0
+// . HCSR04_PCINT1:           enable the interrupt vector for PCINT0
+// . HCSR04_PCINT2:           enable the interrupt vector for PCINT0
 //===========================================================================
 // configuration properties
-#ifndef SHIFTREG_SIZE
-#  define SHIFTREG_SIZE       (1)
+#ifndef HCSR04_COUNT
+#  define HCSR04_COUNT        (1)
+#endif
+#if !defined(HCSR04_PCINT0) && !defined(HCSR04_PCINT1) && !defined(HCSR04_PCINT2)
+#  warning No pin change interrupt enabled for HCSR04, no readings will be taken
 #endif
 // configuration structure
-typedef struct tagShiftRegConfig
+typedef struct tagHCSR04Config
 {
-   UI8   nClockPin;                 // shift register clock output (SHCP)
-   UI8   nLatchPin;                 // storage register clock output (STCP)
-   UI8   nDataPin;                  // serial data output (DS)
-} SHIFTREG_CONFIG, *PSHIFTREG_CONFIG;
+   UI8   nTrigPin;            // trigger (output) pin
+   UI8   nEchoPin;            // echo (input) pin
+} HCSR04_CONFIG, *PHCSR04_CONFIG;
 //===========================================================================
-// SHIFT REGISTER INTERFACE
+// RANGING MODULE INTERFACE
 //===========================================================================
-// shift register API
-VOID  ShiftRegInit   (PSHIFTREG_CONFIG pConfig);
-UI8   ShiftRegRead4  (UI8 nOffset);
-VOID  ShiftRegWrite4 (UI8 nOffset, UI8 nValue);
-UI8   ShiftRegRead8  (UI8 nOffset);
-VOID  ShiftRegWrite8 (UI8 nOffset, UI8 nValue);
-#endif // __SHIFTREG_H
+// ranging  module API
+VOID  HCSR04Init     (PHCSR04_CONFIG pConfig);
+UI16  HCSR04Read     (UI8 nModule);
+#endif // __HCSR04_H

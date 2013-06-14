@@ -78,7 +78,7 @@ namespace Lab
                   rMoto.Stop();
                else
                   rMoto.Run();
-               Console.Write("\r{0:3} {1:3}", lMoto.Rpm, rMoto.Rpm);
+               //Console.Write("\r{0,3} {1,3}          ", lMoto.Rpm, rMoto.Rpm);
                Thread.Sleep(100);
             }
             reactor.Join();

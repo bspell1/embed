@@ -163,8 +163,10 @@ static VOID DispatchPing ()
 //---------------------------------------------------------------------------
 static VOID DispatchSetAddress ()
 {
+   /* TODO: add back
    g_bAddress = g_Receive.bParam0;
    eeprom_write_byte(&g_bEEAddress, g_bAddress);
+   */
 }
 //-----------< FUNCTION: DispatchSetPwm >------------------------------------
 // Purpose:    sets a PWM duty cycle value on the TLC5940

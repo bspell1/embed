@@ -24,6 +24,7 @@
 #include "avrlab.h"
 #include "debug.h"
 #include "uart.h"
+#include "hcsr04.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -42,10 +43,23 @@ int main ()
 
    UartInit(&(UART_CONFIG) { 0 });
 
+   HCSR04Init(
+      (HCSR04_CONFIG[])
+      {
+         {
+            .nTrigPin = PIN_ARDUINO_D5,
+            .nEchoPin = PIN_ARDUINO_D6
+         }
+      }
+   );
+
    for ( ; ; )
    {
       _delay_ms(1000);
       PinToggle(PIN_ARDUINO_LED);
+      UI16 nReading = HCSR04Read(0);
+      UartSendByte((BYTE)(nReading >> 8));
+      UartSendByte((BYTE)(nReading & 0xFF));
    }
 
    return 0;
