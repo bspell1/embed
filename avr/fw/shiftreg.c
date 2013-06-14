@@ -26,9 +26,9 @@
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-static UI8  g_nShiftClockPin;             // shift register clock output (SHCP)
-static UI8  g_nStoreClockPin;             // storage register clock output (STCP)
-static UI8  g_nDataOutputPin;             // serial data output (DS)
+static UI8  g_nClockPin;                  // shift register clock output (SHCP)
+static UI8  g_nLatchPin;                  // storage register clock output (STCP)
+static UI8  g_nDataPin;                   // serial data output (DS)
 static BYTE g_pbBuffer[SHIFTREG_SIZE];    // shift register buffer
 //-----------< FUNCTION: WriteRegister >-------------------------------------
 // Purpose:    writes the current buffer to the shift register
@@ -45,12 +45,12 @@ static VOID WriteRegister ()
       {
          // set the data register to the bit value
          // pulse SHCP to clock in the bit
-         PinSet(g_nDataOutputPin, BitTest(g_pbBuffer[i], j));
-         PinPulseHiLo(g_nShiftClockPin);
+         PinSet(g_nDataPin, BitTest(g_pbBuffer[i], j));
+         PinPulseHiLo(g_nClockPin);
       }
    }
    // pulse STCP to latch in the register values
-   PinPulseHiLo(g_nStoreClockPin);
+   PinPulseHiLo(g_nLatchPin);
 }
 //-----------< FUNCTION: ShiftRegInit >--------------------------------------
 // Purpose:    initializes the shift register module
@@ -59,32 +59,56 @@ static VOID WriteRegister ()
 //---------------------------------------------------------------------------
 VOID ShiftRegInit (PSHIFTREG_CONFIG pConfig)
 {
-   g_nShiftClockPin = pConfig->nShiftClockPin;
-   g_nStoreClockPin = pConfig->nStoreClockPin;
-   g_nDataOutputPin = pConfig->nDataOutputPin;
-   PinSetOutput(g_nShiftClockPin);
-   PinSetOutput(g_nStoreClockPin);
-   PinSetOutput(g_nDataOutputPin);
+   g_nClockPin = pConfig->nClockPin;
+   g_nLatchPin = pConfig->nLatchPin;
+   g_nDataPin = pConfig->nDataPin;
+   PinSetOutput(g_nClockPin);
+   PinSetOutput(g_nLatchPin);
+   PinSetOutput(g_nDataPin);
    memzero(g_pbBuffer, sizeof(g_pbBuffer));
+   WriteRegister();
+}
+//-----------< FUNCTION: ShiftRegRead4 >-------------------------------------
+// Purpose:    reads a 4-bit value from the shift register buffer
+// Parameters: nOffset - shift register offset, in nibbles
+// Returns:    the 4-bit value of the register at the byte offset
+//---------------------------------------------------------------------------
+UI8 ShiftRegRead4 (UI8 nOffset)
+{
+   return nOffset % 2 == 0 ?
+      g_pbBuffer[nOffset / 2] & 0x0F :
+      g_pbBuffer[nOffset / 2] >> 4;
+}
+//-----------< FUNCTION: ShiftRegWrite4 >------------------------------------
+// Purpose:    writes a 4-bit value to the shift register
+// Parameters: nOffset - shift register offset, in nibbles
+//             nValue  - the 4-bit value to write at the offset
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID ShiftRegWrite4 (UI8 nOffset, UI8 nValue)
+{
+   g_pbBuffer[nOffset / 2] = nOffset % 2 == 0 ? 
+      (g_pbBuffer[nOffset / 2] & 0xF0) | (nValue & 0xF) :
+      (g_pbBuffer[nOffset / 2] & 0x0F) | (nValue << 4);
    WriteRegister();
 }
 //-----------< FUNCTION: ShiftRegRead8 >-------------------------------------
 // Purpose:    reads an 8-bit value from the shift register buffer
-// Parameters: cbOffset - shift register offset, in bytes
+// Parameters: nOffset - shift register offset, in bytes
 // Returns:    the 8-bit value of the register at the byte offset
 //---------------------------------------------------------------------------
-UI8 ShiftRegRead8 (UI8 cbOffset)
+UI8 ShiftRegRead8 (UI8 nOffset)
 {
-   return g_pbBuffer[cbOffset];
+   return g_pbBuffer[nOffset];
 }
 //-----------< FUNCTION: ShiftRegWrite8 >------------------------------------
 // Purpose:    writes an 8-bit value to the shift register
-// Parameters: cbOffset - shift register offset, in bytes
-//             nValue   - the 8-bit value to write at the offset
+// Parameters: nOffset - shift register offset, in bytes
+//             nValue  - the 8-bit value to write at the offset
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID ShiftRegWrite8 (UI8 cbOffset, UI8 nValue)
+VOID ShiftRegWrite8 (UI8 nOffset, UI8 nValue)
 {
-   g_pbBuffer[cbOffset] = nValue;
+   g_pbBuffer[nOffset] = nValue;
    WriteRegister();
 }

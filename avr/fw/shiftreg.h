@@ -38,15 +38,17 @@
 // configuration structure
 typedef struct tagShiftRegConfig
 {
-   UI8   nShiftClockPin;            // shift register clock output (SHCP)
-   UI8   nStoreClockPin;            // storage register clock output (STCP)
-   UI8   nDataOutputPin;            // serial data output (DS)
+   UI8   nClockPin;                 // shift register clock output (SHCP)
+   UI8   nLatchPin;                 // storage register clock output (STCP)
+   UI8   nDataPin;                  // serial data output (DS)
 } SHIFTREG_CONFIG, *PSHIFTREG_CONFIG;
 //===========================================================================
 // SHIFT REGISTER INTERFACE
 //===========================================================================
 // shift register API
 VOID  ShiftRegInit   (PSHIFTREG_CONFIG pConfig);
-UI8   ShiftRegRead8  (UI8 cbOffset);
-VOID  ShiftRegWrite8 (UI8 cbOffset, UI8 nValue);
+UI8   ShiftRegRead4  (UI8 nOffset);
+VOID  ShiftRegWrite4 (UI8 nOffset, UI8 nValue);
+UI8   ShiftRegRead8  (UI8 nOffset);
+VOID  ShiftRegWrite8 (UI8 nOffset, UI8 nValue);
 #endif // __SHIFTREG_H

@@ -56,9 +56,9 @@ int main ()
    ShiftRegInit(
       &(SHIFTREG_CONFIG)
       {
-         .nShiftClockPin = PIN_D2,
-         .nStoreClockPin = PIN_D3,
-         .nDataOutputPin = PIN_D4
+         .nClockPin = PIN_D2,
+         .nLatchPin = PIN_D3,
+         .nDataPin  = PIN_D4
       }
    );
    /*

@@ -52,14 +52,7 @@ static const UI8 g_pStages[] =
 //---------------------------------------------------------------------------
 static VOID SetShiftRegister (UI8 nMotor, UI8 nData)
 {
-   UI8 nRegNibble = g_pMotors[nMotor].nSRNibble;
-   UI8 nRegNumber = nRegNibble / 2;
-   ShiftRegWrite8(
-      nRegNumber,
-      nRegNibble % 2 == 0 ? 
-         (ShiftRegRead8(nRegNumber) & 0xF0) | (nData & 0x0F) :
-         (ShiftRegRead8(nRegNumber) & 0x0F) | (nData << 4)
-   );
+   ShiftRegWrite4(g_pMotors[nMotor].nSRNibble, nData);
 }
 //-----------< FUNCTION: StepMotorInit >-------------------------------------
 // Purpose:    initializes the stepper motor module
