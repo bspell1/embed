@@ -39,27 +39,17 @@ int main ()
 {
    sei();
 
-   PinSetOutput(PIN_ARDUINO_LED);
+   PinSetOutput(PIN_B0);
 
    UartInit(&(UART_CONFIG) { 0 });
 
-   HCSR04Init(
-      (HCSR04_CONFIG[])
-      {
-         {
-            .nTrigPin = PIN_ARDUINO_D5,
-            .nEchoPin = PIN_ARDUINO_D6
-         }
-      }
-   );
-
    for ( ; ; )
    {
-      _delay_ms(1000);
-      PinToggle(PIN_ARDUINO_LED);
-      UI16 nReading = HCSR04Read(0);
-      UartSendByte((BYTE)(nReading >> 8));
-      UartSendByte((BYTE)(nReading & 0xFF));
+      BYTE b;
+      if (UartRecv(&b, 1) == 1)
+         UartSendByte(b);
+      PinToggle(PIN_B0);
+      _delay_ms(100);
    }
 
    return 0;

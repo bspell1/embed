@@ -98,6 +98,7 @@ namespace LocoMoto
                rpm *= -1;
             }
             var delay = 600000 / (rpm * this.StepsPerCycle * 4);
+            Console.Write("\r{0} {1}              ", delay, steps);
             this.driver.Send(Command.StepMotor, this.motor, delay, steps >> 8, steps);
          }
          #endregion

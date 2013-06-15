@@ -7,8 +7,8 @@ namespace NPi
 {
    public class Stepper
    {
-      public const Int32 MinRpm = -80;
-      public const Int32 MaxRpm = 80;
+      public const Int32 MinRpm = -60;
+      public const Int32 MaxRpm = 60;
       private IStepperDriver driver;
       private Int32 rpm;
 

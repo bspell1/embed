@@ -27,7 +27,7 @@ namespace Lab
       public static String Param = "";
       public Int32 ThreadID { get; set; }
       public Int32 Iteration { get; set; }
-      
+
       static Test ()
       {
       }
@@ -38,7 +38,8 @@ namespace Lab
 
       public void Run ()
       {
-         var locoPath = Directory.GetFiles("/dev", "ttyUSB*").Single();
+#if true
+         var locoPath = Directory.GetFiles("/dev", "ttyAMA*").Single();
          using (var reactor = new Reactor())
          using (var loco = new LocoMoto.Driver(locoPath, LocoMoto.Driver.UnknownAddress))
          using (var rx = new Nrf24("/dev/spidev0.0", 17, 25, reactor))
@@ -62,28 +63,37 @@ namespace Lab
             {
                lMoto.Rpm = (Int32)(l.JoystickY * Stepper.MaxRpm);
                rMoto.Rpm = (Int32)(r.JoystickY * Stepper.MaxRpm);
+               if (Math.Abs(lMoto.Rpm) < 5)
+                  lMoto.Rpm = 0;
+               if (Math.Abs(rMoto.Rpm) < 5)
+                  rMoto.Rpm = 0;
                alarm.Value = r.ZButton;
             };
             reactor.Start();
             rx.Listen();
+            var oldLRpm = 0;
+            var oldRRpm = 0;
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               if (Math.Abs(lMoto.Rpm) < Stepper.MaxRpm / 10)
-                  lMoto.Stop();
-               else
+               if (lMoto.Rpm != oldLRpm)
+               {
                   lMoto.Run();
-               if (Math.Abs(rMoto.Rpm) < Stepper.MaxRpm / 10)
-                  rMoto.Stop();
-               else
+                  oldLRpm = lMoto.Rpm;
+               }
+               if (rMoto.Rpm != oldRRpm)
+               {
                   rMoto.Run();
-               //Console.Write("\r{0,3} {1,3}          ", lMoto.Rpm, rMoto.Rpm);
-               Thread.Sleep(100);
+                  oldRRpm = rMoto.Rpm;
+               }
+               Console.Write("\r{0,3} {1,3}          ", lMoto.Rpm, rMoto.Rpm);
+               Thread.Sleep(50);
             }
             reactor.Join();
             Console.WriteLine();
          }
+#endif
       }
    }
 }

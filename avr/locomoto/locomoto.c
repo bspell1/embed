@@ -45,7 +45,6 @@ int main ()
 
    PinSetOutput(PIN_B0);
    PinSetLo(PIN_B0);
-   PinSetHi(PIN_B0);
 
    UartInit(
       &(UART_CONFIG)
@@ -62,7 +61,6 @@ int main ()
          .nDataPin  = PIN_D4
       }
    );
-   /*
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
@@ -73,7 +71,6 @@ int main ()
          .nPinGSClk = PIN_OC0A
       }
    );
-   */
    StepMotorInit(
       (STEPMOTOR_CONFIG[STEPMOTO_COUNT])
       {
@@ -82,9 +79,6 @@ int main ()
       }
    );
    ProtoInit();
-
-   _delay_ms(1000);
-   PinSetLo(PIN_B0);
 
    for ( ; ; )
    {
