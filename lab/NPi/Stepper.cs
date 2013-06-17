@@ -9,12 +9,14 @@ namespace NPi
    {
       public const Int32 MinRpm = -60;
       public const Int32 MaxRpm = 60;
+      public const Int32 EpsilonRpm = 5;
       private IStepperDriver driver;
       private Int32 rpm;
 
       public Stepper (IStepperDriver driver)
       {
          this.driver = driver;
+         this.driver.Stop();
       }
 
       public Int32 StepsPerCycle
@@ -43,7 +45,7 @@ namespace NPi
       {
          if (this.StepsPerCycle == 0)
             throw new InvalidOperationException("Invalid StepsPerCycle");
-         if (this.rpm == 0)
+         if (Math.Abs(this.rpm) < EpsilonRpm)
             Stop();
          else
             this.driver.Step(steps, !this.Reverse ? this.Rpm : -this.Rpm);

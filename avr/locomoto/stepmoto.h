@@ -51,12 +51,9 @@ typedef struct tagStepMotorConfig
 //===========================================================================
 // STEPPER MOTOR API
 //===========================================================================
-VOID     StepMotorInit        (STEPMOTOR_CONFIG* pConfig);
-BOOL     StepMotorIsBusy      ();
-VOID     StepMotorWait        ();
-VOID     StepMotorStop        (UI8 nMotor);
-VOID     StepMotorStopAll     ();
-VOID     StepMotorRun         (UI8 nMotor, UI8 nDelay, I16 nSteps);
+VOID  StepMotorInit  (STEPMOTOR_CONFIG* pConfig);
+VOID  StepMotorStop  (UI8 nMotor);
+VOID  StepMotorRun   (UI8 nMotor, UI8 nDelay, I16 nSteps);
 // motor helpers
 inline VOID StepMotorRunForward (UI8 nMotor, UI8 nDelay)
    { StepMotorRun(nMotor, nDelay, STEPMOTOR_FORWARD); }

@@ -70,26 +70,6 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
    RegSetHi(TCCR2B, CS22);                               // prescale = 64 (250kHz)
    OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
 }
-//-----------< FUNCTION: StepMotorIsBusy >-----------------------------------
-// Purpose:    polls the stepper motor's busy status
-// Parameters: none
-// Returns:    true if the stepper motor is running
-//             false otherwise
-//---------------------------------------------------------------------------
-BOOL StepMotorIsBusy ()
-{
-   return RegGet(TIMSK2, OCIE2B);
-}
-//-----------< FUNCTION: StepMotorWait >-------------------------------------
-// Purpose:    waits until the stepper motor stops running
-// Parameters: none
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID StepMotorWait ()
-{
-   while (StepMotorIsBusy())
-      ;
-}
 //-----------< FUNCTION: StepMotorStop >-------------------------------------
 // Purpose:    stops stepper motor processing for a given motor
 // Parameters: nMotor - the stepper motor to stop
@@ -97,21 +77,9 @@ VOID StepMotorWait ()
 //---------------------------------------------------------------------------
 VOID StepMotorStop (UI8 nMotor)
 {
-   // reset motor state and turn off all pins
+   // clear the step count
+   // the interrupt handler will gracefully shutdown
    g_pMotors[nMotor].nSteps = 0;
-   g_pMotors[nMotor].nDelay = 0;
-   g_pMotors[nMotor].nTimer = 0;
-   g_pMotors[nMotor].nStage = 0;
-}
-//-----------< FUNCTION: StepMotorStopAll >----------------------------------
-// Purpose:    stops all stepper motor processing immediately
-// Parameters: none
-// Returns:    none
-//---------------------------------------------------------------------------
-VOID StepMotorStopAll  ()
-{
-   for (UI8 i = 0; i < STEPMOTO_COUNT; i++)
-      StepMotorStop(i);
 }
 //-----------< FUNCTION: StepMotorRun >--------------------------------------
 // Purpose:    starts the stepper motor
@@ -126,14 +94,9 @@ VOID StepMotorStopAll  ()
 //---------------------------------------------------------------------------
 VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 {
-   StepMotorStop(nMotor);
-   if (nSteps != 0)
-   {
-      g_pMotors[nMotor].nDelay = nDelay;
-      g_pMotors[nMotor].nTimer = 0;
-      g_pMotors[nMotor].nSteps = nSteps;
-      RegSetHi(TIMSK2, OCIE2B);
-   }
+   g_pMotors[nMotor].nDelay = nDelay;
+   g_pMotors[nMotor].nSteps = nSteps;
+   RegSetHi(TIMSK2, OCIE2B);
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
 // Purpose:    responds to 10kHz timer events
@@ -145,18 +108,20 @@ ISR(TIMER2_COMPB_vect)
    // uninterruptible phase
    // count down time to next stage for each motor
    for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
-      if (g_pMotors[nMotor].nSteps != 0 && g_pMotors[nMotor].nTimer != 0)
+      if (g_pMotors[nMotor].nDelay != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
+   // interruptible phase
+   // update motor registers
+   // allow only one motor interrupt to enter
    static volatile UI8 g_nLock = 0;
    if (g_nLock++ == 0)
    {
-      // interruptible phase
-      // update motor registers
       sei();
       for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
       {
          if (g_pMotors[nMotor].nTimer == 0)
          {
+            // advance the motor to the next stage in the current step
             if (g_pMotors[nMotor].nSteps > 0)
             {
                // moving forward, go to the next stage
@@ -183,8 +148,18 @@ ISR(TIMER2_COMPB_vect)
                }
                SetShiftRegister(nMotor, nRegData);
             }
-            if (g_pMotors[nMotor].nSteps != 0)
+            // reset the stage timer
+            if (g_pMotors[nMotor].nDelay != 0)
+            {
                g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
+               // if the motor has stopped, turn off all inductors to save power
+               // and reset the delay to allow the stepper to shutdown
+               if (g_pMotors[nMotor].nSteps == 0)
+               {
+                  SetShiftRegister(nMotor, 0);
+                  g_pMotors[nMotor].nDelay = 0;
+               }
+            }
          }
       }
       // uninterruptible phase
@@ -192,7 +167,7 @@ ISR(TIMER2_COMPB_vect)
       cli();
       BOOL bIdle = TRUE;
       for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
-         if (g_pMotors[nMotor].nSteps != 0)
+         if (g_pMotors[nMotor].nDelay != 0)
             bIdle = FALSE;
       if (bIdle)
          RegSetLo(TIMSK2, OCIE2B);

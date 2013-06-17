@@ -38,8 +38,6 @@ namespace LocoMoto
 
       private void Send (Command command, params Int32[] data)
       {
-         while (port.BytesToRead > 0)
-            Console.Write("\r{0}", port.ReadByte().ToString("X"));
          var message = new Byte[data.Length + 3];
          message[0] = (Byte)Signature;
          message[1] = (Byte)this.address;

@@ -6,7 +6,9 @@ namespace NPi.WiiChuk
 {
    public class WiiChukPair : IDisposable
    {
-      IWiiChukReceiver receiver;
+      private WiiChukState LeftZero = WiiChukState.Zero;
+      private WiiChukState RightZero = WiiChukState.Zero;
+      private IWiiChukReceiver receiver;
       public event Action<WiiChukState, WiiChukState> Updated;
 
       public WiiChukPair (IWiiChukReceiver receiver)
@@ -15,10 +17,20 @@ namespace NPi.WiiChuk
          this.receiver.Count = 2;
          this.receiver.Received += data =>
          {
-            this.Left = WiiChukState.Decode(data, 0, WiiChukState.EncodedSize);
-            this.Right = WiiChukState.Decode(data, WiiChukState.EncodedSize, WiiChukState.EncodedSize);
+            // decode the chuk values from the received buffer
+            var left = WiiChukState.Decode(data, 0, WiiChukState.EncodedSize);
+            var right = WiiChukState.Decode(data, WiiChukState.EncodedSize, WiiChukState.EncodedSize);
+            // if all buttons pressed, recalibrate
+            if (left.CButton && right.CButton && left.ZButton && right.ZButton)
+            {
+               this.LeftZero = left;
+               this.RightZero = right;
+            }
+            // calibrate the results and dispatch the updated event
+            left = this.Left = left.Calibrate(this.LeftZero);
+            right = this.Right = right.Calibrate(this.RightZero);
             if (this.Updated != null)
-               this.Updated(this.Left, this.Right);
+               this.Updated(left, right);
          };
       }
 
