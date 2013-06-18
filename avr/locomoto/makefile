@@ -1,5 +1,5 @@
 TARGETNAME  = 	locomoto
-MODULES     = 	proto stepmoto locomoto
+MODULES     = 	proto stepper locomoto
 FWMODULES   =  uart tlc5940 shiftreg
 DEVICE      = 	atmega328p
 PARAMETERS	= 	F_CPU=16000000 															\

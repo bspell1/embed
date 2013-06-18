@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  stepmoto.c
+// Module:  stepper.c
 // Purpose: stepper motor driver module
 //
 // Copyright © 2013
@@ -21,7 +21,7 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "stepmoto.h"
+#include "stepper.h"
 #include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
@@ -33,7 +33,7 @@ static volatile struct
    UI8   nTimer;                          // stage timer
    I16   nSteps;                          // number of steps (+/-) to run
    UI8   nStage;                          // current step stage (0-3)
-} g_pMotors[STEPMOTO_COUNT];
+} g_pMotors[STEPPER_COUNT];
 // motor forward step stages
 static const UI8 g_pStages[] = 
 {
@@ -63,7 +63,7 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
 {
    // initialize motor data
    memzero((PVOID)g_pMotors, sizeof(g_pMotors));
-   for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+   for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
       g_pMotors[nMotor].nSRNibble = pConfig[nMotor].nSRNibble;
    // 8-bit clock 2, software, 10kHz
    RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
@@ -94,7 +94,7 @@ VOID StepMotorStop (UI8 nMotor)
 //---------------------------------------------------------------------------
 VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 {
-   g_pMotors[nMotor].nDelay = nDelay;
+   g_pMotors[nMotor].nDelay = MAX(nDelay, 1);
    g_pMotors[nMotor].nSteps = nSteps;
    RegSetHi(TIMSK2, OCIE2B);
 }
@@ -107,7 +107,7 @@ ISR(TIMER2_COMPB_vect)
 {
    // uninterruptible phase
    // count down time to next stage for each motor
-   for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+   for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
       if (g_pMotors[nMotor].nDelay != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
    // interruptible phase
@@ -117,7 +117,7 @@ ISR(TIMER2_COMPB_vect)
    if (g_nLock++ == 0)
    {
       sei();
-      for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+      for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
       {
          if (g_pMotors[nMotor].nTimer == 0)
          {
@@ -166,7 +166,7 @@ ISR(TIMER2_COMPB_vect)
       // determine whether all motors are idle, disable interrupts if so
       cli();
       BOOL bIdle = TRUE;
-      for (UI8 nMotor = 0; nMotor < STEPMOTO_COUNT; nMotor++)
+      for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
          if (g_pMotors[nMotor].nDelay != 0)
             bIdle = FALSE;
       if (bIdle)

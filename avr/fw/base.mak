@@ -1,3 +1,7 @@
+AVR_LFUSE ?= 0xFF
+AVR_HFUSE ?= 0xD2
+AVR_EFUSE ?= 0x07
+
 CC      = avr-gcc
 CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -Wno-missing-field-initializers 											\
@@ -22,13 +26,15 @@ dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
 write-flash:  bin bin/$(TARGETNAME).hex
-	avrdude -q -patmega328p -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+read-eeprom:
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U eeprom:r:-:i
 write-eeprom: bin bin/$(TARGETNAME).eep
-	avrdude -q -patmega328p -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
 read-fuses:
-	avrdude -q -patmega328p -cusbtiny -B 1 -U lfuse:r:-:i -U hfuse:r:-:i -U efuse:r:-:i
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U lfuse:r:-:i -U hfuse:r:-:i -U efuse:r:-:i
 write-fuses:
-	avrdude -q -patmega328p -cusbtiny -B 1 -U lfuse:w:0xFF:m -U hfuse:w:0xD2:m -U efuse:w:0xFF:m
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U lfuse:w:$(AVR_LFUSE):m -U hfuse:w:$(AVR_HFUSE):m -U efuse:w:$(AVR_EFUSE):m
 
 bin:
 	mkdir bin

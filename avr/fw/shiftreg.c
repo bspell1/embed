@@ -26,10 +26,10 @@
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-static UI8  g_nClockPin;                  // shift register clock output (SHCP)
-static UI8  g_nLatchPin;                  // storage register clock output (STCP)
-static UI8  g_nDataPin;                   // serial data output (DS)
-static BYTE g_pbBuffer[SHIFTREG_SIZE];    // shift register buffer
+static UI8  g_nClockPin = PIN_INVALID;          // shift register clock output (SHCP)
+static UI8  g_nLatchPin = PIN_INVALID;          // storage register clock output (STCP)
+static UI8  g_nDataPin  = PIN_INVALID;          // serial data output (DS)
+static BYTE g_pbBuffer[SHIFTREG_SIZE] = { 0, }; // shift register buffer
 //-----------< FUNCTION: WriteRegister >-------------------------------------
 // Purpose:    writes the current buffer to the shift register
 // Parameters: none
@@ -37,20 +37,25 @@ static BYTE g_pbBuffer[SHIFTREG_SIZE];    // shift register buffer
 //---------------------------------------------------------------------------
 static VOID WriteRegister ()
 {
-   // shift in all bytes, MSB first
-   for (I8 i = SHIFTREG_SIZE - 1; i >= 0; i--)
+   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
-      // shift in all bits, MSB first
-      for (I8 j = 7; j >= 0; j--)
+      // serialize access to the shift register
+      cli();
+      // shift in all bytes, MSB first
+      for (I8 i = SHIFTREG_SIZE - 1; i >= 0; i--)
       {
-         // set the data register to the bit value
-         // pulse SHCP to clock in the bit
-         PinSet(g_nDataPin, BitTest(g_pbBuffer[i], j));
-         PinPulseHiLo(g_nClockPin);
+         // shift in all bits, MSB first
+         for (I8 j = 7; j >= 0; j--)
+         {
+            // set the data register to the bit value
+            // pulse SHCP to clock in the bit
+            PinSet(g_nDataPin, BitTest(g_pbBuffer[i], j));
+            PinPulseHiLo(g_nClockPin);
+         }
       }
+      // pulse STCP to latch in the register values
+      PinPulseHiLo(g_nLatchPin);
    }
-   // pulse STCP to latch in the register values
-   PinPulseHiLo(g_nLatchPin);
 }
 //-----------< FUNCTION: ShiftRegInit >--------------------------------------
 // Purpose:    initializes the shift register module
@@ -65,7 +70,6 @@ VOID ShiftRegInit (PSHIFTREG_CONFIG pConfig)
    PinSetOutput(g_nClockPin);
    PinSetOutput(g_nLatchPin);
    PinSetOutput(g_nDataPin);
-   memzero(g_pbBuffer, sizeof(g_pbBuffer));
    WriteRegister();
 }
 //-----------< FUNCTION: ShiftRegRead4 >-------------------------------------

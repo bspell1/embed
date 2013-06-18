@@ -50,26 +50,34 @@ namespace Lab
             rx.Validate();
             reactor.Start();
             rx.Listen();
+            wii.Updated += (left, right) =>
+            {
+               if (Monitor.TryEnter(wii, 1))
+               {
+                  Console.Write(
+                     "\r{0:hh:mm:ss}: Jx={1,6} Jy={2,6} Ax={3,6} Ay={4,6} Az={5,6}             Jx={6,6} Jy={7,6} Ax={8,6} Ay={9,6} Az={10,6}",
+                     DateTime.Now,
+                     left.JoystickX,
+                     left.JoystickY,
+                     left.AcceleroX,
+                     left.AcceleroY,
+                     left.AcceleroZ,
+                     right.JoystickX,
+                     right.JoystickY,
+                     right.AcceleroX,
+                     right.AcceleroY,
+                     right.AcceleroZ
+                  );
+                  Thread.Sleep(1000);
+                  Monitor.Exit(wii);
+               }
+            };
             Console.WriteLine("Listening...");
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
                Thread.Sleep(500);
-               Console.Write(
-                  "\r{0:hh:mm:ss}: Jx={1,6} Jy={2,6} Ax={3,6} Ay={4,6} Az={5,6}             Jx={6,6} Jy={7,6} Ax={8,6} Ay={9,6} Az={10,6}",
-                  DateTime.Now,
-                  wii.Left.JoystickX,
-                  wii.Left.JoystickY,
-                  wii.Left.AcceleroX,
-                  wii.Left.AcceleroY,
-                  wii.Left.AcceleroZ,
-                  wii.Right.JoystickX,
-                  wii.Right.JoystickY,
-                  wii.Right.AcceleroX,
-                  wii.Right.AcceleroY,
-                  wii.Right.AcceleroZ
-               );
             }
             reactor.Join();
             Console.WriteLine();

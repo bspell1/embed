@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  avrlab.c
-// Purpose: AVR test program
+// Module:  uartpong.h
+// Purpose: AVR UART echo program
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,39 +18,13 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
+#ifndef __UARTPONG_H
+#define __UARTPONG_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "avrlab.h"
-#include "debug.h"
-#include "uart.h"
-#include "hcsr04.h"
+#ifndef __AVRDEFS_H
+#include "avrdefs.h"
+#endif
 //-------------------[       Module Definitions        ]-------------------//
-//-------------------[        Module Variables         ]-------------------//
-//-------------------[        Module Prototypes        ]-------------------//
-//-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
-//---------------------------------------------------------------------------
-int main ()
-{
-   sei();
-
-   PinSetOutput(PIN_B0);
-
-   UartInit(&(UART_CONFIG) { 0 });
-
-   for ( ; ; )
-   {
-      BYTE b;
-      if (UartRecv(&b, 1) == 1)
-         UartSendByte(b);
-      PinToggle(PIN_B0);
-      _delay_ms(100);
-   }
-
-   return 0;
-}
+#endif // __UARTPONG_H

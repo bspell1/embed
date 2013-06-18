@@ -27,7 +27,7 @@
 #include "uart.h"
 #include "tlc5940.h"
 #include "sx1509.h"
-#include "stepmoto.h"
+#include "stepper.h"
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // PROTOCOL SIGNATURE

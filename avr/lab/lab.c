@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.c
-// Purpose: LocoMoto motor driver program entry point
+// Module:  lab.c
+// Purpose: AVR test program
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -20,15 +20,11 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
-#include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
-#include "locomoto.h"
-#include "stepper.h"
-#include "proto.h"
+#include "lab.h"
+#include "debug.h"
 #include "uart.h"
-#include "tlc5940.h"
-#include "shiftreg.h"
+#include "hcsr04.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -44,45 +40,16 @@ int main ()
    sei();
 
    PinSetOutput(PIN_B0);
-   PinSetLo(PIN_B0);
 
-   UartInit(
-      &(UART_CONFIG)
-      {
-         .pfnOnSend = NULL,
-         .pfnOnRecv = ProtoRecvByte
-      }
-   );
-   ShiftRegInit(
-      &(SHIFTREG_CONFIG)
-      {
-         .nClockPin = PIN_D2,
-         .nLatchPin = PIN_D3,
-         .nDataPin  = PIN_D4
-      }
-   );
-   Tlc5940Init(
-      &(TLC5940_CONFIG)
-      {
-         .nPinXlat  = PIN_D5,
-         .nPinGSClk = PIN_OC0A,  // PIN_D6
-         .nPinSIn   = PIN_D7,
-         .nPinSClk  = PIN_B0,
-         .nPinBlank = PIN_B1
-      }
-   );
-   StepMotorInit(
-      (STEPMOTOR_CONFIG[STEPPER_COUNT])
-      {
-         { .nSRNibble = 0 },
-         { .nSRNibble = 1 },
-      }
-   );
-   ProtoInit();
+   UartInit(&(UART_CONFIG) { 0 });
 
    for ( ; ; )
    {
-      _delay_ms(1000);
+      BYTE b;
+      if (UartRecv(&b, 1) == 1)
+         UartSendByte(b);
+      PinToggle(PIN_B0);
+      _delay_ms(100);
    }
 
    return 0;

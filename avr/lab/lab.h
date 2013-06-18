@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  avrlab.h
+// Module:  lab.h
 // Purpose: AVR test program
 //
 // Copyright © 2013
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __AVRLAB_H
-#define __AVRLAB_H
+#ifndef __LAB_H
+#define __LAB_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,4 +27,4 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-#endif // __AVRLAB_H
+#endif // __LAB_H

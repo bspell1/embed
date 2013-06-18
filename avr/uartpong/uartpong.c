@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  locomoto.c
-// Purpose: LocoMoto motor driver program entry point
+// Module:  uartpong.c
+// Purpose: AVR UART echo program
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -20,18 +20,12 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
-#include <avr/interrupt.h>
-#include <util/delay.h>
 //-------------------[      Project Include Files      ]-------------------//
-#include "locomoto.h"
-#include "stepper.h"
-#include "proto.h"
 #include "uart.h"
-#include "tlc5940.h"
-#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
+static VOID OnUartRecv (BYTE b);
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -43,47 +37,34 @@ int main ()
 {
    sei();
 
-   PinSetOutput(PIN_B0);
-   PinSetLo(PIN_B0);
+   PinSetOutput(PIN_ARDUINO_LED);
+   PinSetLo(PIN_ARDUINO_LED);
 
    UartInit(
       &(UART_CONFIG)
       {
          .pfnOnSend = NULL,
-         .pfnOnRecv = ProtoRecvByte
+         .pfnOnRecv = OnUartRecv
       }
    );
-   ShiftRegInit(
-      &(SHIFTREG_CONFIG)
-      {
-         .nClockPin = PIN_D2,
-         .nLatchPin = PIN_D3,
-         .nDataPin  = PIN_D4
-      }
-   );
-   Tlc5940Init(
-      &(TLC5940_CONFIG)
-      {
-         .nPinXlat  = PIN_D5,
-         .nPinGSClk = PIN_OC0A,  // PIN_D6
-         .nPinSIn   = PIN_D7,
-         .nPinSClk  = PIN_B0,
-         .nPinBlank = PIN_B1
-      }
-   );
-   StepMotorInit(
-      (STEPMOTOR_CONFIG[STEPPER_COUNT])
-      {
-         { .nSRNibble = 0 },
-         { .nSRNibble = 1 },
-      }
-   );
-   ProtoInit();
 
    for ( ; ; )
    {
+      PinToggle(PIN_ARDUINO_LED);
+      _delay_ms(500);
+      PinToggle(PIN_ARDUINO_LED);
       _delay_ms(1000);
    }
 
    return 0;
+}
+//-----------< FUNCTION: main >----------------------------------------------
+// Purpose:    program entry point
+// Parameters: none
+// Returns:    0 if successful
+//             nonzero otherwise
+//---------------------------------------------------------------------------
+VOID OnUartRecv (BYTE b)
+{
+   UartSendByte(b);
 }

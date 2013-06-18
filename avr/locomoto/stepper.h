@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  stepmoto.h
+// Module:  stepper.h
 // Purpose: stepper motor driver module
 //
 // Copyright © 2013
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __STEPMOTO_H
-#define __STEPMOTO_H
+#ifndef __STEPPER_H
+#define __STEPPER_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -29,10 +29,10 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // STEPPER MOTOR CONFIGURATION
-// . STEPMOTO_COUNT: the number of stepper motors in the circuit
+// . STEPPER_COUNT: the number of stepper motors in the circuit
 //===========================================================================
-#ifndef STEPMOTO_COUNT
-#  define STEPMOTO_COUNT      2
+#ifndef STEPPER_COUNT
+#  define STEPPER_COUNT      2
 #endif
 //===========================================================================
 // STEPPER MOTOR STRUCTURES
@@ -59,4 +59,4 @@ inline VOID StepMotorRunForward (UI8 nMotor, UI8 nDelay)
    { StepMotorRun(nMotor, nDelay, STEPMOTOR_FORWARD); }
 inline VOID StepMotorRunReverse (UI8 nMotor, UI8 nDelay)
    { StepMotorRun(nMotor, nDelay, STEPMOTOR_REVERSE); }
-#endif // __STEPMOTO_H
+#endif // __STEPPER_H
