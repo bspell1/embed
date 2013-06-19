@@ -72,6 +72,25 @@ VOID ShiftRegInit (PSHIFTREG_CONFIG pConfig)
    PinSetOutput(g_nDataPin);
    WriteRegister();
 }
+//-----------< FUNCTION: ShiftRegRead >--------------------------------------
+// Purpose:    reads the entire shift register
+// Parameters: pbRegister - return the register contents via here
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID ShiftRegRead (PBYTE pbRegister)
+{
+   memcpy(pbRegister, g_pbBuffer, SHIFTREG_SIZE);
+}
+//-----------< FUNCTION: ShiftRegWrite >-------------------------------------
+// Purpose:    writes the entire shift register
+// Parameters: pbRegister - register data to write
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID ShiftRegWrite (PCBYTE pbRegister)
+{
+   memcpy(g_pbBuffer, pbRegister, SHIFTREG_SIZE);
+   WriteRegister();
+}
 //-----------< FUNCTION: ShiftRegRead4 >-------------------------------------
 // Purpose:    reads a 4-bit value from the shift register buffer
 // Parameters: nOffset - shift register offset, in nibbles

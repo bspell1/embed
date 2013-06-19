@@ -1,6 +1,8 @@
 //===========================================================================
-// Module:  uartpong.c
-// Purpose: AVR UART echo program
+// Module:  shrdance.c
+// Purpose: dancing shift register program
+//          toggles an alternating bit pattern across the chain of shift
+//          registers every two seconds
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -21,12 +23,11 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "uartpong.h"
-#include "uart.h"
+#include "shrdance.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
-static VOID OnUartRecv (BYTE b);
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -37,35 +38,28 @@ static VOID OnUartRecv (BYTE b);
 int main ()
 {
    sei();
-
+   // initialize the module
    PinSetOutput(PIN_ARDUINO_LED);
    PinSetLo(PIN_ARDUINO_LED);
-
-   UartInit(
-      &(UART_CONFIG)
+   ShiftRegInit(
+      &(SHIFTREG_CONFIG)
       {
-         .pfnOnSend = NULL,
-         .pfnOnRecv = OnUartRecv
+         .nClockPin = PIN_D2,
+         .nLatchPin = PIN_D3,
+         .nDataPin  = PIN_D4
       }
    );
-
+   // initialize the contents of the shift register,
+   // alternating zeroes and ones
+   BYTE pbRegister[SHIFTREG_SIZE];
+   memset(pbRegister, 0xAA, SHIFTREG_SIZE);
+   // dance, monkey!
    for ( ; ; )
    {
       PinToggle(PIN_ARDUINO_LED);
-      _delay_ms(500);
-      PinToggle(PIN_ARDUINO_LED);
-      _delay_ms(1000);
+      ShiftRegWrite(pbRegister);
+      memset(pbRegister, ~pbRegister[0], SHIFTREG_SIZE);
+      _delay_ms(2000);
    }
-
    return 0;
-}
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
-//---------------------------------------------------------------------------
-VOID OnUartRecv (BYTE b)
-{
-   UartSendByte(b);
 }
