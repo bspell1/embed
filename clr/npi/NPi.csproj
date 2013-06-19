@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{09A22B28-FFF4-4DF1-827D-7AA8F1666937}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>NPi</RootNamespace>
+    <AssemblyName>NPi</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <VisualStudioVersion>11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutputPath>..\bin\</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Mono.Posix, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\mono\lib\mono\4.0\Mono.Posix.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BitBanger\StepperDriver.cs" />
+    <Compile Include="EventFD.cs" />
+    <Compile Include="I2CDevice.cs" />
+    <Compile Include="Gpio.cs" />
+    <Compile Include="IStepperDriver.cs" />
+    <Compile Include="Lcd.cs" />
+    <Compile Include="Native.cs" />
+    <Compile Include="Nrf24.cs" />
+    <Compile Include="Reactor.cs" />
+    <Compile Include="SpiDevice.cs" />
+    <Compile Include="Stepper.cs" />
+    <Compile Include="VC0706Camera.cs" />
+    <Compile Include="WiiChuk\I2cReceiver.cs" />
+    <Compile Include="WiiChuk\IWiiChukReceiver.cs" />
+    <Compile Include="WiiChuk\Nrf24Receiver.cs" />
+    <Compile Include="WiiChuk\WiiChuk.cs" />
+    <Compile Include="WiiChuk\WiiChukPair.cs" />
+    <Compile Include="WiiChuk\WiiChukState.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

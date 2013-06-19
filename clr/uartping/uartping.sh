@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo mono ~/prj/bin/UartPing.exe "$@"
+sudo mono ~/prj/embed/clr/bin/UartPing.exe "$@"

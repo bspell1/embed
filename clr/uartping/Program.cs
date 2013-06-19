@@ -8,12 +8,12 @@ namespace Lab
 {
    class Program
    {
-      static String portName = "COM5";
-      static Int32 baudRate = 57600;
-      static Parity parityBits = Parity.None;
-      static Int32 dataBits = 8;
-      static StopBits stopBits = StopBits.One;
-      static Int32 message = 0xC0;
+      static String portName;
+      static Int32 baudRate;
+      static Parity parityBits;
+      static Int32 dataBits;
+      static StopBits stopBits;
+      static Int32 message;
 
       static Int32 Main (String[] options)
       {
@@ -29,6 +29,17 @@ namespace Lab
 
       static Boolean ParseOptions (String[] options)
       {
+         // apply option defaults
+         var portNames = SerialPort.GetPortNames();
+         portName = 
+            portNames.FirstOrDefault(p => p.StartsWith("/dev/ttyUSB")) ??
+            portNames.FirstOrDefault(p => p.StartsWith("/dev/ttyAMA")) ??
+            "COM5";
+         baudRate = 57600;
+         parityBits = Parity.None;
+         dataBits = 8;
+         stopBits = StopBits.One;
+         message = 0xC0;
          // parse options
          try
          {
@@ -49,7 +60,7 @@ namespace Lab
       static void ReportUsage ()
       {
          Console.WriteLine("   Usage: UartPing {options}");
-         Console.WriteLine("      -n|-name {name} port name, ex: /dev/ttyAMA0, default=COM5");
+         Console.WriteLine("      -n|-name {name} port name, default=COM5 or /dev/ttyAMA0");
          Console.WriteLine("      -b|-baud {rate} baud rate, default=57600");
          Console.WriteLine("      -p|-parity {none|even|odd|mark|space} parity bits, default=none");
          Console.WriteLine("      -d|-data {bits} data bits, default=8");
@@ -63,17 +74,20 @@ namespace Lab
          {
             Console.Write("   Opening port {0}...", port.PortName);
             port.Open();
-            port.ReadExisting();
-            Console.WriteLine("done.");
+            port.DiscardInBuffer();
+            Console.WriteLine("done. Press escape to exit.");
             for (; ; )
             {
-               Console.Write("\r   {0:hh:mm:ss}: Sending 0x{1}...", DateTime.Now, message.ToString("X"));
+               if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                  break;
+               Console.Write("\r   {0:h:mm:ss tt}: Sending 0x{1}... ", DateTime.Now, message.ToString("X"));
                port.Write(new[] { (Byte)message }, 0, 1);
                while (port.BytesToRead == 0)
                   Thread.Sleep(1);
-               Console.Write("received: 0x{0}", port.ReadByte().ToString("X"));
+               Console.Write("Received: 0x{0}", port.ReadByte().ToString("X"));
                Thread.Sleep(1000);
             }
+            Console.WriteLine();
          }
       }
    }

@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo mono ~/prj/bin/Lab.exe "$@"
+sudo mono ~/prj/embed/clr/bin/Lab.exe "$@"
