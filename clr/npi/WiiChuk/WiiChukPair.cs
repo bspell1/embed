@@ -25,6 +25,7 @@ namespace NPi.WiiChuk
             {
                this.LeftZero = left;
                this.RightZero = right;
+               left.CButton = left.ZButton = right.CButton = right.ZButton = false;
             }
             // calibrate the results and dispatch the updated event
             left = this.Left = left.Calibrate(this.LeftZero);

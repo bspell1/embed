@@ -105,72 +105,56 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 //---------------------------------------------------------------------------
 ISR(TIMER2_COMPB_vect)
 {
-   // uninterruptible phase
-   // count down time to next stage for each motor
+   BOOL bIdle = TRUE;
    for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
+   {
       if (g_pMotors[nMotor].nDelay != 0 && g_pMotors[nMotor].nTimer != 0)
          g_pMotors[nMotor].nTimer--;
-   // interruptible phase
-   // update motor registers
-   // allow only one motor interrupt to enter
-   static volatile UI8 g_nLock = 0;
-   if (g_nLock++ == 0)
-   {
-      sei();
-      for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
+      if (g_pMotors[nMotor].nTimer == 0)
       {
-         if (g_pMotors[nMotor].nTimer == 0)
+         // advance the motor to the next stage in the current step
+         if (g_pMotors[nMotor].nSteps > 0)
          {
-            // advance the motor to the next stage in the current step
-            if (g_pMotors[nMotor].nSteps > 0)
+            // moving forward, go to the next stage
+            // decrement step count when cycle completes
+            UI8 nRegData = g_pStages[g_pMotors[nMotor].nStage++];
+            if (g_pMotors[nMotor].nStage == 4)
             {
-               // moving forward, go to the next stage
-               // decrement step count when cycle completes
-               UI8 nRegData = g_pStages[g_pMotors[nMotor].nStage++];
-               if (g_pMotors[nMotor].nStage == 4)
-               {
-                  g_pMotors[nMotor].nStage = 0;
-                  if (g_pMotors[nMotor].nSteps != I16_MAX)
-                     g_pMotors[nMotor].nSteps--;
-               }
-               SetShiftRegister(nMotor, nRegData);
+               g_pMotors[nMotor].nStage = 0;
+               if (g_pMotors[nMotor].nSteps != I16_MAX)
+                  g_pMotors[nMotor].nSteps--;
             }
-            else if (g_pMotors[nMotor].nSteps < 0)
+            SetShiftRegister(nMotor, nRegData);
+         }
+         else if (g_pMotors[nMotor].nSteps < 0)
+         {
+            // moving backward, go to the previous stage
+            // increment step count when cycle completes
+            UI8 nRegData = g_pStages[3 - g_pMotors[nMotor].nStage++];
+            if (g_pMotors[nMotor].nStage == 4)
             {
-               // moving backward, go to the previous stage
-               // increment step count when cycle completes
-               UI8 nRegData = g_pStages[3 - g_pMotors[nMotor].nStage++];
-               if (g_pMotors[nMotor].nStage == 4)
-               {
-                  g_pMotors[nMotor].nStage = 0;
-                  if (g_pMotors[nMotor].nSteps != I16_MIN)
-                     g_pMotors[nMotor].nSteps++;
-               }
-               SetShiftRegister(nMotor, nRegData);
+               g_pMotors[nMotor].nStage = 0;
+               if (g_pMotors[nMotor].nSteps != I16_MIN)
+                  g_pMotors[nMotor].nSteps++;
             }
-            // reset the stage timer
-            if (g_pMotors[nMotor].nDelay != 0)
+            SetShiftRegister(nMotor, nRegData);
+         }
+         // reset the stage timer
+         if (g_pMotors[nMotor].nDelay != 0)
+         {
+            g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
+            // if the motor has stopped, turn off all inductors to save power
+            // and reset the delay to allow the stepper to shutdown
+            if (g_pMotors[nMotor].nSteps == 0)
             {
-               g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
-               // if the motor has stopped, turn off all inductors to save power
-               // and reset the delay to allow the stepper to shutdown
-               if (g_pMotors[nMotor].nSteps == 0)
-               {
-                  SetShiftRegister(nMotor, 0);
-                  g_pMotors[nMotor].nDelay = 0;
-               }
+               SetShiftRegister(nMotor, 0);
+               g_pMotors[nMotor].nDelay = 0;
             }
          }
       }
-      // uninterruptible phase
-      // determine whether all motors are idle, disable interrupts if so
-      cli();
-      BOOL bIdle = TRUE;
-      for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
-         if (g_pMotors[nMotor].nDelay != 0)
-            bIdle = FALSE;
-      if (bIdle)
-         RegSetLo(TIMSK2, OCIE2B);
+      if (g_pMotors[nMotor].nDelay != 0)
+         bIdle = FALSE;
    }
-   g_nLock--;
+   if (bIdle)
+      RegSetLo(TIMSK2, OCIE2B);
 }

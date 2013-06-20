@@ -38,6 +38,7 @@ namespace Lab
 
       public void Run ()
       {
+#if false
          using (var reactor = new Reactor())
          using (var rx = new Nrf24("/dev/spidev0.0", 17, 18, reactor))
          using (var wii = new WiiChukPair(new Nrf24Receiver(rx, "Wii00")))
@@ -82,7 +83,9 @@ namespace Lab
             reactor.Join();
             Console.WriteLine();
          }
-#if false
+#endif
+
+#if true
          var locoPath = Directory.GetFiles("/dev", "ttyAMA*").Single();
          using (var reactor = new Reactor())
          using (var loco = new LocoMoto.Driver(locoPath, LocoMoto.Driver.UnknownAddress))
@@ -102,29 +105,16 @@ namespace Lab
             rx.Listen();
             wii.Updated += (l, r) =>
             {
-               // TODO: call Run() here for lock-step responsiveness
-               //       this will require modifying the stepper driver
-               //       to more smoothly handle transitions (needs testing)
                lMoto.Rpm = (Int32)(l.JoystickY * Stepper.MaxRpm);
+               lMoto.Run();
                rMoto.Rpm = (Int32)(r.JoystickY * Stepper.MaxRpm);
+               rMoto.Run();
             };
             reactor.Start();
-            var oldLRpm = 0;
-            var oldRRpm = 0;
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               if (lMoto.Rpm != oldLRpm)
-               {
-                  lMoto.Run();
-                  oldLRpm = lMoto.Rpm;
-               }
-               if (rMoto.Rpm != oldRRpm)
-               {
-                  rMoto.Run();
-                  oldRRpm = rMoto.Rpm;
-               }
                Console.Write("\r{0,3} {1,3}          ", lMoto.Rpm, rMoto.Rpm);
                Thread.Sleep(50);
             }

@@ -15,13 +15,13 @@ namespace NPi.WiiChuk
       private const Int32 AcceleroMax = 1023;
       private const Int32 AcceleroRange = AcceleroMax - AcceleroMin;
 
-      public Single JoystickX { get; private set; }
-      public Single JoystickY { get; private set; }
-      public Single AcceleroX { get; private set; }
-      public Single AcceleroY { get; private set; }
-      public Single AcceleroZ { get; private set; }
-      public Boolean CButton { get; private set; }
-      public Boolean ZButton { get; private set; }
+      public Single JoystickX { get; set; }
+      public Single JoystickY { get; set; }
+      public Single AcceleroX { get; set; }
+      public Single AcceleroY { get; set; }
+      public Single AcceleroZ { get; set; }
+      public Boolean CButton { get; set; }
+      public Boolean ZButton { get; set; }
 
       public static WiiChukState Decode (Byte[] data, Int32 offset, Int32 count)
       {
