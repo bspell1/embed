@@ -26,7 +26,7 @@
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 // motor state data
-static volatile struct
+static volatile struct MOTOR
 {
    UI8   nSRNibble;                       // shift register offset, in nibbles
    UI8   nDelay;                          // stage delay, in 0.1ms units
@@ -37,11 +37,12 @@ static volatile struct
 // motor forward step stages
 static const UI8 g_pStages[] = 
 {
-   0xA,                                   // 1010, pink/blue on
-   0x6,                                   // 0110, orange/blue on
-   0x5,                                   // 0101, orange/yellow on
-   0x9                                    // 1001, pink/yellow on
+   0xA,                                   // 1010, magnet 1/magnet 3 on
+   0x6,                                   // 0110, magnet 2/magnet 3 on
+   0x5,                                   // 0101, magnet 2/magnet 4 on
+   0x9                                    // 1001, magnet 1/magnet 4 on
 };
+#define STAGE_COUNT sizeof(g_pStages) / sizeof(*g_pStages);
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SetShiftRegister >----------------------------------
@@ -100,6 +101,17 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
 // Purpose:    responds to 10kHz timer events
+//             . the stepper delay determines the number of interrupts per 
+//               motor that need to elapse before making a stage transition,
+//               which determines the speed of the motor 
+//               (lower delay = higher speed)
+//             . each stage is represented by a pair of magnets to turn on 
+//               (and a pair to turn off) to advance a quarter step
+//             . each step consists of 4 stages; to run the motor in reverse
+//               the step count should be less than zero; the number of
+//               steps determines the distance traveled
+//             . to run the motor continuously, the step count should be
+//               either INT16_MIN or INT16_MAX
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
@@ -108,53 +120,51 @@ ISR(TIMER2_COMPB_vect)
    BOOL bIdle = TRUE;
    for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
    {
-      if (g_pMotors[nMotor].nDelay != 0 && g_pMotors[nMotor].nTimer != 0)
-         g_pMotors[nMotor].nTimer--;
-      if (g_pMotors[nMotor].nTimer == 0)
+      volatile struct MOTOR* pMotor = &g_pMotors[nMotor];
+      // decrement the stage timer for the current motor
+      // when it reaches zero, a stage transition should occur
+      if (pMotor->nDelay != 0 && --pMotor->nTimer == 0)
       {
          // advance the motor to the next stage in the current step
-         if (g_pMotors[nMotor].nSteps > 0)
+         if (pMotor->nSteps > 0)
          {
             // moving forward, go to the next stage
             // decrement step count when cycle completes
-            UI8 nRegData = g_pStages[g_pMotors[nMotor].nStage++];
-            if (g_pMotors[nMotor].nStage == 4)
+            SetShiftRegister(nMotor, g_pStages[pMotor->nStage++]);
+            if (pMotor->nStage == STAGE_COUNT)
             {
-               g_pMotors[nMotor].nStage = 0;
-               if (g_pMotors[nMotor].nSteps != I16_MAX)
-                  g_pMotors[nMotor].nSteps--;
+               pMotor->nStage = 0;
+               if (pMotor->nSteps != I16_MAX)
+                  pMotor->nSteps--;
             }
-            SetShiftRegister(nMotor, nRegData);
          }
-         else if (g_pMotors[nMotor].nSteps < 0)
+         else if (pMotor->nSteps < 0)
          {
             // moving backward, go to the previous stage
             // increment step count when cycle completes
-            UI8 nRegData = g_pStages[3 - g_pMotors[nMotor].nStage++];
-            if (g_pMotors[nMotor].nStage == 4)
+            SetShiftRegister(nMotor, g_pStages[STAGE_COUNT - 1 - pMotor->nStage++]);
+            if (pMotor->nStage == STAGE_COUNT)
             {
-               g_pMotors[nMotor].nStage = 0;
-               if (g_pMotors[nMotor].nSteps != I16_MIN)
-                  g_pMotors[nMotor].nSteps++;
+               pMotor->nStage = 0;
+               if (pMotor->nSteps != I16_MIN)
+                  pMotor->nSteps++;
             }
-            SetShiftRegister(nMotor, nRegData);
          }
-         // reset the stage timer
-         if (g_pMotors[nMotor].nDelay != 0)
+         else
          {
-            g_pMotors[nMotor].nTimer = g_pMotors[nMotor].nDelay;
-            // if the motor has stopped, turn off all inductors to save power
-            // and reset the delay to allow the stepper to shutdown
-            if (g_pMotors[nMotor].nSteps == 0)
-            {
-               SetShiftRegister(nMotor, 0);
-               g_pMotors[nMotor].nDelay = 0;
-            }
+            // stopping, turn off all magnets to save power
+            // and reset the delay to allow disabling the interrupt
+            SetShiftRegister(nMotor, 0);
+            pMotor->nDelay = pMotor->nStage = 0;
          }
+         // reset the timer for the next stage
+         pMotor->nTimer = pMotor->nDelay;
       }
-      if (g_pMotors[nMotor].nDelay != 0)
+      // if the delay hasn't yet been cleared, we are still running
+      if (pMotor->nDelay != 0)
          bIdle = FALSE;
    }
+   // if all motors are idle, disable the interrupt
    if (bIdle)
       RegSetLo(TIMSK2, OCIE2B);
 }
