@@ -49,6 +49,8 @@ typedef struct tagShiftRegConfig
 VOID  ShiftRegInit   (PSHIFTREG_CONFIG pConfig);
 VOID  ShiftRegRead   (PBYTE pbRegister);
 VOID  ShiftRegWrite  (PCBYTE pbRegister);
+BIT   ShiftRegRead1  (UI8 nOffset);
+VOID  ShiftRegWrite1 (UI8 nOffset, BIT bValue);
 UI8   ShiftRegRead4  (UI8 nOffset);
 VOID  ShiftRegWrite4 (UI8 nOffset, UI8 nValue);
 UI8   ShiftRegRead8  (UI8 nOffset);

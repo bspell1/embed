@@ -143,7 +143,7 @@ using System.Linq;
 using NDesk.Options;
 #endif
 
-namespace UartPing.Options {
+namespace LocoMoto.Options {
 
 	public class OptionValueCollection : IList, IList<string> {
 

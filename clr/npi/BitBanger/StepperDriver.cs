@@ -59,7 +59,7 @@ namespace NPi.BitBanger
       {
          get; set; 
       }
-      public void Stop ()
+      public TimeSpan Stop ()
       {
          if (this.task != null)
          {
@@ -71,13 +71,15 @@ namespace NPi.BitBanger
             this.canceler.Dispose();
             this.canceler = null;
          }
+         return TimeSpan.Zero;
       }
-      public void Step (Int32 steps, Int32 rpm)
+      public TimeSpan Step (Int32 steps, Int32 rpm)
       {
          Stop();
          this.canceler = new CancellationTokenSource();
          var cancel = this.canceler.Token;
          var stepsPerCycle = this.StepsPerCycle;
+         var nsDelay = (60000000000 / rpm / stepsPerCycle);
          this.task = Task.Factory.StartNew(
             () =>
             {
@@ -87,7 +89,7 @@ namespace NPi.BitBanger
                var req = new Mono.Unix.Native.Timespec()
                {
                   tv_sec = 0,
-                  tv_nsec = (60000000000 / rpm / stepsPerCycle)
+                  tv_nsec = nsDelay
                };
                var rem = new Mono.Unix.Native.Timespec();
                for (var i = 0; i < steps || steps == Int32.MaxValue; i++)
@@ -102,6 +104,11 @@ namespace NPi.BitBanger
                }
             }
          );
+         return steps != Int32.MinValue && steps != Int32.MaxValue ?
+            TimeSpan.FromMilliseconds(
+               Math.Abs(steps) * CwStages.Length * (nsDelay / 100000)
+            ) : 
+            TimeSpan.MaxValue;
       }
       #endregion
    }

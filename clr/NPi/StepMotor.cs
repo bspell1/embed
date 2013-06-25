@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace NPi
 {
-   public class Stepper
+   public class StepMotor
    {
       public const Int32 MinRpm = -60;
       public const Int32 MaxRpm = 60;
@@ -13,7 +13,7 @@ namespace NPi
       private IStepperDriver driver;
       private Int32 rpm;
 
-      public Stepper (IStepperDriver driver)
+      public StepMotor (IStepperDriver driver)
       {
          this.driver = driver;
          this.driver.Stop();
@@ -36,54 +36,53 @@ namespace NPi
          set { this.rpm = Math.Min(Math.Max(value, MinRpm), MaxRpm); }
       }
 
-      public void Stop ()
+      public TimeSpan Stop ()
       {
-         this.driver.Stop();
+         return this.driver.Stop();
       }
 
-      public void Step (Int32 steps)
+      public TimeSpan Step (Int32 steps)
       {
          if (this.StepsPerCycle == 0)
             throw new InvalidOperationException("Invalid StepsPerCycle");
-         if (Math.Abs(this.rpm) < EpsilonRpm)
-            Stop();
-         else
+         return Math.Abs(this.rpm) < EpsilonRpm ?
+            this.driver.Stop() : 
             this.driver.Step(steps, !this.Reverse ? this.Rpm : -this.Rpm);
       }
 
-      public void StepReverse (Int32 steps)
+      public TimeSpan StepReverse (Int32 steps)
       {
-         Step(-steps);
+         return Step(-steps);
       }
 
-      public void Rotate (Double radians)
+      public TimeSpan Rotate (Double radians)
       {
-         Step((Int32)(radians * this.driver.StepsPerCycle / (2 * Math.PI)));
+         return Step((Int32)(radians * this.driver.StepsPerCycle / (2 * Math.PI)));
       }
 
-      public void RotateReverse (Double radians)
+      public TimeSpan RotateReverse (Double radians)
       {
-         StepReverse((Int32)(radians * this.driver.StepsPerCycle / (2 * Math.PI)));
+         return StepReverse((Int32)(radians * this.driver.StepsPerCycle / (2 * Math.PI)));
       }
 
-      public void Cycle (Int32 cycles)
+      public TimeSpan Cycle (Int32 cycles)
       {
-         Step(cycles * this.driver.StepsPerCycle);
+         return Step(cycles * this.driver.StepsPerCycle);
       }
 
-      public void CycleReverse (Int32 cycles)
+      public TimeSpan CycleReverse (Int32 cycles)
       {
-         StepReverse(cycles * this.driver.StepsPerCycle);
+         return StepReverse(cycles * this.driver.StepsPerCycle);
       }
 
-      public void Run ()
+      public TimeSpan Run ()
       {
-         Step(Int32.MaxValue);
+         return Step(Int32.MaxValue);
       }
 
-      public void RunReverse ()
+      public TimeSpan RunReverse ()
       {
-         Step(Int32.MinValue);
+         return Step(Int32.MinValue);
       }
    }
 }

@@ -91,10 +91,33 @@ VOID ShiftRegWrite (PCBYTE pbRegister)
    memcpy(g_pbBuffer, pbRegister, SHIFTREG_SIZE);
    WriteRegister();
 }
+//-----------< FUNCTION: ShiftRegRead1 >-------------------------------------
+// Purpose:    reads a bit value from the shift register buffer
+// Parameters: nOffset - shift register offset, in bits
+// Returns:    the bit value of the register at the specified offset
+//---------------------------------------------------------------------------
+BIT ShiftRegRead1 (UI8 nOffset)
+{
+   return (g_pbBuffer[nOffset / 8] >> (nOffset % 8)) & 0x1;
+}
+//-----------< FUNCTION: ShiftRegWrite1 >------------------------------------
+// Purpose:    writes a bit value to the shift register
+// Parameters: nOffset - shift register offset, in bits
+//             bValue  - the bit value to write at the offset
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID ShiftRegWrite1 (UI8 nOffset, BIT bValue)
+{
+
+   g_pbBuffer[nOffset / 8] = bValue ? 
+      g_pbBuffer[nOffset / 8] |  (1 << (nOffset % 8)) : 
+      g_pbBuffer[nOffset / 8] & ~(1 << (nOffset % 8));
+   WriteRegister();
+}
 //-----------< FUNCTION: ShiftRegRead4 >-------------------------------------
 // Purpose:    reads a 4-bit value from the shift register buffer
 // Parameters: nOffset - shift register offset, in nibbles
-// Returns:    the 4-bit value of the register at the byte offset
+// Returns:    the 4-bit value of the register at the specified offset
 //---------------------------------------------------------------------------
 UI8 ShiftRegRead4 (UI8 nOffset)
 {
@@ -118,7 +141,7 @@ VOID ShiftRegWrite4 (UI8 nOffset, UI8 nValue)
 //-----------< FUNCTION: ShiftRegRead8 >-------------------------------------
 // Purpose:    reads an 8-bit value from the shift register buffer
 // Parameters: nOffset - shift register offset, in bytes
-// Returns:    the 8-bit value of the register at the byte offset
+// Returns:    the 8-bit value of the register at the specified offset
 //---------------------------------------------------------------------------
 UI8 ShiftRegRead8 (UI8 nOffset)
 {

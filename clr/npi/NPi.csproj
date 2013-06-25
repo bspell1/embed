@@ -42,7 +42,8 @@
     <Compile Include="Nrf24.cs" />
     <Compile Include="Reactor.cs" />
     <Compile Include="SpiDevice.cs" />
-    <Compile Include="Stepper.cs" />
+    <Compile Include="StepMotor.cs" />
+    <Compile Include="StepTrike.cs" />
     <Compile Include="VC0706Camera.cs" />
     <Compile Include="WiiChuk\I2cReceiver.cs" />
     <Compile Include="WiiChuk\IWiiChukReceiver.cs" />

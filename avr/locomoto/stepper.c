@@ -42,7 +42,7 @@ static const UI8 g_pStages[] =
    0x5,                                   // 0101, magnet 2/magnet 4 on
    0x9                                    // 1001, magnet 1/magnet 4 on
 };
-#define STAGE_COUNT sizeof(g_pStages) / sizeof(*g_pStages);
+#define STAGE_COUNT (sizeof(g_pStages) / sizeof(*g_pStages))
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SetShiftRegister >----------------------------------
