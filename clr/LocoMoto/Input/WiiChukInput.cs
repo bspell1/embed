@@ -105,7 +105,6 @@ namespace LocoMoto
 
       private void OnRightCButton (Boolean value)
       {
-         this.control.SetOutput(0, value);
       }
 
       private void OnLeftZButton (Boolean value)
@@ -114,6 +113,7 @@ namespace LocoMoto
 
       private void OnRightZButton (Boolean value)
       {
+         this.control.SetOutput(0, value);
       }
 
       public struct Config
