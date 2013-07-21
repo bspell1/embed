@@ -48,7 +48,8 @@ namespace LocoMoto
          {
             UartPath = Directory.GetFiles("/dev", "ttyAMA*").Single(),
             LocoAddress = LocoMoto.Protocol.BroadcastAddress,
-            TrikeStepsPerCycle = 128,
+            TrikeStepsPerCycle = 50,
+            TrikeMaxRpm = 300,
             TrikeAxleWidth = 18.4,
             TrikeWheelRadius = 2.1
          };
@@ -75,6 +76,7 @@ namespace LocoMoto
                Thread.Sleep(1000);
             }
             reactor.Join();
+            control.Trike.Stop();
             Console.WriteLine();
          }
       }

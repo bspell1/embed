@@ -7,16 +7,15 @@ namespace NPi
 {
    public class StepMotor
    {
-      public const Int32 MinRpm = -60;
-      public const Int32 MaxRpm = 60;
       public const Int32 EpsilonRpm = 5;
       private IStepperDriver driver;
       private Int32 rpm;
 
-      public StepMotor (IStepperDriver driver)
+      public StepMotor (IStepperDriver driver, Int32 maxRpm)
       {
          this.driver = driver;
          this.driver.Stop();
+         this.MaxRpm = maxRpm;
       }
 
       public Int32 StepsPerCycle
@@ -30,10 +29,18 @@ namespace NPi
          get; set;
       }
 
+      public Int32 MaxRpm
+      {
+         get; private set;
+      }
+      public Int32 MinRpm
+      {
+         get { return -this.MaxRpm; }
+      }
       public Int32 Rpm
       {
          get { return this.rpm; }
-         set { this.rpm = Math.Min(Math.Max(value, MinRpm), MaxRpm); }
+         set { this.rpm = Math.Min(Math.Max(value, this.MinRpm), this.MaxRpm); }
       }
 
       public TimeSpan Stop ()

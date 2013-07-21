@@ -23,6 +23,10 @@ namespace NPi
          this.axleWidth = axleWidth;
       }
 
+      public StepMotor Left { get { return this.left; } }
+      public StepMotor Right { get { return this.right; } }
+      public Int32 MaxRpm { get { return this.left.MaxRpm; } }
+
       public TimeSpan Stop ()
       {
          this.left.Stop();

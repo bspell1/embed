@@ -1,6 +1,6 @@
 TARGETNAME 	= 	lab
 MODULES    	= 	lab
-FWMODULES   =	uart hcsr04
+FWMODULES   =	uart hcsr04 shiftreg
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					DEBUG_TRACE=UartTrace													\
