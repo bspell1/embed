@@ -49,6 +49,7 @@ namespace LocoMoto
             UartPath = Directory.GetFiles("/dev", "ttyAMA*").Single(),
             LocoAddress = LocoMoto.Protocol.BroadcastAddress,
             TrikeStepsPerCycle = 50,
+            TrikeMinRpm = 30,
             TrikeMaxRpm = 300,
             TrikeAxleWidth = 18.4,
             TrikeWheelRadius = 2.1
@@ -72,7 +73,7 @@ namespace LocoMoto
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Console.Write("\rLast chuk update: {0:h:mm:ss tt}", lastChuk);
+               Console.Write("\rLast chuk update: {0:h:mm:ss tt} {1}                  ", lastChuk, control.Trike.Left.Rpm);
                Thread.Sleep(1000);
             }
             reactor.Join();

@@ -14,12 +14,12 @@ namespace LocoMoto
       {
          this.proto = new Protocol(config.UartPath, config.LocoAddress);
          this.Trike = new StepTrike(
-            new StepMotor(new StepperDriver(this.proto, 0), config.TrikeMaxRpm)
+            new StepMotor(new StepperDriver(this.proto, 0), config.TrikeMinRpm, config.TrikeMaxRpm)
             {
                StepsPerCycle = config.TrikeStepsPerCycle,
                Reverse = true
             },
-            new StepMotor(new StepperDriver(this.proto, 1), config.TrikeMaxRpm)
+            new StepMotor(new StepperDriver(this.proto, 1), config.TrikeMinRpm, config.TrikeMaxRpm)
             {
                StepsPerCycle = config.TrikeStepsPerCycle
             },
@@ -46,6 +46,7 @@ namespace LocoMoto
          public String UartPath { get; set; }
          public Int32 LocoAddress { get; set; }
          public Int32 TrikeStepsPerCycle { get; set; }
+         public Int32 TrikeMinRpm { get; set; }
          public Int32 TrikeMaxRpm { get; set; }
          public Double TrikeWheelRadius { get; set; }
          public Double TrikeAxleWidth { get; set; }

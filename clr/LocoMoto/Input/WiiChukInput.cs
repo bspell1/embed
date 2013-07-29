@@ -93,13 +93,10 @@ namespace LocoMoto
 
       private void OnJoystick (WiiChukState left, WiiChukState right)
       {
-         var rpmLeft = (Int32)(left.JoystickY * control.Trike.MaxRpm);
-         var rpmRight = (Int32)(right.JoystickY * control.Trike.MaxRpm);
-         if (Math.Abs(rpmLeft) < 20)
-            rpmLeft = 0;
-         if (Math.Abs(rpmRight) < 20)
-            rpmRight = 0;
-         this.control.Trike.Run(rpmLeft, rpmRight);
+         this.control.Trike.Run(
+            (Int32)(left.JoystickY * control.Trike.MaxRpm),
+            (Int32)(right.JoystickY * control.Trike.MaxRpm)
+         );
       }
 
       private void OnLeftCButton (Boolean value)

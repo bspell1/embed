@@ -7,14 +7,17 @@ namespace NPi
 {
    public class StepMotor
    {
-      public const Int32 EpsilonRpm = 5;
       private IStepperDriver driver;
       private Int32 rpm;
 
-      public StepMotor (IStepperDriver driver, Int32 maxRpm)
+      public StepMotor (
+         IStepperDriver driver, 
+         Int32 minRpm,
+         Int32 maxRpm)
       {
          this.driver = driver;
          this.driver.Stop();
+         this.MinRpm = minRpm;
          this.MaxRpm = maxRpm;
       }
 
@@ -35,12 +38,12 @@ namespace NPi
       }
       public Int32 MinRpm
       {
-         get { return -this.MaxRpm; }
+         get; private set;
       }
       public Int32 Rpm
       {
          get { return this.rpm; }
-         set { this.rpm = Math.Min(Math.Max(value, this.MinRpm), this.MaxRpm); }
+         set { this.rpm = Math.Min(Math.Max(value, -this.MaxRpm), this.MaxRpm); }
       }
 
       public TimeSpan Stop ()
@@ -52,7 +55,7 @@ namespace NPi
       {
          if (this.StepsPerCycle == 0)
             throw new InvalidOperationException("Invalid StepsPerCycle");
-         return Math.Abs(this.rpm) < EpsilonRpm ?
+         return Math.Abs(this.rpm) < this.MinRpm ?
             this.driver.Stop() : 
             this.driver.Step(steps, !this.Reverse ? this.Rpm : -this.Rpm);
       }
