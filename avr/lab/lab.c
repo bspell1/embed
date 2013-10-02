@@ -24,8 +24,7 @@
 #include "lab.h"
 #include "debug.h"
 #include "uart.h"
-#include "hcsr04.h"
-#include "shiftreg.h"
+#include "tlc5940.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -40,29 +39,35 @@ int main ()
 {
    sei();
    // initialize the module
-   PinSetOutput(PIN_ARDUINO_LED);
    PinSetLo(PIN_ARDUINO_LED);
+   Tlc5940Init(
+      &(TLC5940_CONFIG) {
+         .nPinBlank = PIN_ARDUINO_D7,
+         .nPinSClk  = PIN_ARDUINO_D8,
+         .nPinSIn   = PIN_ARDUINO_D9,
+         .nPinXlat  = PIN_ARDUINO_D10,
+         .nPinGSClk = PIN_ARDUINO_D6
+      }
+   );
 
-   // temperature sensor input config
-   ADMUX  |= (1<<REFS1) | (1<<REFS0) |                // 1.1v internal reference
-             (1<<MUX3);                               // ADC source 8 (temperature sensor)
-   ADCSRA |= (1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);    // 150kHz ADC clock for 10-bits
-
-   // start up the ADC
-   RegSetHi(ADCSRA, ADEN);
-
+   I16  min = 1;
+   I16  max = 30;
+   I16  cur = 0;
+   BOOL dir = TRUE;
    for ( ; ; )
    {
-      _delay_ms(1000);
-      // run the next conversion
-      RegSetHi(ADCSRA, ADSC);
-      while (BitTest(ADCSRA, ADSC))
-         ;
-      // send the conversion results
-      UI8 l = ADCL;
-      UI8 h = ADCH;
-      UartSendByte(h);
-      UartSendByte(l);
+      Tlc5940SetDuty(0, 15, cur);
+      if (dir)
+      {
+         if (++cur == max)
+            dir = FALSE;
+      }
+      else
+      {
+         if (--cur == min)
+            dir = TRUE;
+      }
+      _delay_ms(10);
    }
    return 0;
 }

@@ -48,7 +48,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    memzero(&Tlc5940, sizeof(Tlc5940));
    Tlc5940.nPinBlank = pConfig->nPinBlank;
    Tlc5940.nPinSClk  = pConfig->nPinSClk;
-   Tlc5940.nPinSClk  = pConfig->nPinSClk;
+   Tlc5940.nPinSIn   = pConfig->nPinSIn;
    Tlc5940.nPinXlat  = pConfig->nPinXlat;
    Tlc5940.nPinGSClk = pConfig->nPinGSClk;
    Tlc5940.bUpdate   = TRUE;
@@ -80,17 +80,16 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
 UI16 Tlc5940GetDuty (UI8 nModule, UI8 nChannel)
 {
    // decode the control value from the data buffer
-   // . the module offset identifies the 
+   // . the module offset identifies the 24-byte segment in the buffer
    // . each control value is 12 bits wide, stored big endian
    // . channel values are stored in reverse order (channel 15 first)
-   // . output channels are active low, so subtract from 4095
-   UI8  cbModule = (TLC5940_COUNT - nModule) * 24;
+   UI8  cbModule = (TLC5940_COUNT - nModule - 1) * 24;
    UI8  cbOffset = 23 - nChannel * 3 / 2 - 1;
    UI8* pb       = Tlc5940.pbGsData + cbModule + cbOffset;
-   UI16 nLoDuty  = (nChannel % 2 == 0) ? 
+   UI16 nDuty    = (nChannel % 2 == 0) ? 
       ((UI16)(pb[0] & 0x0F) << 8) | pb[1] : 
       ((UI16)pb[0] << 4) | (pb[1] >> 4);
-   return 4095 - nLoDuty;
+   return nDuty;
 }
 //-----------< FUNCTION: Tlc5940SetDuty >------------------------------------
 // Purpose:    sets the duty cycle for a PWM channel
@@ -102,19 +101,18 @@ UI16 Tlc5940GetDuty (UI8 nModule, UI8 nChannel)
 VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 {
    // encode the control value into the data buffer
-   UI8  cbModule = (TLC5940_COUNT - nModule) * 24;
+   UI8  cbModule = (TLC5940_COUNT - nModule - 1) * 24;
    UI8  cbOffset = 23 - nChannel * 3 / 2 - 1;
    UI8* pb       = Tlc5940.pbGsData + cbModule + cbOffset;
-   UI16 nLoDuty  = 4095 - nDuty;
    if (nChannel % 2 == 0)
    {
-      pb[0] = (pb[0] & 0xF0) | (nLoDuty >> 8);   // high nibble at low nibble of offset
-      pb[1] = nLoDuty;                           // low byte at next offset
+      pb[0] = (pb[0] & 0xF0) | (nDuty >> 8);     // high nibble at low nibble of offset
+      pb[1] = nDuty;                             // low byte at next offset
    }
    else
    {
-      pb[0] = nLoDuty >> 4;                      // high byte at offset
-      pb[1] = (pb[1] & 0x0F) | (nLoDuty << 4);   // low nibble at high nibble of next offset
+      pb[0] = nDuty >> 4;                        // high byte at offset
+      pb[1] = (pb[1] & 0x0F) | (nDuty << 4);     // low nibble at high nibble of next offset
    }
    Tlc5940.bUpdate = TRUE;
 }
