@@ -124,9 +124,10 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 ISR(TIMER2_COMPA_vect)
 {
    // pwm cycle is 20ms, clock ticks at 0.1ms
-   static volatile UI16 fms = 0;
-   if (fms++ % 200 == 0)
+   static volatile UI8 g_fms = 0;
+   if (g_fms++ == 200)
    {
+      g_fms = 0;
       // uninterruptible phase
       // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
@@ -152,6 +153,5 @@ ISR(TIMER2_COMPA_vect)
          // pulse XLAT to latch in the greyscale data
          PinPulse(Tlc5940.nPinXlat);
       }
-      fms = 0;
    }
 }
