@@ -54,6 +54,13 @@ typedef uint32_t              UI32;
 #define UI32_MIN              UINT32_MIN
 #define UI32_MAX              UINT32_MAX
 //===========================================================================
+// FLOATING POINT TYPES
+//===========================================================================
+typedef float                 F32;
+#define F32_MIN               FLT_MIN
+#define F32_MAX               FLT_MAX
+#define F32_EPSILON           FLT_EPSILON
+//===========================================================================
 // BOOLEAN TYPES
 //===========================================================================
 typedef uint8_t               BOOL;
