@@ -40,34 +40,77 @@ int main ()
    sei();
    // initialize the module
    PinSetLo(PIN_ARDUINO_LED);
+   PinSetOutput(PIN_ARDUINO_LED);
    Tlc5940Init(
       &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_ARDUINO_D7,
-         .nPinSClk  = PIN_ARDUINO_D8,
-         .nPinSIn   = PIN_ARDUINO_D9,
-         .nPinXlat  = PIN_ARDUINO_D10,
-         .nPinGSClk = PIN_ARDUINO_D6
+         .nPinBlank = PIN_B1,
+         .nPinSClk  = PIN_D7,
+         .nPinSIn   = PIN_D5,
+         .nPinXlat  = PIN_B0,
+         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
 
-   I16  min = 1;
-   I16  max = 30;
-   I16  cur = 0;
-   BOOL dir = TRUE;
+#if 0
+   PinSetOutput(PIN_ARDUINO_D12);
+   for ( ; ; ) {
+      float duty = 2;
+      PinSetHi(PIN_ARDUINO_D12);
+      _delay_ms(duty);
+      PinSetLo(PIN_ARDUINO_D12);
+      _delay_ms(20 - duty);
+      static volatile UI8 g_nCycle = 0;
+      if (g_nCycle++ == 50) {
+         g_nCycle = 0;
+         PinToggle(PIN_ARDUINO_LED);
+      }
+   }
+#endif
+#if 0
+   for ( ; ; ) { 
+      Tlc5940SetDuty(0, 0, 4096 - 1.5 * (4096 / 20) - 100);
+      _delay_ms(2000);
+      PinToggle(PIN_ARDUINO_LED);
+      Tlc5940SetDuty(0, 0, 4096 - (4096 / 20));
+      _delay_ms(2000);
+      PinToggle(PIN_ARDUINO_LED);
+   }
+#else
+   I16  min  = 4096 - (1.5) * (4096 / 20);
+   I16  max  = 4096 - (4096 / 20);
+   I16  step = 10;
+   //I16  min = (4096 / 20);
+   //I16  max = 2 * (4096 / 20);
+   //I16  min  = 0;
+   //I16  max  = 4095;
+   //I16  step = 100;
+   I16  cur  = min;
+   BOOL dir  = TRUE;
    for ( ; ; )
    {
-      Tlc5940SetDuty(0, 15, cur);
+      Tlc5940SetDuty(0, 0, cur);
       if (dir)
       {
-         if (++cur == max)
+         if ((cur += step) > max)
+         {
+            cur = max;
             dir = FALSE;
+            _delay_ms(1000);
+            PinToggle(PIN_ARDUINO_LED);
+         }
       }
       else
       {
-         if (--cur == min)
+         if ((cur -= step) < min)
+         {
+            cur = min;
             dir = TRUE;
+            _delay_ms(1000);
+            PinToggle(PIN_ARDUINO_LED);
+         }
       }
-      _delay_ms(10);
+      _delay_ms(100);
    }
+#endif
    return 0;
 }

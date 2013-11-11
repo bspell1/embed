@@ -38,6 +38,7 @@
     <Compile Include="Gpio.cs" />
     <Compile Include="IStepperDriver.cs" />
     <Compile Include="Lcd.cs" />
+    <Compile Include="Mpu6050.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Nrf24.cs" />
     <Compile Include="Reactor.cs" />
