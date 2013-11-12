@@ -22,8 +22,11 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "quopter.h"
-#include "quadctrl.h"
+#include "pid.h"
 #include "tlc5940.h"
+#include "i2cmast.h"
+#include "mpu6050.h"
+#include "quadctrl.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -46,6 +49,13 @@ int main ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
+   I2cInit();
+   sei();
+   Mpu6050Init();
+   Mpu6050Wake();
+   Mpu6050DisableTemp();
+   Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
+   Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
    QuadRotorInit(
       &(QUADROTOR_CONFIG)
       {
@@ -56,35 +66,37 @@ int main ()
          .nStarChannel   = 3
       }
    );
-   sei();
-   F32  min = 0.0f;
-   F32  max = 0.5f;
-   F32  cur = min;
-   F32  inc = 0.05f;
-   BOOL dir = TRUE;
+   // hover parameters
+   F32 thrust = 0.3f;
+   F32 pitch  = 0.0f;
+   F32 roll   = 0.0f;
+   F32 yaw    = 0.0f;
+   PID pidRoll = 
+   { 
+      .nPGain   = 0.5f,
+      .nIGain   = 0.2f,
+      .nDGain   = 0.1f,
+      .nControl = 0.0f
+   };
+   PID pidPitch = pidRoll;
+   PID pidYaw = pidRoll;
+   PidInit(&pidRoll);
+   PidInit(&pidPitch);
+   PidInit(&pidYaw);
    for ( ; ; ) {
-      QuadRotorControl(cur, 0, 0, 0);
-      if (dir)
-      {
-         if ((cur += inc) > max)
-         {
-            cur = max;
-            dir = FALSE;
-            _delay_ms(1000);
-            PinToggle(PIN_D4);
-         }
-      }
-      else
-      {
-         if ((cur -= inc) < min)
-         {
-            cur = min;
-            dir = TRUE;
-            _delay_ms(1000);
-            PinToggle(PIN_D4);
-         }
-      }
-      _delay_ms(500);
+      // read the accelerometer, scale to 1g, and 
+      // pass the readings  through the PID controllers
+      MPU6050_VECTOR accel = Mpu6050ReadAccel();
+      PidUpdate(&pidRoll, roll, accel.x / 2.0f);
+      PidUpdate(&pidPitch, pitch, accel.y / 2.0f);
+      PidUpdate(&pidYaw, yaw, 0.0f);
+      // send the control signals to the rotors
+      QuadRotorControl(
+         thrust, 
+         pidRoll.nControl,
+         pidPitch.nControl,
+         pidYaw.nControl
+      );
    }
    return 0;
 }

@@ -23,6 +23,7 @@
 //-------------------[      Project Include Files      ]-------------------//
 #include "lab.h"
 #include "uart.h"
+#include "i2cmast.h"
 #include "mpu6050.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
@@ -38,18 +39,18 @@ int main ()
 {
    sei();
    UartInit(&(UART_CONFIG) { 0, });
-   Mpu6050Init(&(MPU6050_CONFIG) { });
+   I2cInit();
+   Mpu6050Init();
    Mpu6050Wake();
-   //Mpu6050DisableTemp();
    Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
-   Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
+   //Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
    for ( ; ; )
    {
       union {
          F32   f;
          BYTE  b[4];
       } data;
-      data.f = Mpu6050ReadTempCelcius();
+      data.f = Mpu6050ReadAccelY();
       UartSend(data.b, 4);
       _delay_ms(1000);
    }

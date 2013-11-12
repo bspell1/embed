@@ -36,11 +36,6 @@
 //===========================================================================
 // MPU6050 STRUCTURES
 //===========================================================================
-// module configuration
-typedef struct tagMpu6050Config
-{
-
-} MPU6050_CONFIG, *PMPU6050_CONFIG;
 // sensor vector
 typedef union tagMpu6050Vector
 {
@@ -108,7 +103,7 @@ typedef struct tagMpu6050Sensors
 // MODULE API
 //===========================================================================
 // module initialiization
-VOID              Mpu6050Init                (PMPU6050_CONFIG pConfig);
+VOID              Mpu6050Init                ();
 // general configuration register
 UI8               Mpu6050GetFrameSync        ();
 VOID              Mpu6050SetFrameSync        (UI8 nFrameSync);
@@ -127,14 +122,14 @@ VOID              Mpu6050SetAccelScale       (UI8 nScale);
 // sensor registers
 F32               Mpu6050ReadAccelAxis       (UI8 nAxis);
 MPU6050_VECTOR    Mpu6050ReadAccel           ();
-F32               Mpu6050ReadTempCelcius     ();
+F32               Mpu6050ReadTempCelsius     ();
 F32               Mpu6050ReadTempFahrenheit  ();
 F32               Mpu6050ReadGyroAxis        (UI8 nAxis);
 MPU6050_VECTOR    Mpu6050ReadGyro            ();
 MPU6050_SENSORS   Mpu6050ReadSensors         ();
 // power management registers
 VOID              Mpu6050Reset               ();
-BOOL              Mpu6050IsAwake             ();
+BOOL              Mpu6050IsAsleep            ();
 VOID              Mpu6050Sleep               ();
 VOID              Mpu6050Wake                ();
 BOOL              Mpu6050IsCycling           ();
@@ -168,8 +163,8 @@ inline F32 Mpu6050ReadGyroY ()
    { return Mpu6050ReadGyroAxis(MPU6050_AXIS_Y); }
 inline F32 Mpu6050ReadGyroZ ()
    { return Mpu6050ReadGyroAxis(MPU6050_AXIS_Z); }
-inline BOOL Mpu6050IsAsleep ()
-   { return !Mpu6050IsAwake(); }
+inline BOOL Mpu6050IsAwake ()
+   { return !Mpu6050IsAsleep(); }
 inline BOOL Mpu6050IsTempEnabled ()
    { return !Mpu6050IsTempDisabled(); }
 inline VOID Mpu6050DisableTemp ()

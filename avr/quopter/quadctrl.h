@@ -56,5 +56,5 @@ typedef struct tagQuadRotorConfig
 // controller initialization
 VOID  QuadRotorInit     (PQUADROTOR_CONFIG pConfig);
 // control operations
-VOID  QuadRotorControl  (F32 nThrust, F32 nPitch, F32 nRoll, F32 nYaw);
+VOID  QuadRotorControl  (F32 nThrust, F32 nRoll, F32 nPitch, F32 nYaw);
 #endif // __QUADCTRL_H

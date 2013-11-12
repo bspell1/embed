@@ -1,6 +1,6 @@
 TARGETNAME 	= 	quopter
 MODULES    	= 	quopter quadctrl
-FWMODULES   =  pid tlc5940 i2cmast
+FWMODULES   =  pid tlc5940 i2cmast mpu6050
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					TLC5940_COUNT=1															\

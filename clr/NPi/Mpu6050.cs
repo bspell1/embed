@@ -430,13 +430,13 @@ namespace NPi
          { 
             get; private set;
          }
-         public Single Celcius
+         public Single Celsius
          {
             get { return this.Raw / 340.0f + 35.0f; }
          }
          public Single Fahrenheit
          {
-            get { return this.Celcius * 9.0f / 5.0f + 32.0f; }
+            get { return this.Celsius * 9.0f / 5.0f + 32.0f; }
          }
          public TemperatureRegister (Byte[] encoded) : this()
          {
@@ -444,7 +444,7 @@ namespace NPi
          }
          public override String ToString ()
          {
-            return String.Format("{0:0.0}C/{1:0.0}F", this.Celcius, this.Fahrenheit);
+            return String.Format("{0:0.0}C/{1:0.0}F", this.Celsius, this.Fahrenheit);
          }
       }
 

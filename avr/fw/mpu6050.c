@@ -26,7 +26,7 @@
 #include "i2cmast.h"
 //-------------------[       Module Definitions        ]-------------------//
 #if I2C_BUFFER_SIZE < 15
-#  error The I2C buffer size is too small for MPU-6050 - increase I2C_BUFFER_SIZE
+#  error The I2C buffer size is too small for MPU-6050.
 #endif
 //===========================================================================
 // MPU6050 REGISTER ADDRESSES
@@ -116,12 +116,11 @@ static I16 ReadRegisterI16 (UI8 nRegister)
 }
 //-----------< FUNCTION: Mpu6050Init >---------------------------------------
 // Purpose:    MPU6050 interface initialization
-// Parameters: pConfig - module configuration
+// Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID Mpu6050Init (PMPU6050_CONFIG pConfig)
+VOID Mpu6050Init ()
 {
-   IgnoreParam(pConfig);
    // reset the module
    Mpu6050Reset();
 }
@@ -143,7 +142,7 @@ VOID Mpu6050SetFrameSync (UI8 nFrameSync)
 {
    WriteRegister8(
       REGISTER_CONFIG,
-      (ReadRegister8(REGISTER_CONFIG) & ~(0x7 << 3)) | (nFrameSync & 0x7)
+      (ReadRegister8(REGISTER_CONFIG) & ~(0x7 << 3)) | ((nFrameSync & 0x7) << 3)
    );
 }
 //-----------< FUNCTION: Mpu6050GetLowPassFilter >---------------------------
@@ -207,7 +206,7 @@ VOID Mpu6050SetGyroScale (UI8 nScale)
 {
    WriteRegister8(
       REGISTER_GYROCONFIG,
-      (ReadRegister8(REGISTER_GYROCONFIG) & ~(0x3 << 3)) | (nScale & 0x3)
+      (ReadRegister8(REGISTER_GYROCONFIG) & ~(0x3 << 3)) | ((nScale & 0x3) << 3)
    );
 }
 //-----------< FUNCTION: Mpu6050GetAccelSelfTest >---------------------------
@@ -250,7 +249,7 @@ VOID Mpu6050SetAccelScale (UI8 nScale)
 {
    WriteRegister8(
       REGISTER_ACCELCONFIG,
-      (ReadRegister8(REGISTER_ACCELCONFIG) & ~(0x3 << 3)) | (nScale & 0x3)
+      (ReadRegister8(REGISTER_ACCELCONFIG) & ~(0x3 << 3)) | ((nScale & 0x3) << 3)
    );
 }
 //-----------< FUNCTION: Mpu6050ReadAccelAxis >------------------------------
@@ -277,12 +276,12 @@ MPU6050_VECTOR Mpu6050ReadAccel ()
       s.v[i] = (F32)(((I16)pbBuffer[2 * i] << 8) | pbBuffer[2 * i + 1]) / ACCEL_SENSOR_RANGE;
    return s;
 }
-//-----------< FUNCTION: Mpu6050ReadTempCelcius >----------------------------
+//-----------< FUNCTION: Mpu6050ReadTempCelsius >----------------------------
 // Purpose:    reads the temperature sensor
 // Parameters: none
-// Returns:    the current temperature reading, in degrees Celcius
+// Returns:    the current temperature reading, in degrees Celsius
 //---------------------------------------------------------------------------
-F32 Mpu6050ReadTempCelcius ()
+F32 Mpu6050ReadTempCelsius ()
 {
    return (F32)ReadRegisterI16(REGISTER_TEMP) / TEMP_SENSOR_RANGE + TEMP_SENSOR_OFFSET;
 }
@@ -293,7 +292,7 @@ F32 Mpu6050ReadTempCelcius ()
 //---------------------------------------------------------------------------
 F32 Mpu6050ReadTempFahrenheit ()
 {
-   return Mpu6050ReadTempCelcius() * 9.0f / 5.0f + 32.0f;
+   return Mpu6050ReadTempCelsius() * 9.0f / 5.0f + 32.0f;
 }
 //-----------< FUNCTION: Mpu6050ReadGyroAxis >-------------------------------
 // Purpose:    reads a gyroscope sensor
@@ -348,13 +347,13 @@ VOID Mpu6050Reset ()
       BitSetHi(ReadRegister8(REGISTER_PWR_MGMT_1), 7)
    );
 }
-//-----------< FUNCTION: Mpu6050IsAwake >------------------------------------
-// Purpose:    determines whether the motion processor is awake
+//-----------< FUNCTION: Mpu6050IsAsleep >-----------------------------------
+// Purpose:    determines whether the motion processor is asleep
 // Parameters: none
-// Returns:    true if the MPU is awake
+// Returns:    true if the MPU is asleep
 //             false otherwise
 //---------------------------------------------------------------------------
-BOOL Mpu6050IsAwake ()
+BOOL Mpu6050IsAsleep ()
 {
    return BitTest(ReadRegister8(REGISTER_PWR_MGMT_1), 6);
 }
@@ -381,6 +380,8 @@ VOID Mpu6050Wake ()
       REGISTER_PWR_MGMT_1,
       BitSetLo(ReadRegister8(REGISTER_PWR_MGMT_1), 6)
    );
+   // the module requires a delay upon waking, say 5ms
+   _delay_ms(5);
 }
 //-----------< FUNCTION: Mpu6050IsCycling >----------------------------------
 // Purpose:    determines whether the MPU is in low-power 
