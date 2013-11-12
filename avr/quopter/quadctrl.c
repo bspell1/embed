@@ -73,8 +73,11 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
 //---------------------------------------------------------------------------
 VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 {
-   g_nTlc5940 = pConfig->nTlc5940Module;
-   memzero(g_nChannels, sizeof(g_nChannels));
+   g_nTlc5940              = pConfig->nTlc5940Module;
+   g_nChannels[ROTOR_FORE] = pConfig->nForeChannel;
+   g_nChannels[ROTOR_AFT]  = pConfig->nAftChannel;
+   g_nChannels[ROTOR_PORT] = pConfig->nPortChannel;
+   g_nChannels[ROTOR_STAR] = pConfig->nStarChannel;
    SetThrust(ROTOR_FORE, QUADROTOR_THRUST_MIN);
    SetThrust(ROTOR_AFT,  QUADROTOR_THRUST_MIN);
    SetThrust(ROTOR_PORT, QUADROTOR_THRUST_MIN);
