@@ -84,10 +84,11 @@ namespace NPi
       private const Byte RegisterPower1 = 0x6B;
       private const Byte RegisterPower2 = 0x6C;
 
+      private const Single GyroRange = 32750;
+      private const Single AccelRange = 32767;
+
       private I2CDevice i2c;
       private Byte[] buffer = new Byte[3];
-      private GyroConfigRegister gyroConfig = GyroConfigRegister.Default;
-      private AccelConfigRegister accelConfig = AccelConfigRegister.Default;
 
       public Mpu6050 (String path, I2cAddress address = I2cAddress._0)
       {
@@ -114,13 +115,13 @@ namespace NPi
       }
       public GyroConfigRegister GyroConfig
       {
-         get { return this.gyroConfig; }
-         set { Write(RegisterGyroConfig, (this.gyroConfig = value).Encode()); }
+         get { return new GyroConfigRegister(Read(RegisterGyroConfig, 1)); }
+         set { Write(RegisterGyroConfig, value.Encode()); }
       }
       public AccelConfigRegister AccelConfig
       {
-         get { return this.accelConfig; }
-         set { Write(RegisterAccelConfig, (this.accelConfig = value).Encode()); }
+         get { return new AccelConfigRegister(Read(RegisterAccelConfig, 1)); }
+         set { Write(RegisterAccelConfig, value.Encode()); }
       }
       public PowerConfigRegister PowerConfig
       {
@@ -129,15 +130,15 @@ namespace NPi
       }
       public SampleRegister AccelX
       {
-         get { return new SampleRegister(Read(RegisterAccelX, 2), this.accelConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterAccelX, 2), AccelRange); }
       }
       public SampleRegister AccelY
       {
-         get { return new SampleRegister(Read(RegisterAccelY, 2), this.accelConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterAccelY, 2), AccelRange); }
       }
       public SampleRegister AccelZ
       {
-         get { return new SampleRegister(Read(RegisterAccelZ, 2), this.accelConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterAccelZ, 2), AccelRange); }
       }
       public TemperatureRegister Temperature
       {
@@ -145,15 +146,15 @@ namespace NPi
       }
       public SampleRegister GyroX
       {
-         get { return new SampleRegister(Read(RegisterGyroX, 2), this.gyroConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterGyroX, 2), GyroRange); }
       }
       public SampleRegister GyroY
       {
-         get { return new SampleRegister(Read(RegisterGyroY, 2), this.gyroConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterGyroY, 2), GyroRange); }
       }
       public SampleRegister GyroZ
       {
-         get { return new SampleRegister(Read(RegisterGyroZ, 2), this.gyroConfig.ScaleFactor); }
+         get { return new SampleRegister(Read(RegisterGyroZ, 2), GyroRange); }
       }
       #endregion
 
@@ -172,8 +173,8 @@ namespace NPi
             //---------------------------------------------------------------
             // DEVNOTE: bspell - 11/8/2013
             // eat all exceptions here, as the MPU6050 stops responding 
-            // over I2C after a reset, causing the Linux I2C driver to fail
-            // afterwards, the state of the driver appears to be stable
+            // over I2C after a reset, causing the Linux I2C driver to fail,
+            // but the state of the driver appears to be stable afterwards
             //---------------------------------------------------------------
          }
       }
@@ -254,26 +255,6 @@ namespace NPi
          public Boolean SelfTestZ { get; set; }
          public GyroScale Scale { get; set; }
 
-         public Single ScaleFactor
-         {
-            get
-            {
-               switch (this.Scale)
-               {
-                  case GyroScale._500DegPerSec:
-                     return 250f * 131f;
-                  case GyroScale._1000DegPerSec:
-                     return 500f * 65.5f;
-                  case GyroScale._2000DegPerSec:
-                     return 1000f * 32.8f;
-                  case GyroScale._4000DegPerSec:
-                     return 2000f * 16.4f;
-                  default:
-                     throw new NotSupportedException();
-               }
-            }
-         }
-
          public static readonly GyroConfigRegister Default = new GyroConfigRegister()
          {
             Scale = GyroScale._500DegPerSec
@@ -320,26 +301,6 @@ namespace NPi
          public Boolean SelfTestY { get; set; }
          public Boolean SelfTestZ { get; set; }
          public AccelScale Scale { get; set; }
-
-         public Single ScaleFactor
-         {
-            get
-            {
-               switch (this.Scale)
-               {
-                  case AccelScale._4G:
-                     return 2f * 16384f;
-                  case AccelScale._8G:
-                     return 4f * 8192f;
-                  case AccelScale._16G:
-                     return 8f * 4096f;
-                  case AccelScale._32G:
-                     return 16f * 2048f;
-                  default:
-                     throw new NotSupportedException();
-               }
-            }
-         }
 
          public static readonly AccelConfigRegister Default = new AccelConfigRegister()
          {

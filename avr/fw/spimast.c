@@ -110,9 +110,9 @@ VOID SpiBeginSendRecv (
    {
       // set up SPI state and transfer the send buffer
       g_nSsPin = nSsPin;
-      cbSend = MIN(cbSend, SPI_BUFFER_SIZE);
-      cbRecv = MIN(cbRecv, SPI_BUFFER_SIZE);
-      g_cbBuffer = MAX(cbSend, cbRecv);
+      cbSend = Min(cbSend, SPI_BUFFER_SIZE);
+      cbRecv = Min(cbRecv, SPI_BUFFER_SIZE);
+      g_cbBuffer = Max(cbSend, cbRecv);
       g_pfnCallback = pfnCallback;
       if (pvSend != NULL)
          memcpy((PBYTE)g_pbBuffer, pvSend, cbSend);
@@ -137,7 +137,7 @@ UI8 SpiEndSendRecv (PVOID pvRecv, UI8 cbRecv)
    SpiWait();
    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
-      cbRecv = MIN(cbRecv, g_cbBuffer);
+      cbRecv = Min(cbRecv, g_cbBuffer);
       if (pvRecv != NULL)
          memcpy(pvRecv, (PVOID)g_pbBuffer, cbRecv);
    }

@@ -51,8 +51,8 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
    // clamp the thrust value and calculate the duty cycle
    UI16 nDuty = 
       (UI16)(
-         MIN(
-            MAX(
+         Min(
+            Max(
                nThrust, 
                QUADROTOR_THRUST_MIN
             ), 

@@ -81,7 +81,7 @@ VOID UartSend (PCVOID pvData, UI8 cbData)
       {
          BOOL bStart = !RegGet(UCSR0B, UDRIE0);
          // fill the send FIFO
-         cbSent = MIN(cbData, FifoSize(g_pSendFifo) - FifoCount(g_pSendFifo));
+         cbSent = Min(cbData, FifoSize(g_pSendFifo) - FifoCount(g_pSendFifo));
          FifoWriteBlock(g_pSendFifo, pbData, cbSent);
          // if the FIFO was empty, start the UART transfer
          if (cbSent > 0 && bStart)

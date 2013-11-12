@@ -701,7 +701,7 @@ VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
       UI8  cbSend = cbPacket + 1;
       BYTE pbSend[cbSend];
       pbSend[0] = g_bTXRecvAck ? COMMAND_TXWRITEPACKET : COMMAND_TXWRITENOACK;
-      memcpy(pbSend + 1, pvPacket, MIN(cbPacket, NRF24_PACKET_MAX));
+      memcpy(pbSend + 1, pvPacket, Min(cbPacket, NRF24_PACKET_MAX));
       SpiSend(g_nSsPin, pbSend, cbSend);
       SpiWait();
       // set CE low to return to standby after the transfer

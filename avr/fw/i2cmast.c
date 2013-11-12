@@ -141,8 +141,8 @@ VOID I2cBeginSendRecv (
    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
       // validate parameters
-      cbSend = MIN(cbSend, I2C_BUFFER_SIZE);
-      cbRecv = MIN(cbRecv, I2C_BUFFER_SIZE);
+      cbSend = Min(cbSend, I2C_BUFFER_SIZE);
+      cbRecv = Min(cbRecv, I2C_BUFFER_SIZE);
       // set up I2C state
       if (cbSend == 0)
          g_pbBuffer[0] = (nSlaveAddr << 1) | BitMask(ADDR_READ_BIT);
@@ -170,7 +170,7 @@ UI8 I2cEndSendRecv (PVOID pvRecv, UI8 cbRecv)
    I2cWait();
    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
    {
-      cbRecv = MIN(cbRecv, g_cbRecv);
+      cbRecv = Min(cbRecv, g_cbRecv);
       if (pvRecv != NULL)
          memcpy(pvRecv, (PBYTE)g_pbBuffer + 1, cbRecv);
    }

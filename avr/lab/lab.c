@@ -22,9 +22,8 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "lab.h"
-#include "debug.h"
 #include "uart.h"
-#include "tlc5940.h"
+#include "mpu6050.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -38,10 +37,20 @@
 int main ()
 {
    sei();
-   UartInit(&(UART_CONFIG) { });
+   UartInit(&(UART_CONFIG) { 0, });
+   Mpu6050Init(&(MPU6050_CONFIG) { });
+   Mpu6050Wake();
+   //Mpu6050DisableTemp();
+   Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
+   Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
    for ( ; ; )
    {
-      UartSendByte(0xC0);
+      union {
+         F32   f;
+         BYTE  b[4];
+      } data;
+      data.f = Mpu6050ReadTempCelcius();
+      UartSend(data.b, 4);
       _delay_ms(1000);
    }
    return 0;

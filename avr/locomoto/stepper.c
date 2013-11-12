@@ -95,7 +95,7 @@ VOID StepMotorStop (UI8 nMotor)
 //---------------------------------------------------------------------------
 VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 {
-   g_pMotors[nMotor].nDelay = MAX(nDelay, 1);
+   g_pMotors[nMotor].nDelay = Max(nDelay, 1);
    g_pMotors[nMotor].nSteps = nSteps;
    RegSetHi(TIMSK2, OCIE2B);
 }

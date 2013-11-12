@@ -72,6 +72,9 @@ typedef BOOL                  BIT;
 #define BitMask(b)            (1 << (b))
 #define BitUnmask(b)          (~BitMask(b))
 #define BitTest(v, b)         (((v) & BitMask(b)) ? BIT_HI : BIT_LO)
+#define BitSetHi(v, b)        ((v) | BitMask(b))
+#define BitSetLo(v, b)        ((v) & BitUnmask(b))
+#define BitSet(v, b, t)       ((t) ? BitSetHi(v, b) : BitSetLo(v, b))
 //===========================================================================
 // BUFFER TYPES
 //===========================================================================
@@ -99,17 +102,23 @@ typedef const CHAR*           PCSTR;
 //===========================================================================
 // MIN/MAX DEFINITIONS
 //===========================================================================
-#ifndef MIN
-#  define MIN(x, y)        (((x) < (y)) ? (x) : (y))
+#ifndef Min
+#  define Min(x, y)           (((x) < (y)) ? (x) : (y))
 #endif
-#ifndef MAX
-#  define MAX(x, y)        (((x) > (y)) ? (x) : (y))
+#ifndef Max
+#  define Max(x, y)           (((x) > (y)) ? (x) : (y))
 #endif
 //===========================================================================
 // MEMORY OPERATIONS
 //===========================================================================
 #ifndef memzero
 #  define memzero(pv, cb)     memset((pv), 0, (cb))
+#endif
+//===========================================================================
+// COMPILER OPTIONS
+//===========================================================================
+#ifndef IgnoreParam
+#  define IgnoreParam(p)      (void)(p)
 #endif
 //===========================================================================
 // AVR PINS
