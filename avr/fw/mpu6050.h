@@ -82,15 +82,15 @@ typedef struct tagMpu6050Sensors
 #define MPU6050_DLPF_10HZ           0x5      // 10Hz accel, 10Hz gyro filter
 #define MPU6050_DLPF_5HZ            0x6      // 5Hz accel, 5Hz gyro filter
 // gyro scale values
-#define MPU6050_GYRO_SCALE_500DPS   0x0      // +-250deg/sec (default)
-#define MPU6050_GYRO_SCALE_1000DPS  0x1      // +-500deg/sec
-#define MPU6050_GYRO_SCALE_2000DPS  0x2      // +-1000deg/sec
-#define MPU6050_GYRO_SCALE_4000DPS  0x3      // +-2000deg/sec
+#define MPU6050_GYRO_SCALE_250DPS   0x0      // +-250deg/sec (default)
+#define MPU6050_GYRO_SCALE_500DPS   0x1      // +-500deg/sec
+#define MPU6050_GYRO_SCALE_1000DPS  0x2      // +-1000deg/sec
+#define MPU6050_GYRO_SCALE_2000DPS  0x3      // +-2000deg/sec
 // accel scale values
-#define MPU6050_ACCEL_SCALE_4G      0x0      // +-2g (default)
-#define MPU6050_ACCEL_SCALE_8G      0x1      // +-4g
-#define MPU6050_ACCEL_SCALE_16G     0x2      // +-8g
-#define MPU6050_ACCEL_SCALE_32G     0x3      // +-16g
+#define MPU6050_ACCEL_SCALE_2G      0x0      // +-2g (default)
+#define MPU6050_ACCEL_SCALE_4G      0x1      // +-4g
+#define MPU6050_ACCEL_SCALE_8G      0x2      // +-8g
+#define MPU6050_ACCEL_SCALE_16G     0x3      // +-16g
 // clock sources
 #define MPU6050_CLOCK_INTERNAL8MHZ  0x0      // internal clock (default)
 #define MPU6050_CLOCK_PLLGYROX      0x1      // x-axis gyroscope clock

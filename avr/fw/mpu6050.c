@@ -112,7 +112,7 @@ static I16 ReadRegisterI16 (UI8 nRegister)
 {
    BYTE pbBuffer[2];
    ReadRegister(nRegister, pbBuffer, 2);
-   return (I16)pbBuffer[0] << 8 | pbBuffer[1];
+   return ((I16)pbBuffer[0] << 8) | pbBuffer[1];
 }
 //-----------< FUNCTION: Mpu6050Init >---------------------------------------
 // Purpose:    MPU6050 interface initialization

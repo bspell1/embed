@@ -136,9 +136,7 @@ ISR(TIMER2_COMPA_vect)
       if (Tlc5940.bUpdate)
       {
          Tlc5940.bUpdate = FALSE;
-         // interuptible phase
          // shift in greyscale bytes, MSB first
-         sei();
          for (UI8 i = 0; i < sizeof(Tlc5940.pbGsData); i++)
          {
             // shift in the current greyscale byte, MSB first

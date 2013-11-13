@@ -93,10 +93,10 @@ VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 //---------------------------------------------------------------------------
 VOID QuadRotorControl (F32 nThrust, F32 nRoll, F32 nPitch, F32 nYaw)
 {
-   F32 nFore = nThrust + nPitch / 2.0f + nYaw / 2.0f;
-   F32 nAft  = nThrust - nPitch / 2.0f + nYaw / 2.0f;
-   F32 nPort = nThrust - nRoll  / 2.0f - nYaw / 2.0f;
-   F32 nStar = nThrust + nRoll  / 2.0f - nYaw / 2.0f;
+   F32 nFore = nThrust + (nPitch / 2.0f) + nYaw / 2.0f;
+   F32 nAft  = nThrust - (nPitch / 2.0f) + nYaw / 2.0f;
+   F32 nPort = nThrust - (nRoll  / 2.0f) - nYaw / 2.0f;
+   F32 nStar = nThrust + (nRoll  / 2.0f) - nYaw / 2.0f;
    SetThrust(ROTOR_FORE, nFore);
    SetThrust(ROTOR_AFT,  nAft);
    SetThrust(ROTOR_PORT, nPort);
