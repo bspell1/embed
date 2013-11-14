@@ -25,6 +25,7 @@
 #include "uart.h"
 #include "i2cmast.h"
 #include "mpu6050.h"
+#include "tlc5940.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -38,21 +39,48 @@
 int main ()
 {
    sei();
-   UartInit(&(UART_CONFIG) { 0, });
-   I2cInit();
-   Mpu6050Init();
-   Mpu6050Wake();
-   Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
-   //Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
+   PinSetOutput(PIN_D4);
+   Tlc5940Init(
+      &(TLC5940_CONFIG) {
+         .nPinBlank = PIN_B1,
+         .nPinSClk  = PIN_D7,
+         .nPinSIn   = PIN_D5,
+         .nPinXlat  = PIN_B0,
+         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
+      }
+   );
+#if 1
    for ( ; ; )
    {
-      union {
-         F32   f;
-         BYTE  b[4];
-      } data;
-      data.f = Mpu6050ReadAccelY();
-      UartSend(data.b, 4);
+      for (UI8 i = 0; i < 16; i++)
+      {
+         if (i % 2 == 0)
+            Tlc5940SetDuty(0, i, 3870);
+         else
+            Tlc5940SetDuty(0, i, 3891);
+      }
       _delay_ms(1000);
+      for (UI8 i = 0; i < 16; i++)
+      {
+         if (i % 2 == 0)
+            Tlc5940SetDuty(0, i, 3891);
+         else
+            Tlc5940SetDuty(0, i, 3870);
+      }
+      _delay_ms(1000);
+      PinToggle(PIN_D4);
    }
+#else
+   for ( ; ; ) {
+      for (UI16 i = 0; i < 4000; i += 1) {
+         for (UI8 j = 0; j < 16; j++)
+            if (j % 2 == 0)
+               Tlc5940SetDuty(0, j, i);
+            else
+               Tlc5940SetDuty(0, j, 4000 - i);
+         _delay_ms(1);
+      }
+   }
+#endif
    return 0;
 }

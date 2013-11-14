@@ -68,7 +68,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    PinSetOutput(Tlc5940.nPinSIn);                             
    PinSetOutput(Tlc5940.nPinXlat);                            
    PinSetOutput(Tlc5940.nPinGSClk);                         
-   // set BLANK high
+   // set BLANK high to enable PWM
    PinSetHi(Tlc5940.nPinBlank);
 }
 //-----------< FUNCTION: Tlc5940GetDuty >------------------------------------
@@ -102,17 +102,17 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
 {
    // encode the control value into the data buffer
    UI8  cbModule = (TLC5940_COUNT - nModule - 1) * 24;
-   UI8  cbOffset = 23 - nChannel * 3 / 2 - 1;
+   UI8  cbOffset = 23 - (nChannel * 3) / 2 - 1;
    UI8* pb       = Tlc5940.pbGsData + cbModule + cbOffset;
    if (nChannel % 2 == 0)
    {
-      pb[0] = (pb[0] & 0xF0) | (nDuty >> 8);     // high nibble at low nibble of offset
-      pb[1] = nDuty;                             // low byte at next offset
+      pb[0] = (pb[0] & 0xF0) | (nDuty >> 8);    // high nibble at low nibble of offset
+      pb[1] = nDuty;                            // low byte at next offset
    }
    else
    {
-      pb[0] = nDuty >> 4;                        // high byte at offset
-      pb[1] = (pb[1] & 0x0F) | (nDuty << 4);     // low nibble at high nibble of next offset
+      pb[0] = nDuty >> 4;                       // high byte at offset
+      pb[1] = (pb[1] & 0x0F) | (nDuty << 4);    // low nibble at high nibble of next offset
    }
    Tlc5940.bUpdate = TRUE;
 }
@@ -128,7 +128,6 @@ ISR(TIMER2_COMPA_vect)
    if (g_fms++ == 200)
    {
       g_fms = 0;
-      // uninterruptible phase
       // resync GSCLK and pulse BLANK to start the next PWM cycle
       TCNT0 = 0;
       PinPulse(Tlc5940.nPinBlank);

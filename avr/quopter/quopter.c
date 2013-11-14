@@ -39,6 +39,7 @@
 //---------------------------------------------------------------------------
 int main ()
 {
+   PinSetOutput(PIN_D4);
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
@@ -67,7 +68,7 @@ int main ()
       }
    );
    // hover parameters
-   F32 thrust = 0.3f;
+   F32 thrust = 0.2f;
    F32 pitch  = 0.0f;
    F32 roll   = 0.0f;
    F32 yaw    = 0.0f;
@@ -84,11 +85,12 @@ int main ()
    PidInit(&pidPitch);
    PidInit(&pidYaw);
    for ( ; ; ) {
+      PinToggle(PIN_D4);
       // read the accelerometer, scale to 1g, and 
       // pass the readings  through the PID controllers
       MPU6050_VECTOR accel = Mpu6050ReadAccel();
-      PidUpdate(&pidRoll, roll, accel.x / 2.0f);
-      PidUpdate(&pidPitch, pitch, accel.y / 2.0f);
+      PidUpdate(&pidRoll, roll, accel.x * 2.0f);
+      PidUpdate(&pidPitch, pitch, accel.y * 2.0f);
       PidUpdate(&pidYaw, yaw, 0.0f);
       // send the control signals to the rotors
       QuadRotorControl(
@@ -97,6 +99,7 @@ int main ()
          pidPitch.nControl,
          pidYaw.nControl
       );
+      _delay_ms(1000);
    }
    return 0;
 }
