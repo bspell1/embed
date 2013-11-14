@@ -22,22 +22,15 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "quadctrl.h"
-#include "tlc5940.h"
+#include "pwmbang.h"
 //-------------------[       Module Definitions        ]-------------------//
 // channel numbers
 #define ROTOR_FORE         0                    // forward rotor
 #define ROTOR_AFT          1                    // aft rotor
 #define ROTOR_PORT         2                    // port rotor
 #define ROTOR_STAR         3                    // starboard rotor
-// TLC5940 PWM duty cycle values for the electronic speed controller
-// this ESC uses the standard servo frequency/duty cycle timings
-#define PWM_CYCLE          (20)                 // 50Hz cycle
-#define PWM_DUTY_RANGE     (4096 / PWM_CYCLE)   // 1ms duty cycle range
-#define PWM_DUTY_MIN       (1 * PWM_DUTY_RANGE) // 1ms minimum duty cycle
-#define PWM_DUTY_MAX       (2 * PWM_DUTY_RANGE) // 2ms maximum duty cycle
 //-------------------[        Module Variables         ]-------------------//
-static UI8 g_nTlc5940       = UI8_MAX;          // TLC5940 module number
-static UI8 g_nChannels[4]   = { UI8_MAX, };     // rotor channel numbers on the TLC5940
+static UI8 g_nChannels[4]   = { UI8_MAX, };     // rotor channels on the servo banger
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SetThrust >-----------------------------------------
@@ -48,23 +41,11 @@ static UI8 g_nChannels[4]   = { UI8_MAX, };     // rotor channel numbers on the 
 //---------------------------------------------------------------------------
 static VOID SetThrust (UI8 nRotor, F32 nThrust)
 {
-   // clamp the thrust value and calculate the duty cycle
-   UI16 nDuty = 
-      (UI16)(
-         Min(
-            Max(
-               nThrust, 
-               QUADROTOR_THRUST_MIN
-            ), 
-            QUADROTOR_THRUST_MAX
-         ) * 
-         PWM_DUTY_RANGE
-      ) + 
-      PWM_DUTY_MIN;
-   // because the TLC5940 has open collector outputs,
-   // this configuration uses a pull-up resistor to drive
-   // the speed controller, so subtract the duty cycle from the max
-   Tlc5940SetDuty(g_nTlc5940, g_nChannels[nRotor], 4096 - nDuty);
+   // clamp the thrust value and set the rotor duty cycle
+   PwmBangSetDutyF(
+      g_nChannels[nRotor], 
+      Min(Max(nThrust, QUADROTOR_THRUST_MIN), QUADROTOR_THRUST_MAX)
+   );
 }
 //-----------< FUNCTION: QuadRotorInit >-------------------------------------
 // Purpose:    initializes the controller
@@ -73,7 +54,6 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
 //---------------------------------------------------------------------------
 VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 {
-   g_nTlc5940              = pConfig->nTlc5940Module;
    g_nChannels[ROTOR_FORE] = pConfig->nForeChannel;
    g_nChannels[ROTOR_AFT]  = pConfig->nAftChannel;
    g_nChannels[ROTOR_PORT] = pConfig->nPortChannel;
@@ -93,10 +73,10 @@ VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 //---------------------------------------------------------------------------
 VOID QuadRotorControl (F32 nThrust, F32 nRoll, F32 nPitch, F32 nYaw)
 {
-   F32 nFore = nThrust + (nPitch / 2.0f) + nYaw / 2.0f;
-   F32 nAft  = nThrust - (nPitch / 2.0f) + nYaw / 2.0f;
-   F32 nPort = nThrust - (nRoll  / 2.0f) - nYaw / 2.0f;
-   F32 nStar = nThrust + (nRoll  / 2.0f) - nYaw / 2.0f;
+   F32 nFore = nThrust + nPitch / 2.0f + nYaw / 2.0f;
+   F32 nAft  = nThrust - nPitch / 2.0f + nYaw / 2.0f;
+   F32 nPort = nThrust - nRoll  / 2.0f - nYaw / 2.0f;
+   F32 nStar = nThrust + nRoll  / 2.0f - nYaw / 2.0f;
    SetThrust(ROTOR_FORE, nFore);
    SetThrust(ROTOR_AFT,  nAft);
    SetThrust(ROTOR_PORT, nPort);

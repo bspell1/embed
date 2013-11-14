@@ -26,6 +26,7 @@
 #include "i2cmast.h"
 #include "mpu6050.h"
 #include "tlc5940.h"
+#include "pwmbang.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -38,49 +39,31 @@
 //---------------------------------------------------------------------------
 int main ()
 {
-   sei();
    PinSetOutput(PIN_D4);
-   Tlc5940Init(
-      &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_B1,
-         .nPinSClk  = PIN_D7,
-         .nPinSIn   = PIN_D5,
-         .nPinXlat  = PIN_B0,
-         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
+   sei();
+   PwmBangInit(
+      &(PWMBANG_CONFIG)
+      {
+         .pPins = (UI8[PWMBANG_CHANNEL_COUNT])
+         { 
+            PIN_D5, PIN_D6, PIN_D7, PIN_B0 
+         }
       }
    );
-#if 1
-   for ( ; ; )
-   {
-      for (UI8 i = 0; i < 16; i++)
-      {
-         if (i % 2 == 0)
-            Tlc5940SetDuty(0, i, 3870);
-         else
-            Tlc5940SetDuty(0, i, 3891);
-      }
+   for ( ; ; ) {
+      PwmBangSetDutyF(0, 0.2f);
+      PwmBangSetDutyF(1, 0.0f);
+      PwmBangSetDutyF(2, 0.0f);
       _delay_ms(1000);
-      for (UI8 i = 0; i < 16; i++)
-      {
-         if (i % 2 == 0)
-            Tlc5940SetDuty(0, i, 3891);
-         else
-            Tlc5940SetDuty(0, i, 3870);
-      }
+      PwmBangSetDutyF(0, 0.0f);
+      PwmBangSetDutyF(1, 0.2f);
+      PwmBangSetDutyF(2, 0.0f);
+      _delay_ms(1000);
+      PwmBangSetDutyF(0, 0.0f);
+      PwmBangSetDutyF(1, 0.0f);
+      PwmBangSetDutyF(2, 0.2f);
       _delay_ms(1000);
       PinToggle(PIN_D4);
    }
-#else
-   for ( ; ; ) {
-      for (UI16 i = 0; i < 4000; i += 1) {
-         for (UI8 j = 0; j < 16; j++)
-            if (j % 2 == 0)
-               Tlc5940SetDuty(0, j, i);
-            else
-               Tlc5940SetDuty(0, j, 4000 - i);
-         _delay_ms(1);
-      }
-   }
-#endif
    return 0;
 }

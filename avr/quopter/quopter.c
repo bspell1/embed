@@ -23,9 +23,9 @@
 //-------------------[      Project Include Files      ]-------------------//
 #include "quopter.h"
 #include "pid.h"
-#include "tlc5940.h"
 #include "i2cmast.h"
 #include "mpu6050.h"
+#include "pwmbang.h"
 #include "quadctrl.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
@@ -40,14 +40,10 @@
 int main ()
 {
    PinSetOutput(PIN_D4);
-   Tlc5940Init(
-      &(TLC5940_CONFIG)
+   PwmBangInit(
+      &(PWMBANG_CONFIG)
       {
-         .nPinBlank = PIN_B1,
-         .nPinSClk  = PIN_D7,
-         .nPinSIn   = PIN_D5,
-         .nPinXlat  = PIN_B0,
-         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
+         .pPins = (UI8[]) { PIN_D5, PIN_D6, PIN_D7, PIN_B0 }
       }
    );
    I2cInit();
@@ -60,11 +56,10 @@ int main ()
    QuadRotorInit(
       &(QUADROTOR_CONFIG)
       {
-         .nTlc5940Module = 0,
-         .nForeChannel   = 0,
-         .nAftChannel    = 1,
-         .nPortChannel   = 2,
-         .nStarChannel   = 3
+         .nForeChannel   = 0, // D5
+         .nAftChannel    = 1, // D6
+         .nPortChannel   = 2, // D7
+         .nStarChannel   = 3  // B0
       }
    );
    // hover parameters
