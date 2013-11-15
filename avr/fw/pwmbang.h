@@ -31,32 +31,32 @@
 // PWM BANGER CONFIGURATION
 // . PWMBANG_CHANNEL_COUNT:   number of output pins to bit-bang
 // . PWMBANG_SERVO:           define to set servo defaults
-// . PWMBANG_CYCLE_LEN:       PWM cycle length, in 0.1ms units
-// . PWMBANG_DUTY_MIN:        PWM minimum duty cycle, in 0.1ms units
-// . PWMBANG_DUTY_MAX:        PWM maximum duty cycle, in 0.1ms units
+// . PWMBANG_CYCLE_LEN:       PWM cycle length, in 0.01ms units
+// . PWMBANG_DUTY_MIN:        PWM minimum duty cycle, in 0.01ms units
+// . PWMBANG_DUTY_MAX:        PWM maximum duty cycle, in 0.01ms units
 //===========================================================================
 #ifndef PWMBANG_CHANNEL_COUNT
 #  error Undefined channel count (PWMBANG_CHANNEL_COUNT)
 #endif
 #ifdef PWMBANG_SERVO
 #  ifndef PWMBANG_CYCLE_LEN
-#     define PWMBANG_CYCLE_LEN      200         // 20ms
+#     define PWMBANG_CYCLE_LEN      2000        // 20ms
 #  endif
 #  ifndef PWMBANG_DUTY_MIN
-#     define PWMBANG_DUTY_MIN       10          // 1ms
+#     define PWMBANG_DUTY_MIN       100         // 1ms
 #  endif
 #  ifndef PWMBANG_DUTY_MAX
-#     define PWMBANG_DUTY_MAX       20          // 2ms
+#     define PWMBANG_DUTY_MAX       200         // 2ms
 #  endif
 #else
 #  ifndef PWMBANG_CYCLE_LEN
-#     define PWMBANG_CYCLE_LEN      200         // 20ms
+#     define PWMBANG_CYCLE_LEN      2000        // 20ms
 #  endif
 #  ifndef PWMBANG_DUTY_MIN
 #     define PWMBANG_DUTY_MIN       0           // 0ms
 #  endif
 #  ifndef PWMBANG_DUTY_MAX
-#     define PWMBANG_DUTY_MAX       200         // 20ms
+#     define PWMBANG_DUTY_MAX       2000        // 20ms
 #  endif
 #endif
 #define PWMBANG_DUTY_RANGE          (PWMBANG_DUTY_MAX - PWMBANG_DUTY_MIN + 1)
@@ -72,9 +72,9 @@ typedef struct tagPwmBangConfig
 //===========================================================================
 // module initialization
 VOID     PwmBangInit       (PWMBANG_CONFIG* pConfig);
-// duty cycle control, in 0.1ms units
-UI8      PwmBangGetDuty    (UI8 nChannel);
-VOID     PwmBangSetDuty    (UI8 nChannel, UI8 nDuty);
+// duty cycle control, in 0.01ms units
+UI16     PwmBangGetDuty    (UI8 nChannel);
+VOID     PwmBangSetDuty    (UI8 nChannel, UI16 nDuty);
 // duty cycle control, in the range [0,1], mapped to min/max duty cycle
 F32      PwmBangGetDutyF   (UI8 nChannel);
 VOID     PwmBangSetDutyF   (UI8 nChannel, F32 nPoint);

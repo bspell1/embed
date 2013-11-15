@@ -39,8 +39,22 @@
 //---------------------------------------------------------------------------
 int main ()
 {
+   TCCR0A = (1 << COM0A1) | (1 << WGM01) | (1 << WGM00);
+   TCCR0B = (1 << WGM02) | (1 << CS02) | (1 << CS00);
    PinSetOutput(PIN_D4);
+   PinSetOutput(PIN_OC0A); // D6
+   PinSetOutput(PIN_OC0B); // D5
    sei();
+
+   for ( ; ; ) {
+      OCR0A = 16;
+      OCR0B = 19;
+      _delay_ms(1000);
+      OCR0A = 19;
+      OCR0B = 16;
+      _delay_ms(1000);
+   }
+#if 0
    PwmBangInit(
       &(PWMBANG_CONFIG)
       {
@@ -65,5 +79,6 @@ int main ()
       _delay_ms(1000);
       PinToggle(PIN_D4);
    }
+#endif
    return 0;
 }
