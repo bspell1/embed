@@ -48,10 +48,9 @@ VOID PwmBangInit (PWMBANG_CONFIG* pConfig)
    }
    // 8-bit timer 0, software, 100kHz
    RegSetHi(TCCR0A, WGM01);                  // CTC mode, compare at OCR0A
-   RegSetHi(TCCR0B, CS00);                   // prescale = 64 (250kHz)
-   RegSetHi(TCCR0B, CS01);                   // prescale = 64 (250kHz)
+   RegSetHi(TCCR0B, CS01);                   // prescale = 8 (2MHz)
    RegSetHi(TIMSK0, OCIE0A);                 // enable compare interrupt A
-   OCR0A = F_CPU / 64 / 1000 - 1;            // reset OC0A at 250 ticks for 100kHz
+   OCR0A = F_CPU / 8 / 100000 - 1;           // reset OC0A at 20 ticks for 100kHz
 }
 //-----------< FUNCTION: PwmBangGetDuty >------------------------------------
 // Purpose:    gets the duty cycle for a PWM channel
@@ -105,7 +104,7 @@ ISR(TIMER0_COMPA_vect)
    if (++g_nTick == PWMBANG_CYCLE_LEN)
    {
       // begin the duty cycle for all channels
-      g_nTick   = 0;
+      g_nTick = 0;
       g_bDone = FALSE;
       for (UI8 i = 0; i < PWMBANG_CHANNEL_COUNT; i++)
          PinSetHi(g_Channels[i].nPin);
