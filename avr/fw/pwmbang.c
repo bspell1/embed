@@ -107,7 +107,8 @@ ISR(TIMER0_COMPA_vect)
       g_nTick = 0;
       g_bDone = FALSE;
       for (UI8 i = 0; i < PWMBANG_CHANNEL_COUNT; i++)
-         PinSetHi(g_Channels[i].nPin);
+         if (g_Channels[i].nDuty > 0)
+            PinSetHi(g_Channels[i].nPin);
    }
    else if (!g_bDone && g_nTick <= PWMBANG_DUTY_MAX)
    {

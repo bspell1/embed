@@ -40,6 +40,7 @@
 int main ()
 {
    sei();
+   PinSetOutput(PIN_D4);
    PwmBangInit(
       &(PWMBANG_CONFIG)
       {
@@ -50,26 +51,29 @@ int main ()
       }
    );
    for ( ; ; ) {
-      PwmBangSetDutyF(0, 0.2f);
+      PwmBangSetDutyF(0, 0.07f);
       PwmBangSetDutyF(1, 0.0f);
       PwmBangSetDutyF(2, 0.0f);
       PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(1000);
+      _delay_ms(500);
+      PinToggle(PIN_D4);
       PwmBangSetDutyF(0, 0.0f);
-      PwmBangSetDutyF(1, 0.2f);
+      PwmBangSetDutyF(1, 0.07f);
       PwmBangSetDutyF(2, 0.0f);
       PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(1000);
+      _delay_ms(500);
+      PinToggle(PIN_D4);
       PwmBangSetDutyF(0, 0.0f);
       PwmBangSetDutyF(1, 0.0f);
-      PwmBangSetDutyF(2, 0.2f);
+      PwmBangSetDutyF(2, 0.07f);
       PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(1000);
+      _delay_ms(500);
+      PinToggle(PIN_D4);
       PwmBangSetDutyF(0, 0.0f);
       PwmBangSetDutyF(1, 0.0f);
       PwmBangSetDutyF(2, 0.0f);
-      PwmBangSetDutyF(3, 0.2f);
-      _delay_ms(1000);
+      PwmBangSetDutyF(3, 0.07f);
+      _delay_ms(500);
       PinToggle(PIN_D4);
    }
    return 0;

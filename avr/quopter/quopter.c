@@ -63,7 +63,7 @@ int main ()
       }
    );
    // hover parameters
-   F32 thrust = 0.2f;
+   F32 thrust = 0.1f;
    F32 pitch  = 0.0f;
    F32 roll   = 0.0f;
    F32 yaw    = 0.0f;
