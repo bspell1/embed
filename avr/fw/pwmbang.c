@@ -43,6 +43,7 @@ VOID PwmBangInit (PWMBANG_CONFIG* pConfig)
    for (UI8 i = 0; i < PWMBANG_CHANNEL_COUNT; i++)
    {
       g_Channels[i].nPin = pConfig->pPins[i];
+      g_Channels[1].nDuty = PWMBANG_DUTY_MIN;
       PinSetLo(g_Channels[i].nPin);
       PinSetOutput(g_Channels[i].nPin);
    }

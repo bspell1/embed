@@ -40,40 +40,42 @@
 int main ()
 {
    sei();
+   PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
-   PwmBangInit(
-      &(PWMBANG_CONFIG)
-      {
-         .pPins = (UI8[PWMBANG_CHANNEL_COUNT])
-         { 
-            PIN_D5, PIN_D6, PIN_D7, PIN_B0 
-         }
+   Tlc5940Init(
+      &(TLC5940_CONFIG) {
+         .nPinBlank = PIN_B1,
+         .nPinSClk  = PIN_D7,
+         .nPinSIn   = PIN_D5,
+         .nPinXlat  = PIN_B0,
+         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
-   for ( ; ; ) {
-      PwmBangSetDutyF(0, 0.07f);
-      PwmBangSetDutyF(1, 0.0f);
-      PwmBangSetDutyF(2, 0.0f);
-      PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(500);
+   PinSetHi(PIN_D4);
+   Tlc5940SetDuty(0, 0, (4096 - 2 * (4096 / 20)));
+   Tlc5940SetDuty(0, 1, (4096 - 2 * (4096 / 20)));
+   Tlc5940SetDuty(0, 2, (4096 - 2 * (4096 / 20)));
+   Tlc5940SetDuty(0, 3, (4096 - 2 * (4096 / 20)));
+   _delay_ms(2000);
+   PinSetLo(PIN_D4);
+   Tlc5940SetDuty(0, 0, (4096 - 1 * (4096 / 20)));
+   Tlc5940SetDuty(0, 1, (4096 - 1 * (4096 / 20)));
+   Tlc5940SetDuty(0, 2, (4096 - 1 * (4096 / 20)));
+   Tlc5940SetDuty(0, 3, (4096 - 1 * (4096 / 20)));
+   _delay_ms(2000);
+   for ( ; ; )
+   {
+      Tlc5940SetDuty(0, 0, (4096 - 1.5 * (4096 / 20)));
+      Tlc5940SetDuty(0, 1, (4096 - 1.5 * (4096 / 20)));
+      Tlc5940SetDuty(0, 2, (4096 - 1.5 * (4096 / 20)));
+      Tlc5940SetDuty(0, 3, (4096 - 1.5 * (4096 / 20)));
+      _delay_ms(1000);
       PinToggle(PIN_D4);
-      PwmBangSetDutyF(0, 0.0f);
-      PwmBangSetDutyF(1, 0.07f);
-      PwmBangSetDutyF(2, 0.0f);
-      PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(500);
-      PinToggle(PIN_D4);
-      PwmBangSetDutyF(0, 0.0f);
-      PwmBangSetDutyF(1, 0.0f);
-      PwmBangSetDutyF(2, 0.07f);
-      PwmBangSetDutyF(3, 0.0f);
-      _delay_ms(500);
-      PinToggle(PIN_D4);
-      PwmBangSetDutyF(0, 0.0f);
-      PwmBangSetDutyF(1, 0.0f);
-      PwmBangSetDutyF(2, 0.0f);
-      PwmBangSetDutyF(3, 0.07f);
-      _delay_ms(500);
+      Tlc5940SetDuty(0, 0, (4096 - 1 * (4096 / 20)));
+      Tlc5940SetDuty(0, 1, (4096 - 1 * (4096 / 20)));
+      Tlc5940SetDuty(0, 2, (4096 - 1 * (4096 / 20)));
+      Tlc5940SetDuty(0, 3, (4096 - 1 * (4096 / 20)));
+      _delay_ms(1000);
       PinToggle(PIN_D4);
    }
    return 0;
