@@ -1,7 +1,7 @@
 TARGETPATH = /usr/local/lib
 TARGETNAME = monoext
 TARGETVER  = 1.0.1
-MODULES    = spi i2c eventfd
+MODULES    = math spi i2c eventfd
 
 CC = gcc
 LD = gcc
@@ -9,7 +9,7 @@ CP = sudo cp
 CCFLAGS = -Wall -Wextra -Winline 														\
 			 -Wno-missing-field-initializers 											\
 			 -O3 -funroll-loops
-LDFLAGS = -shared -Wl,-soname=$(@:bin/%.so.$(TARGETVER)=%.so) -o$@ -lc
+LDFLAGS = -shared -Wl,-soname=$(@:bin/%.so.$(TARGETVER)=%.so) -o$@
 
 all: bin/ bin/lib$(TARGETNAME).so.$(TARGETVER)
 

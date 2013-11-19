@@ -17,6 +17,25 @@ namespace NPi
          EFD_NONBLOCK = OpenFlags.O_NONBLOCK
       }
 
+      #region Math Interface
+      public static Single Atan2 (Single y, Single x)
+      {
+         Single result;
+         Atan2(ref y, ref x, out result);
+         return result;
+      }
+      public static Double Atan2 (Double y, Double x)
+      {
+         Double result;
+         Atan2(ref y, ref x, out result);
+         return result;
+      }
+      [DllImport("monoext", EntryPoint = "MonoMathAtan2F")]
+      private static extern void Atan2 (ref Single y, ref Single x, out Single result);
+      [DllImport("monoext", EntryPoint = "MonoMathAtan2D")]
+      private static extern void Atan2 (ref Double y, ref Double x, out Double result);
+      #endregion
+
       #region "I2C interface"
       [DllImport("monoext", EntryPoint = "I2cSetSlave", SetLastError = true)]
       public static extern Int32 I2cSetSlave (
@@ -83,10 +102,7 @@ namespace NPi
 
       #region "Eventfd Interface"
       [DllImport("monoext", EntryPoint = "EventFDCreate", SetLastError = true)]
-      public static extern Int32 EventFDCreate (
-         Int32 value,
-         EventFDFlags flags
-      );
+      public static extern Int32 EventFDCreate (Int32 value, EventFDFlags flags);
       #endregion
    }
 }

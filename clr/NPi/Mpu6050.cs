@@ -88,7 +88,7 @@ namespace NPi
       private const Single AccelRange = 32767;
 
       private I2CDevice i2c;
-      private Byte[] buffer = new Byte[3];
+      private Byte[] buffer = new Byte[16];
 
       public Mpu6050 (String path, I2cAddress address = I2cAddress._0)
       {
@@ -130,31 +130,43 @@ namespace NPi
       }
       public SampleRegister AccelX
       {
-         get { return new SampleRegister(Read(RegisterAccelX, 2), AccelRange); }
+         get { return new SampleRegister(Read(RegisterAccelX, 2), 0, AccelRange); }
       }
       public SampleRegister AccelY
       {
-         get { return new SampleRegister(Read(RegisterAccelY, 2), AccelRange); }
+         get { return new SampleRegister(Read(RegisterAccelY, 2), 0, AccelRange); }
       }
       public SampleRegister AccelZ
       {
-         get { return new SampleRegister(Read(RegisterAccelZ, 2), AccelRange); }
+         get { return new SampleRegister(Read(RegisterAccelZ, 2), 0, AccelRange); }
+      }
+      public SampleVector Accel
+      {
+         get { return new SampleVector(Read(RegisterAccelX, 6), 0, AccelRange); }
       }
       public TemperatureRegister Temperature
       {
-         get { return new TemperatureRegister(Read(RegisterTemperature1, 2)); }
+         get { return new TemperatureRegister(Read(RegisterTemperature1, 2), 0); }
       }
       public SampleRegister GyroX
       {
-         get { return new SampleRegister(Read(RegisterGyroX, 2), GyroRange); }
+         get { return new SampleRegister(Read(RegisterGyroX, 2), 0, GyroRange); }
       }
       public SampleRegister GyroY
       {
-         get { return new SampleRegister(Read(RegisterGyroY, 2), GyroRange); }
+         get { return new SampleRegister(Read(RegisterGyroY, 2), 0, GyroRange); }
       }
       public SampleRegister GyroZ
       {
-         get { return new SampleRegister(Read(RegisterGyroZ, 2), GyroRange); }
+         get { return new SampleRegister(Read(RegisterGyroZ, 2), 0, GyroRange); }
+      }
+      public SampleVector Gyro
+      {
+         get { return new SampleVector(Read(RegisterGyroX, 6), 0, GyroRange); }
+      }
+      public SensorSamples Sensors
+      {
+         get { return new SensorSamples(Read(RegisterAccelX, 14), AccelRange, GyroRange); }
       }
       #endregion
 
@@ -438,9 +450,9 @@ namespace NPi
          {
             get { return this.Celsius * 9.0f / 5.0f + 32.0f; }
          }
-         public TemperatureRegister (Byte[] encoded) : this()
+         public TemperatureRegister (Byte[] encoded, Int32 offset) : this()
          {
-            this.Raw = (Int16)((UInt16)encoded[0] << 8 | encoded[1]);
+            this.Raw = (Int16)((UInt16)encoded[offset + 0] << 8 | encoded[offset + 1]);
          }
          public override String ToString ()
          {
@@ -462,14 +474,56 @@ namespace NPi
          {
             get { return (Single)this.Raw / this.Scale; }
          }
-         public SampleRegister (Byte[] encoded, Single scale) : this()
+         public SampleRegister (Byte[] encoded, Int32 offset, Single scale) : this()
          {
-            this.Raw = (Int16)((UInt16)encoded[0] << 8 | encoded[1]);
+            this.Raw = (Int16)((UInt16)encoded[offset + 0] << 8 | encoded[offset + 1]);
             this.Scale = scale;
          }
          public override String ToString ()
          {
-            return String.Format("{0:0.0}", this.Value);
+            return String.Format("{0,5:0.00}", this.Value);
+         }
+      }
+
+      public struct SampleVector
+      {
+         public SampleRegister X { get; private set; }
+         public SampleRegister Y { get; private set; }
+         public SampleRegister Z { get; private set; }
+
+         public SampleVector (Byte[] encoded, Int32 offset, Single scale) : this()
+         {
+            this.X = new SampleRegister(encoded, offset + 0, scale);
+            this.Y = new SampleRegister(encoded, offset + 2, scale);
+            this.Z = new SampleRegister(encoded, offset + 4, scale);
+         }
+      }
+
+      public struct SensorSamples
+      {
+         public SampleVector Accel { get; private set; }
+         public TemperatureRegister Temperature { get; private set; }
+         public SampleVector Gyro { get; private set; }
+
+         public SensorSamples (Byte[] encoded, Single accelScale, Single gyroScale) : this()
+         {
+            this.Accel = new SampleVector(encoded, 0, accelScale);
+            this.Temperature = new TemperatureRegister(encoded, 6);
+            this.Gyro = new SampleVector(encoded, 8, gyroScale);
+         }
+
+         public override String ToString ()
+         {
+            return String.Format(
+               "Temperature: {0} Gx: {1} Gy: {2} Gz: {3} Ax: {4} Ay: {5} Az: {6}",
+               this.Temperature,
+               this.Gyro.X,
+               this.Gyro.Y,
+               this.Gyro.Z,
+               this.Accel.X,
+               this.Accel.Y,
+               this.Accel.Z
+            );
          }
       }
    }

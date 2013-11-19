@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
@@ -33,7 +34,6 @@ namespace Lab
 
       public void Run ()
       {
-#if true
          using (var mpu = new Mpu6050("/dev/i2c-1"))
          {
             mpu.Wake();
@@ -43,52 +43,82 @@ namespace Lab
             };
             mpu.GeneralConfig = new Mpu6050.GeneralConfigRegister(mpu.GeneralConfig)
             {
-               Filter = Mpu6050.LowPassFilter._5Hz
+               //Filter = Mpu6050.LowPassFilter._5Hz
+            };
+            mpu.GyroConfig = new Mpu6050.GyroConfigRegister(mpu.GyroConfig)
+            {
+               //Scale = Mpu6050.GyroScale._1000DegPerSec
             };
             Console.WriteLine(mpu.GeneralConfig);
+            var ticks2 = 20.0f;
+            Single filterX = 0.0f;
+            Single filterY = 0.0f;
+            Single yawZ = 0.0f;
+            var l = new Object();
+            var done = false;
+            var thread = new Thread(
+               () =>
+               {
+                  var watch = new Stopwatch();
+                  var dt = 0.001f;
+                  while (!done)
+                  {
+                     watch.Reset();
+                     watch.Start();
+                     //Thread.Sleep(10);
+                     var sample = mpu.Sensors;
+                     Single accelX = sample.Accel.X.Value * 2.0f;
+                     Single accelY = sample.Accel.Y.Value * 2.0f;
+                     Single accelZ = sample.Accel.Z.Value * 2.0f;
+                     Single angleX = accelX * (Single)Math.PI / 2.0f; // Native.Atan2(accelX, (Single)Math.Sqrt(accelY * accelY + accelZ * accelZ));
+                     Single angleY = accelY * (Single)Math.PI / 2.0f; // Native.Atan2(accelY, (Single)Math.Sqrt(accelX * accelX + accelZ * accelZ));
+                     Single rateX = sample.Gyro.X.Value * 250.0f / 180.0f * (Single)Math.PI;
+                     Single rateY = sample.Gyro.Y.Value * 250.0f / 180.0f * (Single)Math.PI;
+                     Single rateZ = sample.Gyro.Z.Value * 250.0f / 180.0f * (Single)Math.PI;
+                     watch.Stop();
+                     lock (l)
+                     {
+                        filterX = ComplementaryFilter(filterX, angleX, rateX, dt);
+                        filterY = ComplementaryFilter(filterY, angleY, rateY, dt);
+                        yawZ = rateZ;
+                        ticks2 = dt * 1000;
+                     }
+                     dt = (Single)(watch.Elapsed.TotalMilliseconds / 1000);
+                  }
+               }
+            );
+            thread.Start();
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Console.Write(
-                  "\rTemperature: {0} Gx: {1} Gy: {2} Gz: {3} Ax: {4} Ay: {5} Az: {6}      ", 
-                  mpu.Temperature, 
-                  mpu.GyroX, 
-                  mpu.GyroY, 
-                  mpu.GyroZ,
-                  mpu.AccelX, 
-                  mpu.AccelY, 
-                  mpu.AccelZ
-               );
+               Single fX;
+               Single fY;
+               Single yZ;
+               Single t2;
+               lock (l)
+               {
+                  fX = filterX;
+                  fY = filterY;
+                  yZ = yawZ;
+                  t2 = ticks2;
+               }
+               Console.Write("\rFx: {0,5:0.00} Fy:{1,5:0.00} Yz:{2,5:0.00} Dt:{3,4:0.00}  ", fX, fY, yZ, t2);
                Thread.Sleep(10);
             }
-            Console.WriteLine(mpu.Temperature);
+            done = true;
+            thread.Join();
          }
-#else
-         using (var i2c = new I2CDevice("/dev/i2c-1"))
-         {
-            i2c.SlaveAddress = 0x68;
-            var buffer = new Byte[3];
-            buffer[0] = 0x6B;
-            i2c.ReadWrite(buffer, 0, 1, buffer, 1, 2);
-            //buffer[0] |= (1 << 7);
-            unchecked
-            {
-               buffer[1] &= (Byte)~(1 << 6);
-               buffer[1] &= (Byte)~(1 << 3);
-            }
-            i2c.Write(buffer, 3);
-            buffer[0] = 0x41;
-            i2c.ReadWrite(buffer, 0, 1, buffer, 1, 2);
-            var tempraw = (Int16)((UInt16)buffer[1] << 8 | buffer[2]);
-            var tempcel = (Double)tempraw / 340 + 35;
-            var tempfah = tempcel * 9 / 5 + 32;
-            Console.WriteLine("{0}", BitConverter.ToString(buffer));
-            Console.WriteLine(tempraw);
-            Console.WriteLine(tempcel);
-            Console.WriteLine(tempfah);
-         }
-#endif
+      }
+
+      private Single ComplementaryFilter (Single filterAngle, Single accelAngle, Single gyroRate, Single dt)
+      {
+         //Single dt = 0.030f;
+         //Single tc = 0.750f;
+         //Single bias = tc / (tc + dt);
+         Single bias = 0.95f;
+         Single result = bias * (filterAngle + gyroRate * dt) + (1.0f - bias) * accelAngle;
+         return (Single)Math.Min(Math.Max(result, -Math.PI / 2), Math.PI / 2);
       }
    }
 }
