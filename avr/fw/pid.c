@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  pid.c
-// Purpose: PID (proportional, integral, derivative) controller
+// Purpose: PID (proportional, integral, differential) controller
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.

@@ -22,6 +22,7 @@
 #define __QUOPTER_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <math.h>
 //-------------------[      Project Include Files      ]-------------------//
 #ifndef __AVRDEFS_H
 #include "avrdefs.h"

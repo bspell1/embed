@@ -1,5 +1,5 @@
 //===========================================================================
-// Module:  quadctrl.h
+// Module:  quadrotr.h
 // Purpose: quadcopter rotor controller
 //
 // Copyright © 2013
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __QUADCTRL_H
-#define __QUADCTRL_H
+#ifndef __QUADROTR_H
+#define __QUADROTR_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -29,8 +29,12 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // CONTROLLER CONSTANTS
+// . QUADROTOR_THRUST_MIN        restricts the minimum thrust value
+// . QUADROTOR_THRUST_MAX        restricts the maximum thrust value
+// . QUADROTOR_PID_PGAIN         PID controller proportional gain
+// . QUADROTOR_PID_IGAIN         PID controller integral gain
+// . QUADROTOR_PID_DGAIN         PID controller differential gain
 //===========================================================================
-// min/max rotor thrust values, inclusive
 #ifndef QUADROTOR_THRUST_MIN
 #  define QUADROTOR_THRUST_MIN   ((F32)0.0f)
 #endif
@@ -38,6 +42,15 @@
 #  define QUADROTOR_THRUST_MAX   ((F32)1.0f)
 #endif
 #define QUADROTOR_THRUST_RANGE   (QUADROTOR_THRUST_MAX - QUADROTOR_THRUST_MIN)
+#ifndef QUADROTOR_PID_PGAIN
+#  define QUADROTOR_PID_PGAIN    (0.5f)
+#endif
+#ifndef QUADROTOR_PID_IGAIN
+#  define QUADROTOR_PID_IGAIN    (0.2f)
+#endif
+#ifndef QUADROTOR_PID_DGAIN
+#  define QUADROTOR_PID_DGAIN    (0.1f)
+#endif
 //===========================================================================
 // CONTROLLER STRUCTURES
 //===========================================================================
@@ -50,11 +63,22 @@ typedef struct tagQuadRotorConfig
    UI8   nPortChannel;        // port-side rotor channel on the TLC5940
    UI8   nStarChannel;        // starboard-side rotor channel on the TLC5940
 } QUADROTOR_CONFIG, *PQUADROTOR_CONFIG;
+// controller input
+typedef struct tagQuadRotorControl
+{
+   F32 nThrustInput;          // base thrust input control [0,1]
+   F32 nRollInput;            // roll input control [-1,1]
+   F32 nPitchInput;           // pitch input control [-1,1]
+   F32 nYawInput;             // yaw input control [-1,1]
+   F32 nRollSensor;           // roll sensor reading [-1,1]
+   F32 nPitchSensor;          // pitch sensor reading [-1,1]
+   F32 nYawSensor;            // yaw sensor reading [-1,1]
+} QUADROTOR_CONTROL, *PQUADROTOR_CONTROL;
 //===========================================================================
 // CONTROLLER API
 //===========================================================================
 // controller initialization
 VOID  QuadRotorInit     (PQUADROTOR_CONFIG pConfig);
 // control operations
-VOID  QuadRotorControl  (F32 nThrust, F32 nRoll, F32 nPitch, F32 nYaw);
-#endif // __QUADCTRL_H
+VOID  QuadRotorControl  (PQUADROTOR_CONTROL pControl);
+#endif // __QUADROTR_H

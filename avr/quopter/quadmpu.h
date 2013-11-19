@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  pid.h
-// Purpose: PID (proportional, integral, differential) controller
+// Module:  quadmpu.h
+// Purpose: quadcopter motion processor and sensor filter
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -18,33 +18,38 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __PID_H
-#define __PID_H
+#ifndef __QUADMPU_H
+#define __QUADMPU_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#ifndef __AVRDEFS_H
-#include "avrdefs.h"
+#ifndef __QUOPTER_H
+#include "quopter.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
-// PID STRUCTURES
+// MPU SENSOR CONSTANTS
+// . QUADCTRL_SAMPLE_RATE     MPU sample rate, for integrating gyro speeds
 //===========================================================================
-// PID state
-typedef struct tagPid
+#ifndef QUADCTRL_SAMPLE_RATE
+#  error QUADCTRL_SAMPLE_RATE must be assigned
+#endif
+//===========================================================================
+// MPU SENSOR STRUCTURES
+//===========================================================================
+typedef struct tagQuadMpuConfig
 {
-   F32   nPGain;              // proportional gain
-   F32   nIGain;              // integral gain
-   F32   nDGain;              // differential gain
-   F32   nControl;            // current PID control value
-   F32   nISum;               // integral component sum
-   F32   nDPrev;              // differential component previous sensor value
-} PID, *PPID;
+} QUADMPU_CONFIG, *PQUADMPU_CONFIG;
+typedef struct tagQuadMpuSensor
+{
+   F32   nRollAngle;             // roll (X) angle in radians, from accel/gyro
+   F32   nPitchAngle;            // pitch (Y) angle in radians, from accel/gyro
+   F32   nYawRate;               // yaw (Z) rate in radians/sec
+} QUADMPU_SENSOR, *PQUADMPU_SENSOR;
 //===========================================================================
-// PID API
+// MPU SENSOR API
 //===========================================================================
-// PID initialization
-VOID     PidInit              (PPID pPid);
-// PID update
-PPID     PidUpdate            (PPID pPid, F32 nInput, F32 nSensor);
-#endif // __PID_H  
+VOID              QuadMpuInit       (PQUADMPU_CONFIG pConfig);
+VOID              QuadMpuBeginRead  ();
+QUADMPU_SENSOR*   QuadMpuEndRead    (PQUADMPU_SENSOR pSensor);
+#endif // __QUADMPU_H

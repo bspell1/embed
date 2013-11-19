@@ -73,7 +73,7 @@ UI8      SpiSendRecv       (UI8          nSsPin,
                             BSIZE        cbRecv);
 // SPI one-way helpers
 inline VOID SpiSend (UI8 nSsPin, PCVOID pvSend, BSIZE cbSend)
-   { SpiSendRecv(nSsPin, pvSend, cbSend, NULL, 0); }
+   { SpiBeginSendRecv(nSsPin, pvSend, cbSend, 0, NULL); }
 inline VOID SpiBeginRecv (UI8 nSsPin, BSIZE cbRecv, SPI_CALLBACK pfnCallback)
    { SpiBeginSendRecv(nSsPin, NULL, 0, cbRecv, pfnCallback); }
 inline UI8 SpiEndRecv (PVOID pvRecv, BSIZE cbRecv)

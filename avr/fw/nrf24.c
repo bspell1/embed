@@ -669,6 +669,12 @@ VOID Nrf24PowerOn (UI8 fMode)
          (ReadRegister8(REGISTER_CONFIG) & ~0x3) | (0x2) | (fMode & 0x1)
       );
       g_fPowerMode = fMode;
+      // if receiving, set CE high to enable incoming packets
+      if (fMode == NRF24_MODE_RECV)
+      {
+         SpiWait();
+         PinSetHi(g_nCePin);
+      }
    }
 }
 //-----------< FUNCTION: Nrf24PowerOff >-------------------------------------
@@ -678,24 +684,26 @@ VOID Nrf24PowerOn (UI8 fMode)
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOff ()
 {
+   PinSetLo(g_nCePin);
    g_fPowerMode = NRF24_MODE_OFF;
    WriteRegister8(
       REGISTER_CONFIG,
       ReadRegister8(REGISTER_CONFIG) & ~0x3
    );
 }
-//-----------< FUNCTION: Nrf24Send >-----------------------------------------
-// Purpose:    transmits a packet
+//-----------< FUNCTION: Nrf24BeginSend >------------------------------------
+// Purpose:    transmits a data packet asynchronously
 // Parameters: pvPacket - packet to transfer
 //             cbPacket - number of bytes to transfer
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
+VOID Nrf24BeginSend (PCVOID pvPacket, BSIZE cbPacket)
 {
-   // TODO: trace failure
    if (g_fPowerMode == NRF24_MODE_SEND)
    {
-      // set CE high to move the transciever out of standby
+      // ensure no other transfers are in progress
+      SpiWait();
+      // set CE high to take the transciever out of standby
       PinSetHi(g_nCePin);
       // clock in the command and data buffer
       UI8  cbSend = cbPacket + 1;
@@ -703,8 +711,58 @@ VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
       pbSend[0] = g_bTXRecvAck ? COMMAND_TXWRITEPACKET : COMMAND_TXWRITENOACK;
       memcpy(pbSend + 1, pvPacket, Min(cbPacket, NRF24_PACKET_MAX));
       SpiSend(g_nSsPin, pbSend, cbSend);
+   }
+}
+//-----------< FUNCTION: Nrf24EndSend >--------------------------------------
+// Purpose:    waits for an async packet transmission to complete
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID Nrf24EndSend ()
+{
+   if (g_fPowerMode == NRF24_MODE_SEND)
+   {
       SpiWait();
       // set CE low to return to standby after the transfer
       PinSetLo(g_nCePin);
    }
+}
+//-----------< FUNCTION: Nrf24BeginRecv >------------------------------------
+// Purpose:    begins an async packet receive operation
+// Parameters: cbPacket - number of bytes to receive
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID Nrf24BeginRecv (BSIZE cbPacket)
+{
+   if (g_fPowerMode == NRF24_MODE_RECV)
+   {
+      // ensure no other transfers are in progress
+      SpiWait();
+      // clock in the command buffer
+      UI8  cbSend   = 1;
+      BYTE pbSend[] = { COMMAND_RXREADPACKET };
+      SpiBeginSendRecv(
+         g_nSsPin, 
+         pbSend, 
+         cbSend, 
+         Min(cbPacket, NRF24_PACKET_MAX), 
+         NULL
+      );
+   }
+}
+//-----------< FUNCTION: Nrf24EndRecv >--------------------------------------
+// Purpose:    completes an async packet receive operation
+// Parameters: pvPacket - return the packet via here
+//             cbPacket - number of bytes to receive
+// Returns:    pvPacket if a packet was received
+//             NULL otherwise
+//---------------------------------------------------------------------------
+PVOID Nrf24EndRecv (PVOID pvPacket, BSIZE cbPacket)
+{
+   if (g_fPowerMode == NRF24_MODE_RECV)
+   {
+      SpiEndSendRecv(pvPacket, cbPacket);
+      return pvPacket;
+   }
+   return NULL;
 }

@@ -61,7 +61,7 @@ UI8      I2cSendRecv       (UI8          nSlaveAddr,
                             BSIZE        cbRecv);
 // I2C one-way helpers
 inline VOID I2cSend (UI8 nSlaveAddr, PCVOID pvSend, BSIZE cbSend)
-   { I2cSendRecv(nSlaveAddr, pvSend, cbSend, NULL, 0); }
+   { I2cBeginSendRecv(nSlaveAddr, pvSend, cbSend, 0, NULL); }
 inline VOID I2cBeginRecv (UI8 nSlaveAddr, BSIZE cbRecv, I2C_CALLBACK pfnCallback)
    { I2cBeginSendRecv(nSlaveAddr, NULL, 0, cbRecv, pfnCallback); }
 inline UI8 I2cEndRecv (PVOID pvRecv, BSIZE cbRecv)

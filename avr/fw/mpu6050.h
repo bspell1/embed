@@ -121,12 +121,13 @@ UI8               Mpu6050GetAccelScale       ();
 VOID              Mpu6050SetAccelScale       (UI8 nScale);
 // sensor registers
 F32               Mpu6050ReadAccelAxis       (UI8 nAxis);
-MPU6050_VECTOR    Mpu6050ReadAccel           ();
+MPU6050_VECTOR*   Mpu6050ReadAccel           (MPU6050_VECTOR* pAccel);
 F32               Mpu6050ReadTempCelsius     ();
 F32               Mpu6050ReadTempFahrenheit  ();
 F32               Mpu6050ReadGyroAxis        (UI8 nAxis);
-MPU6050_VECTOR    Mpu6050ReadGyro            ();
-MPU6050_SENSORS   Mpu6050ReadSensors         ();
+MPU6050_VECTOR*   Mpu6050ReadGyro            (MPU6050_VECTOR* pGyro);
+VOID              Mpu6050BeginReadSensors    ();
+MPU6050_SENSORS*  Mpu6050EndReadSensors      (MPU6050_SENSORS* pSensors);
 // power management registers
 VOID              Mpu6050Reset               ();
 BOOL              Mpu6050IsAsleep            ();
@@ -163,6 +164,8 @@ inline F32 Mpu6050ReadGyroY ()
    { return Mpu6050ReadGyroAxis(MPU6050_AXIS_Y); }
 inline F32 Mpu6050ReadGyroZ ()
    { return Mpu6050ReadGyroAxis(MPU6050_AXIS_Z); }
+inline MPU6050_SENSORS* Mpu6050ReadSensors (MPU6050_SENSORS* pSensors)
+   { Mpu6050BeginReadSensors(); return Mpu6050EndReadSensors(pSensors); }
 inline BOOL Mpu6050IsAwake ()
    { return !Mpu6050IsAsleep(); }
 inline BOOL Mpu6050IsTempEnabled ()

@@ -22,14 +22,16 @@
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
 #include "quopter.h"
-#include "pid.h"
 #include "tlc5940.h"
 #include "i2cmast.h"
-#include "mpu6050.h"
-#include "quadctrl.h"
+#include "uart.h"
+#include "quadmpu.h"
+#include "quadrotr.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
+static void QuopterInit ();
+static void QuopterRun  ();
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -39,6 +41,23 @@
 //---------------------------------------------------------------------------
 int main ()
 {
+   QuopterInit();
+   for ( ; ; )
+      QuopterRun();
+   return 0;
+}
+//-----------< FUNCTION: QuopterInit >---------------------------------------
+// Purpose:    quopter initialization
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+void QuopterInit ()
+{
+   // protocol initialization
+   sei();
+   I2cInit();
+   UartInit(&(UART_CONFIG) { NULL, NULL }); // TODO: remove
+   // hardware initialization
    PinSetOutput(PIN_D4);
    Tlc5940Init(
       &(TLC5940_CONFIG) {
@@ -49,8 +68,12 @@ int main ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
-   I2cInit();
-   sei();
+   // module initialization
+   QuadMpuInit(
+      &(QUADMPU_CONFIG)
+      {
+      }
+   );
    QuadRotorInit(
       &(QUADROTOR_CONFIG)
       {
@@ -61,55 +84,39 @@ int main ()
          .nStarChannel   = 3
       }
    );
-   for ( ; ; ) 
+   // start the first async sensor read
+   QuadMpuBeginRead();
+}
+//-----------< FUNCTION: QuopterRun >----------------------------------------
+// Purpose:    quopter loop execution
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+void QuopterRun  ()
+{
+   static UI16 g_nTicks = 0;
+   // toggle the LED to calibrate sample timings
+   if (g_nTicks++ == 1000)
    {
-      PinSetHi(PIN_D4);
-      QuadRotorControl(0.25f, 0, 0, 0);
-      _delay_ms(1000);
-      PinSetLo(PIN_D4);
-      QuadRotorControl(0.0f, 0, 0, 0);
-      _delay_ms(1000);
-   }
-#if 0
-   Mpu6050Init();
-   Mpu6050Wake();
-   Mpu6050DisableTemp();
-   Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
-   Mpu6050SetLowPassFilter(MPU6050_DLPF_5HZ);
-   // hover parameters
-   F32 thrust = 0.1f;
-   F32 pitch  = 0.0f;
-   F32 roll   = 0.0f;
-   F32 yaw    = 0.0f;
-   PID pidRoll = 
-   { 
-      .nPGain   = 0.5f,
-      .nIGain   = 0.2f,
-      .nDGain   = 0.1f,
-      .nControl = 0.0f
-   };
-   PID pidPitch = pidRoll;
-   PID pidYaw = pidRoll;
-   PidInit(&pidRoll);
-   PidInit(&pidPitch);
-   PidInit(&pidYaw);
-   for ( ; ; ) {
+      g_nTicks = 0;
       PinToggle(PIN_D4);
-      // read the accelerometer, scale to 1g, and 
-      // pass the readings  through the PID controllers
-      MPU6050_VECTOR accel = Mpu6050ReadAccel();
-      PidUpdate(&pidRoll, roll, accel.x * 2.0f);
-      PidUpdate(&pidPitch, pitch, accel.y * 2.0f);
-      PidUpdate(&pidYaw, yaw, 0.0f);
-      // send the control signals to the rotors
-      QuadRotorControl(
-         thrust, 
-         pidRoll.nControl,
-         pidPitch.nControl,
-         pidYaw.nControl
-      );
-      _delay_ms(1000);
    }
-#endif
-   return 0;
+   // retrieve the sensor readings and start the next async read
+   QUADMPU_SENSOR mpu;
+   QuadMpuEndRead(&mpu);
+   QuadMpuBeginRead();
+   // TODO: remove
+   UartSend(&mpu.nRollAngle, sizeof(mpu.nRollAngle));
+   // send the control signals to the rotors
+   QUADROTOR_CONTROL ctrl = 
+   {
+      .nThrustInput = 0.2f,
+      .nRollInput   = 0.0f,
+      .nPitchInput  = 0.0f,
+      .nYawInput    = 0.0f,
+      .nRollSensor  = mpu.nRollAngle / M_PI_2,
+      .nPitchSensor = mpu.nPitchAngle / M_PI_2,
+      .nYawSensor   = mpu.nYawRate
+   };
+   QuadRotorControl(&ctrl);
 }

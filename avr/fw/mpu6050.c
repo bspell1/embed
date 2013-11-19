@@ -55,6 +55,37 @@
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
+//-----------< FUNCTION: DecodeI16 >-----------------------------------------
+// Purpose:    reads a big endian 16-bit signed integer from a buffer
+// Parameters: pbData - buffer to read
+//             nIndex - index into the buffer, in 16-bit units
+// Returns:    the converted value
+//---------------------------------------------------------------------------
+static UI16 DecodeI16 (PBYTE pbData, UI8 nIndex)
+{
+   return ((I16)pbData[2 * nIndex] << 8) | pbData[2 * nIndex + 1];
+}
+//-----------< FUNCTION: BeginReadRegister >---------------------------------
+// Purpose:    begins an asynchronous read of an MPU6050 register over I2C
+// Parameters: nRegister - register address
+//             cbData    - the number of bytes to read
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID BeginReadRegister (UI8 nRegister, UI8 cbData)
+{
+   I2cBeginSendRecv(MPU6050_I2CADDR, &nRegister, 1, cbData, NULL);
+}
+//-----------< FUNCTION: EndReadRegister >-----------------------------------
+// Purpose:    ends an asynchronous read of an MPU6050 register over I2C
+// Parameters: pvData - return register data via here
+//             cbData - the number of bytes to read
+// Returns:    pvData
+//---------------------------------------------------------------------------
+static PVOID EndReadRegister (PVOID pvData, UI8 cbData)
+{
+   I2cEndSendRecv(pvData, cbData);
+   return pvData;
+}
 //-----------< FUNCTION: ReadRegister >--------------------------------------
 // Purpose:    reads an MPU6050 register over I2C
 // Parameters: nRegister - register address
@@ -64,7 +95,8 @@
 //---------------------------------------------------------------------------
 static PVOID ReadRegister (UI8 nRegister, PVOID pvData, UI8 cbData)
 {
-   I2cSendRecv(MPU6050_I2CADDR, &nRegister, 1, pvData, cbData);
+   BeginReadRegister(nRegister, cbData);
+   EndReadRegister(pvData, cbData);
    return pvData;
 }
 //-----------< FUNCTION: WriteRegister >-------------------------------------
@@ -112,7 +144,7 @@ static I16 ReadRegisterI16 (UI8 nRegister)
 {
    BYTE pbBuffer[2];
    ReadRegister(nRegister, pbBuffer, 2);
-   return ((I16)pbBuffer[0] << 8) | pbBuffer[1];
+   return DecodeI16(pbBuffer, 0);
 }
 //-----------< FUNCTION: Mpu6050Init >---------------------------------------
 // Purpose:    MPU6050 interface initialization
@@ -263,18 +295,18 @@ F32 Mpu6050ReadAccelAxis (UI8 nAxis)
 }
 //-----------< FUNCTION: Mpu6050ReadAccel >----------------------------------
 // Purpose:    reads the three accelerometer sensors
-// Parameters: none
-// Returns:    a vector containing the 3 accelerometer sensors, 
-//             each in the range [-1,1]
+// Parameters: pAccel - return the result via here
+//                      a vector containing the 3 accelerometer sensors, 
+//                      each in the range [-1,1]
+// Returns:    pAccel
 //---------------------------------------------------------------------------
-MPU6050_VECTOR Mpu6050ReadAccel ()
+MPU6050_VECTOR* Mpu6050ReadAccel (MPU6050_VECTOR* pAccel)
 {
    BYTE pbBuffer[6];
    ReadRegister(REGISTER_ACCEL_START, pbBuffer, 6);
-   MPU6050_VECTOR s;
    for (UI8 i = 0; i < 3; i++)
-      s.v[i] = (F32)(((I16)pbBuffer[2 * i] << 8) | pbBuffer[2 * i + 1]) / ACCEL_SENSOR_RANGE;
-   return s;
+      pAccel->v[i] = (F32)DecodeI16(pbBuffer, i) / ACCEL_SENSOR_RANGE;
+   return pAccel;
 }
 //-----------< FUNCTION: Mpu6050ReadTempCelsius >----------------------------
 // Purpose:    reads the temperature sensor
@@ -305,35 +337,48 @@ F32 Mpu6050ReadGyroAxis (UI8 nAxis)
 }
 //-----------< FUNCTION: Mpu6050ReadGyro >-----------------------------------
 // Purpose:    reads the three gyroscope sensors
-// Parameters: none
-// Returns:    a vector containing the 3 gyroscope sensors, 
-//             each in the range [-1,1]
+// Parameters: pGyro - return the result via here
+//                     a vector containing the 3 gyroscope sensors, 
+//                     each in the range [-1,1]
+// Returns:    pGyro
 //---------------------------------------------------------------------------
-MPU6050_VECTOR Mpu6050ReadGyro ()
+MPU6050_VECTOR* Mpu6050ReadGyro (MPU6050_VECTOR* pGyro)
 {
    BYTE pbBuffer[6];
    ReadRegister(REGISTER_GYRO_START, pbBuffer, 6);
-   MPU6050_VECTOR s;
    for (UI8 i = 0; i < 3; i++)
-      s.v[i] = (F32)(((I16)pbBuffer[2 * i] << 8) | pbBuffer[2 * i + 1]) / GYRO_SENSOR_RANGE;
-   return s;
+      pGyro->v[i] = (F32)DecodeI16(pbBuffer, i) / GYRO_SENSOR_RANGE;
+   return pGyro;
 }
-//-----------< FUNCTION: Mpu6050ReadSensors >--------------------------------
-// Purpose:    reads all sensors from the MPU-6050 in one I2C transaction
+//-----------< FUNCTION: Mpu6050BeginReadSensors >---------------------------
+// Purpose:    begins an asynchronous read of all sensors from the 
+//             MPU-6050 in one I2C transaction
 // Parameters: none
-// Returns:    current MPU-6050 gyro, accelerometer, and temperature readings
+// Returns:    none
 //---------------------------------------------------------------------------
-MPU6050_SENSORS Mpu6050ReadSensors ()
+VOID Mpu6050BeginReadSensors ()
 {
+   BeginReadRegister(REGISTER_SENSOR_START, 14);
+}
+//-----------< FUNCTION: Mpu6050EndReadSensors >-----------------------------
+// Purpose:    completes an asynchronous read of all sensors from the 
+//             MPU-6050 in one I2C transaction
+// Parameters: pSensors - return the result via here
+//                        a structure containing the sensor readings
+// Returns:    pSensors
+//---------------------------------------------------------------------------
+MPU6050_SENSORS* Mpu6050EndReadSensors (MPU6050_SENSORS* pSensors)
+{
+   // complete the async read
    BYTE pbBuffer[14];
-   ReadRegister(REGISTER_SENSOR_START, pbBuffer, 14);
-   MPU6050_SENSORS s;
+   EndReadRegister(pbBuffer, sizeof(pbBuffer));
+   // decode the sensor readings from the buffer
    for (UI8 i = 0; i < 3; i++)
-      s.Accel.v[i] = (F32)(((I16)pbBuffer[2 * i] << 8) | pbBuffer[2 * i + 1]) / ACCEL_SENSOR_RANGE;
-   s.Temp = (F32)(((I16)pbBuffer[6] << 8) | pbBuffer[7]) / TEMP_SENSOR_RANGE + TEMP_SENSOR_OFFSET;
+      pSensors->Accel.v[i] = (F32)DecodeI16(pbBuffer, i) / ACCEL_SENSOR_RANGE;
+   pSensors->Temp = (F32)DecodeI16(pbBuffer, 3) / TEMP_SENSOR_RANGE + TEMP_SENSOR_OFFSET;
    for (UI8 i = 0; i < 3; i++)
-      s.Gyro.v[i] = (F32)(((I16)pbBuffer[2 * i + 8] << 8) | pbBuffer[2 * i + 9]) / GYRO_SENSOR_RANGE;
-   return s;
+      pSensors->Gyro.v[i] = (F32)DecodeI16(pbBuffer, i + 4) / GYRO_SENSOR_RANGE;
+   return pSensors;
 }
 //-----------< FUNCTION: Mpu6050Reset >--------------------------------------
 // Purpose:    resets the configuration of the MPU-6050 to power-on state

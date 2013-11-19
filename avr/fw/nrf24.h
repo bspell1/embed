@@ -185,7 +185,10 @@ VOID     Nrf24FlushSend          ();
 VOID     Nrf24FlushRecv          ();
 VOID     Nrf24PowerOn            (UI8 fMode);
 VOID     Nrf24PowerOff           ();
-VOID     Nrf24Send               (PCVOID pvPacket, BSIZE cbPacket);
+VOID     Nrf24BeginSend          (PCVOID pvPacket, BSIZE cbPacket);
+VOID     Nrf24EndSend            ();
+VOID     Nrf24BeginRecv          (BSIZE cbPacket);
+PVOID    Nrf24EndRecv            (PVOID pvPacket, BSIZE cbPacket);
 // busy polling helpers
 inline BOOL Nrf24IsSendBusy ()
    { return (Nrf24GetFifoStatus() & NRF24_FIFO_TX_FULL) ? TRUE : FALSE; }
@@ -195,4 +198,9 @@ inline BOOL Nrf24IsRecvBusy ()
    { return (Nrf24GetFifoStatus() & NRF24_FIFO_RX_FULL) ? TRUE : FALSE; }
 inline VOID Nrf24RecvWait ()
    { while (Nrf24IsRecvBusy()); }
+// send/receive sync helpers
+inline VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
+   { Nrf24BeginSend(pvPacket, cbPacket); Nrf24EndSend(pvPacket, cbPacket); }
+inline VOID Nrf24Recv (PVOID pvPacket, BSIZE cbPacket)
+   { Nrf24BeginRecv(cbPacket); Nrf24EndRecv(pvPacket, cbPacket); }
 #endif // __NRF24_H  
