@@ -347,7 +347,6 @@ UI8 Nrf24GetRFChannel ()
 //---------------------------------------------------------------------------
 VOID Nrf24SetRFChannel (UI8 nChannel)
 {
-   // TODO: trace on validation failures
    if (nChannel < 84)
       WriteRegister8(REGISTER_RFCHANNEL, nChannel);
 }

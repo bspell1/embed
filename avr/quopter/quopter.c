@@ -24,7 +24,6 @@
 #include "quopter.h"
 #include "tlc5940.h"
 #include "i2cmast.h"
-#include "uart.h"
 #include "quadmpu.h"
 #include "quadrotr.h"
 //-------------------[       Module Definitions        ]-------------------//
@@ -56,7 +55,6 @@ void QuopterInit ()
    // protocol initialization
    sei();
    I2cInit();
-   UartInit(&(UART_CONFIG) { NULL, NULL }); // TODO: remove
    // hardware initialization
    PinSetOutput(PIN_D4);
    Tlc5940Init(
@@ -78,8 +76,8 @@ void QuopterInit ()
       &(QUADROTOR_CONFIG)
       {
          .nTlc5940Module = 0,
-         .nForeChannel   = 0,
-         .nAftChannel    = 1,
+         .nBowChannel    = 0,
+         .nSternChannel  = 1,
          .nPortChannel   = 2,
          .nStarChannel   = 3
       }
@@ -94,29 +92,38 @@ void QuopterInit ()
 //---------------------------------------------------------------------------
 void QuopterRun  ()
 {
-   static UI16 g_nTicks = 0;
    // toggle the LED to calibrate sample timings
-   if (g_nTicks++ == 1000)
+   static UI16 g_nSamples  = 0;
+   if (g_nSamples++ == 1000)
    {
-      g_nTicks = 0;
+      g_nSamples = 0;
       PinToggle(PIN_D4);
    }
    // retrieve the sensor readings and start the next async read
    QUADMPU_SENSOR mpu;
    QuadMpuEndRead(&mpu);
    QuadMpuBeginRead();
-   // TODO: remove
-   UartSend(&mpu.nRollAngle, sizeof(mpu.nRollAngle));
    // send the control signals to the rotors
-   QUADROTOR_CONTROL ctrl = 
+   // the rotor ESCs require a full PWM cycle
+   // to elapse between changes, so we can only 
+   // control them once every 20ms
+   static UI8 g_nEscCycle = 0;
+   if (g_nEscCycle < 20)
+      g_nEscCycle += (UI8)(QUADMPU_SAMPLE_TIME * 1000);
+   else
    {
-      .nThrustInput = 0.2f,
-      .nRollInput   = 0.0f,
-      .nPitchInput  = 0.0f,
-      .nYawInput    = 0.0f,
-      .nRollSensor  = mpu.nRollAngle / M_PI_2,
-      .nPitchSensor = mpu.nPitchAngle / M_PI_2,
-      .nYawSensor   = mpu.nYawRate
-   };
-   QuadRotorControl(&ctrl);
+      g_nEscCycle = 0;
+      QuadRotorControl(
+         &(QUADROTOR_CONTROL)
+         {
+         .nThrustInput = 0.5f,
+         .nRollInput   = 0.0f,
+         .nPitchInput  = 0.0f,
+         .nYawInput    = 0.0f,
+         .nRollSensor  = mpu.nRollAngle / M_PI_2,
+         .nPitchSensor = mpu.nPitchAngle / M_PI_2,
+         .nYawSensor   = mpu.nYawRate
+         }
+      );
+   }
 }

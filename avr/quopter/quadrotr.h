@@ -58,8 +58,8 @@
 typedef struct tagQuadRotorConfig
 {
    UI8   nTlc5940Module;      // TLC5940 module number
-   UI8   nForeChannel;        // forward rotor channel on the TLC5940
-   UI8   nAftChannel;         // aft rotor channel on the TLC5940
+   UI8   nBowChannel;         // forward rotor channel on the TLC5940
+   UI8   nSternChannel;       // aft rotor channel on the TLC5940
    UI8   nPortChannel;        // port-side rotor channel on the TLC5940
    UI8   nStarChannel;        // starboard-side rotor channel on the TLC5940
 } QUADROTOR_CONFIG, *PQUADROTOR_CONFIG;

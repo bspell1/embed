@@ -61,7 +61,7 @@
 //             nIndex - index into the buffer, in 16-bit units
 // Returns:    the converted value
 //---------------------------------------------------------------------------
-static UI16 DecodeI16 (PBYTE pbData, UI8 nIndex)
+static I16 DecodeI16 (PBYTE pbData, UI8 nIndex)
 {
    return ((I16)pbData[2 * nIndex] << 8) | pbData[2 * nIndex + 1];
 }
@@ -391,6 +391,8 @@ VOID Mpu6050Reset ()
       REGISTER_PWR_MGMT_1, 
       BitSetHi(ReadRegister8(REGISTER_PWR_MGMT_1), 7)
    );
+   // the module requires a delay upon reset, say 5ms
+   _delay_ms(5);
 }
 //-----------< FUNCTION: Mpu6050IsAsleep >-----------------------------------
 // Purpose:    determines whether the motion processor is asleep

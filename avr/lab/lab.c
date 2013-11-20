@@ -40,41 +40,17 @@
 int main ()
 {
    sei();
-   PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
-   Tlc5940Init(
-      &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_B1,
-         .nPinSClk  = PIN_D7,
-         .nPinSIn   = PIN_D5,
-         .nPinXlat  = PIN_B0,
-         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
-      }
-   );
-   PinSetHi(PIN_D4);
-   Tlc5940SetDuty(0, 0, (4096 - 2 * (4096 / 20)));
-   Tlc5940SetDuty(0, 1, (4096 - 2 * (4096 / 20)));
-   Tlc5940SetDuty(0, 2, (4096 - 2 * (4096 / 20)));
-   Tlc5940SetDuty(0, 3, (4096 - 2 * (4096 / 20)));
-   _delay_ms(2000);
-   PinSetLo(PIN_D4);
-   Tlc5940SetDuty(0, 0, (4096 - 1 * (4096 / 20)));
-   Tlc5940SetDuty(0, 1, (4096 - 1 * (4096 / 20)));
-   Tlc5940SetDuty(0, 2, (4096 - 1 * (4096 / 20)));
-   Tlc5940SetDuty(0, 3, (4096 - 1 * (4096 / 20)));
-   _delay_ms(2000);
+   UartInit(&(UART_CONFIG) { NULL, NULL });
+   I2cInit();
+   Mpu6050Init();
+   Mpu6050Wake();
+   //Mpu6050DisableTemp();
+   Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
    for ( ; ; )
    {
-      Tlc5940SetDuty(0, 0, (4096 - 1.5 * (4096 / 20)));
-      Tlc5940SetDuty(0, 1, (4096 - 1.5 * (4096 / 20)));
-      Tlc5940SetDuty(0, 2, (4096 - 1.5 * (4096 / 20)));
-      Tlc5940SetDuty(0, 3, (4096 - 1.5 * (4096 / 20)));
-      _delay_ms(1000);
-      PinToggle(PIN_D4);
-      Tlc5940SetDuty(0, 0, (4096 - 1 * (4096 / 20)));
-      Tlc5940SetDuty(0, 1, (4096 - 1 * (4096 / 20)));
-      Tlc5940SetDuty(0, 2, (4096 - 1 * (4096 / 20)));
-      Tlc5940SetDuty(0, 3, (4096 - 1 * (4096 / 20)));
+      F32 z = Mpu6050ReadAccelZ();
+      UartSend(&z, sizeof(z));
       _delay_ms(1000);
       PinToggle(PIN_D4);
    }

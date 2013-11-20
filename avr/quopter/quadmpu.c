@@ -111,8 +111,8 @@ QUADMPU_SENSOR* QuadMpuEndRead (PQUADMPU_SENSOR pSensor)
    F32 nRateX  = mpu.Gyro.x * GYRO_SCALE;
    F32 nRateY  = mpu.Gyro.y * GYRO_SCALE;
    // filter the angle readings using the complementary filter
-   g_nFilterX = ComplementaryFilter(g_nFilterX, nAngleX, nRateX, QUADCTRL_SAMPLE_RATE);
-   g_nFilterY = ComplementaryFilter(g_nFilterY, nAngleY, nRateY, QUADCTRL_SAMPLE_RATE);
+   g_nFilterX = ComplementaryFilter(g_nFilterX, nAngleX, nRateX, QUADMPU_SAMPLE_TIME);
+   g_nFilterY = ComplementaryFilter(g_nFilterY, nAngleY, nRateY, QUADMPU_SAMPLE_TIME);
    // return the results
    pSensor->nRollAngle  = g_nFilterX;
    pSensor->nPitchAngle = g_nFilterY;

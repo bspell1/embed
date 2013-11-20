@@ -26,8 +26,8 @@
 #include "pid.h"
 //-------------------[       Module Definitions        ]-------------------//
 // channel numbers
-#define ROTOR_FORE   0                                // forward rotor
-#define ROTOR_AFT    1                                // aft rotor
+#define ROTOR_BOW    0                                // forward rotor
+#define ROTOR_STERN  1                                // aft rotor
 #define ROTOR_PORT   2                                // port rotor
 #define ROTOR_STAR   3                                // starboard rotor
 // PID modules
@@ -79,11 +79,12 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
 //---------------------------------------------------------------------------
 VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 {
-   g_nTlc5940              = pConfig->nTlc5940Module;
-   g_nChannels[ROTOR_FORE] = pConfig->nForeChannel;
-   g_nChannels[ROTOR_AFT]  = pConfig->nAftChannel;
-   g_nChannels[ROTOR_PORT] = pConfig->nPortChannel;
-   g_nChannels[ROTOR_STAR] = pConfig->nStarChannel;
+   // configure the TLC5940 channels
+   g_nTlc5940               = pConfig->nTlc5940Module;
+   g_nChannels[ROTOR_BOW]   = pConfig->nBowChannel;
+   g_nChannels[ROTOR_STERN] = pConfig->nSternChannel;
+   g_nChannels[ROTOR_PORT]  = pConfig->nPortChannel;
+   g_nChannels[ROTOR_STAR]  = pConfig->nStarChannel;
    // initialize the PID controllers
    for (UI8 i = 0; i < sizeof(g_pid) / sizeof(*g_pid); i++)
    {
@@ -119,13 +120,13 @@ VOID QuadRotorControl (PQUADROTOR_CONTROL pControl)
    F32 nPitch  = g_pid[PID_PITCH].nControl;
    F32 nYaw    = g_pid[PID_YAW].nControl;
    // convert the control values to individual rotor thrusts
-   F32 nFore = nThrust + nPitch / 2.0f + nYaw / 2.0f;
-   F32 nAft  = nThrust - nPitch / 2.0f + nYaw / 2.0f;
-   F32 nPort = nThrust - nRoll  / 2.0f - nYaw / 2.0f;
-   F32 nStar = nThrust + nRoll  / 2.0f - nYaw / 2.0f;
+   F32 nBow   = nThrust + nPitch / 2.0f + nYaw / 2.0f;
+   F32 nStern = nThrust - nPitch / 2.0f + nYaw / 2.0f;
+   F32 nPort  = nThrust - nRoll  / 2.0f - nYaw / 2.0f;
+   F32 nStar  = nThrust + nRoll  / 2.0f - nYaw / 2.0f;
    // send the thrust signals to the ESCs through the TLC5940
-   SetThrust(ROTOR_FORE, nFore);
-   SetThrust(ROTOR_AFT,  nAft);
-   SetThrust(ROTOR_PORT, nPort);
-   SetThrust(ROTOR_STAR, nStar);
+   SetThrust(ROTOR_BOW,   nBow);
+   SetThrust(ROTOR_STERN, nStern);
+   SetThrust(ROTOR_PORT,  nPort);
+   SetThrust(ROTOR_STAR,  nStar);
 }

@@ -29,10 +29,10 @@
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
 // MPU SENSOR CONSTANTS
-// . QUADCTRL_SAMPLE_RATE     MPU sample rate, for integrating gyro speeds
+// . QUADMPU_SAMPLE_TIME      time between MPU samples, for integrating gyro speeds
 //===========================================================================
-#ifndef QUADCTRL_SAMPLE_RATE
-#  error QUADCTRL_SAMPLE_RATE must be assigned
+#ifndef QUADMPU_SAMPLE_TIME
+#  error QUADMPU_SAMPLE_TIME must be assigned
 #endif
 //===========================================================================
 // MPU SENSOR STRUCTURES
