@@ -50,6 +50,7 @@ namespace NPi
          Minus0dBm = 0x3
       }
 
+      public const Int32 MaxPayload = 32;
       private const Byte CommandRegisterRead = 0x00;
       private const Byte CommandRegisterWrite = 0x20;
       private const Byte CommandRXReadPacket = 0x61;
@@ -58,7 +59,8 @@ namespace NPi
       private const Byte CommandRXFlush = 0xE2;
       private const Byte CommandTXReuse = 0xE3;
       private const Byte CommandActivate = 0x50;
-      private const Byte CommandTXWriteNoAck= 0xB0;
+      private const Byte CommandRXReadDynamicLength = 0x60;
+      private const Byte CommandTXWriteNoAck = 0xB0;
       private const Byte CommandNoop = 0xFF;
       private const Byte RegAddressConfig = 0x00;
       private const Byte RegAddressAutoAck = 0x01;
@@ -491,6 +493,12 @@ namespace NPi
             throw new ArgumentOutOfRangeException("length");
          WriteRegister(RegAddressRXLength0 + pipe, (Byte)length);
       }
+      public Int32 GetRXDynamicLength ()
+      {
+         this.buffer[0] = CommandRXReadDynamicLength;
+         ReadWrite(1);
+         return this.buffer[1];
+      }
       public StatusRegister ClearInterrupts (Interrupt interrupt = Interrupt.All)
       {
          WriteRegister(RegAddressStatus, (Byte)((Byte)interrupt << 4));
@@ -499,7 +507,7 @@ namespace NPi
       public void TransmitPacket (Byte[] data)
       {
          if (this.config.Mode != Mode.Transmit)
-            throw new InvalidOperationException("Transciever not configured for transmit");
+            throw new InvalidOperationException("Tranceiver not configured for transmit");
          this.buffer[0] = (this.Features.DisableAck) ? 
             CommandTXWriteNoAck : 
             CommandTXWritePacket;
@@ -516,23 +524,27 @@ namespace NPi
       public void Listen ()
       {
          if (this.config.Mode != Mode.Receive)
-            throw new InvalidOperationException("The transciever is not configured for receive");
+            throw new InvalidOperationException("The tranceiver is not configured for receive");
          this.cePin.Value = true;
       }
       public void Unlisten ()
       {
          if (this.config.Mode != Mode.Receive)
-            throw new InvalidOperationException("The transciever is not configured for receive");
+            throw new InvalidOperationException("The tranceiver is not configured for receive");
          this.cePin.Value = false;
+      }
+      public Byte[] ReceivePacket (Byte[] buffer, Int32 length)
+      {
+         if (this.config.Mode != Mode.Receive)
+            throw new InvalidOperationException("The tranceiver is not configured for receive");
+         this.buffer[0] = CommandRXReadPacket;
+         ReadWrite(length);
+         Array.Copy(this.buffer, 1, buffer, 0, length);
+         return buffer;
       }
       public Byte[] ReceivePacket (Byte[] buffer)
       {
-         if (this.config.Mode != Mode.Receive)
-            throw new InvalidOperationException("The transciever is not configured for receive");
-         this.buffer[0] = CommandRXReadPacket;
-         ReadWrite(buffer.Length);
-         Array.Copy(this.buffer, 1, buffer, 0, buffer.Length);
-         return buffer;
+         return ReceivePacket(buffer, buffer.Length);
       }
       public Byte[] ReceivePacket (Int32 pipe)
       {

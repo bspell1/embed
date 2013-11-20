@@ -50,7 +50,7 @@ namespace Lab
          Console.WriteLine("   Usage: Lab {options}");
          Console.WriteLine("      -t|-threads {count}        number of threads to run");
          Console.WriteLine("      -i|-iterations {count}     number of iterations per thread to run");
-         Console.WriteLine("      -p|-Test.Param {value}          custom test paramter");
+         Console.WriteLine("      -p|-param {value}          custom test parameter");
       }
 
       static void ExecuteTests ()
