@@ -21,9 +21,7 @@ namespace LocoMoto
       {
          try
          {
-            this.receiver = config.IrqPin != 0 ?
-               new Nrf24(config.SpiPath, config.CEPin, config.IrqPin, reactor) :
-               new Nrf24(config.SpiPath, config.CEPin, reactor);
+            this.receiver = new Nrf24(config.SpiPath, config.CEPin, config.IrqPin, reactor);
             this.chuks = new WiiChukPair(
                new Nrf24Receiver(this.receiver, config.Address, config.Pipe)
             );

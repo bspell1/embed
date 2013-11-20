@@ -147,17 +147,21 @@ namespace NPi
       public Nrf24 (String path, Int32 cePin, Int32 irqPin, Reactor reactor)
          : this(path, cePin)
       {
-         this.irqPin = new Gpio(irqPin, Gpio.TriggerEdge.Falling, reactor);
-         this.irqPin.Triggered += this.OnInterrupt;
+         if (irqPin == 0)
+            reactor.Poll(
+               () => this.Status.Interrupts != Interrupt.None,
+               this.OnInterrupt
+            );
+         else
+         {
+            this.irqPin = new Gpio(irqPin, Gpio.TriggerEdge.Falling, reactor);
+            this.irqPin.Triggered += this.OnInterrupt;
+         }
       }
 
       public Nrf24 (String path, Int32 cePin, Reactor reactor)
-         : this(path, cePin)
+         : this(path, cePin, 0, reactor)
       {
-         reactor.Poll(
-            () => this.Status.Interrupts != Interrupt.None,
-            this.OnInterrupt
-         );
       }
 
       public void Dispose ()
@@ -489,7 +493,7 @@ namespace NPi
       {
          if (pipe < 0 || pipe > 5)
             throw new ArgumentOutOfRangeException("pipe");
-         if (length < 0 || length > 32)
+         if (length < 0 || length > MaxPayload)
             throw new ArgumentOutOfRangeException("length");
          WriteRegister(RegAddressRXLength0 + pipe, (Byte)length);
       }
@@ -590,9 +594,6 @@ namespace NPi
             default:
                throw new InvalidOperationException("Invalid TX/RX mode");
          }
-         if (this.RFConfig.BitRate != BitRate.OneMbps)
-            if ((rxEnabled & ~this.AutoAck).HasAny)
-               throw new InvalidOperationException("Bit rate must be 1mbps with auto ack disabled");
       }
       #endregion
 

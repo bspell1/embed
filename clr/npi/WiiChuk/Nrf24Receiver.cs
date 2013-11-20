@@ -22,7 +22,7 @@ namespace NPi.WiiChuk
                this.receiver.ReceivePacket(this.buffer);
                if (this.Received != null)
                   this.Received(this.buffer);
-               status = this.receiver.Status;
+               status = this.receiver.ClearInterrupts();
             }
          };
          this.Count = 1;

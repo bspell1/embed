@@ -15,7 +15,7 @@ namespace ChukEcho
       static String wiiName;
       static String nrf24Path;
       static Int32 nrf24CePin;
-      static Int32 nrf24IntPin;
+      static Int32 nrf24IrqPin;
       static Int32 nrf24Pipe;
 
       static Int32 Main (String[] options)
@@ -33,7 +33,7 @@ namespace ChukEcho
          wiiName = "Wii00";
          nrf24Path = Directory.GetFiles("/dev", "spidev*.0").FirstOrDefault();
          nrf24CePin = 17;
-         nrf24IntPin = 18;
+         nrf24IrqPin = 0;
          nrf24Pipe = 0;
          // parse options
          try
@@ -42,7 +42,7 @@ namespace ChukEcho
             {
                { "p|nrf24-path=", v => nrf24Path = v },
                { "c|nrf24-ce=", (Int32 v) => nrf24CePin = v },
-               { "i|nrf24-int=", (Int32 v) => nrf24IntPin = v },
+               { "i|nrf24-irq=", (Int32 v) => nrf24IrqPin = v },
                { "e|nrf24-pipe=", (Int32 v) => nrf24Pipe = v },
                { "h|?|help", v => { throw new Options.OptionException(); } }
             }.Parse(options);
@@ -57,7 +57,7 @@ namespace ChukEcho
             return false;
          if (nrf24CePin <= 0)
             return false;
-         if (nrf24IntPin <= 0)
+         if (nrf24IrqPin < 0)
             return false;
          if (nrf24Pipe < 0 || nrf24Pipe > 5)
             return false;
@@ -70,7 +70,7 @@ namespace ChukEcho
          Console.WriteLine("      [wii-name]           NRF24 Wii address (default: Wii00)");
          Console.WriteLine("      -p|-nrf24-path {path}   SPI device path for the NRF24 (default: /dev/spidev*.0)");
          Console.WriteLine("      -c|-nrf24-ce {pin}      GPIO pin for the NRF24 CE pin (default: 17)");
-         Console.WriteLine("      -i|-nrf24-int {pin}     GPIO pin for the NRF24 interrupt pin (default: 18)");
+         Console.WriteLine("      -i|-nrf24-irq {pin}     GPIO pin for the NRF24 interrupt pin (default: none/poll)");
          Console.WriteLine("      -e|-nrf24-pipe {pipe}   NRF24 pipe number to use (0-5, default: 0)");
       }
       static void ReportException (Exception e)
@@ -87,11 +87,17 @@ namespace ChukEcho
          try
          {
             using (var reactor = new Reactor())
-            using (var nrf24 = new Nrf24(nrf24Path, nrf24CePin, nrf24IntPin, reactor))
+            using (var nrf24 = new Nrf24(nrf24Path, nrf24CePin, nrf24IrqPin, reactor))
             using (var chuks = new WiiChukPair(new Nrf24Receiver(nrf24, wiiName, nrf24Pipe)))
             {
                var updated = DateTime.MinValue;
                chuks.Updated += (c1, c2) => updated = DateTime.Now;
+               nrf24.Config = new Nrf24.ConfigRegister(nrf24.Config)
+               {
+                  Mode = Nrf24.Mode.Receive,
+                  Crc = Nrf24.Crc.TwoByte
+               };
+               nrf24.Listen();
                reactor.Start();
                Console.WriteLine("   Listening for updates. Press escape to exit.");
                Console.WriteLine();
@@ -113,6 +119,7 @@ namespace ChukEcho
                   );
                   Thread.Sleep(20);
                }
+               reactor.Join();
             }
             Console.WriteLine();
          }
