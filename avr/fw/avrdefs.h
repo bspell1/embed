@@ -108,6 +108,17 @@ typedef const CHAR*           PCSTR;
 #ifndef Max
 #  define Max(x, y)           (((x) > (y)) ? (x) : (y))
 #endif
+#ifndef Clamp
+#  define Clamp(x, min, max)  (Min(Max((x), (min)), (max)))
+#endif
+#ifndef Map
+#  define Map(x, imin, imax, omin, omax)                                   \
+      (((x) - (imin)) * ((omax) - (omin)) / ((imax) - (imin)) + (omin))
+#endif
+#ifndef ClampMap
+#  define ClampMap(x, imin, imax, omin, omax)                              \
+      Map(Clamp(x, imin, imax), imin, imax, omin, omax)
+#endif
 //===========================================================================
 // MEMORY OPERATIONS
 //===========================================================================

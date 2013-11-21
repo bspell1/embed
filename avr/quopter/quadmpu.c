@@ -63,7 +63,7 @@ static F32 ComplementaryFilter (
    F32 nGyroAngle = nOldAngle + nGyroRate * nDt;
    F32 nNewAngle  = COMPFILTER_GYROBIAS * nGyroAngle + 
                     COMPFILTER_ACCELBIAS * nAccelAngle;
-   return Min(Max(nNewAngle, -M_PI_2), M_PI_2);
+   return Clamp(nNewAngle, -M_PI_2, M_PI_2);
 }
 //-----------< FUNCTION: QuadMpuInit >---------------------------------------
 // Purpose:    module initialization

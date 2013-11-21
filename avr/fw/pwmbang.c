@@ -71,8 +71,7 @@ UI16 PwmBangGetDuty (UI8 nChannel)
 //---------------------------------------------------------------------------
 VOID PwmBangSetDuty (UI8 nChannel, UI16 nDuty)
 {
-   g_Channels[nChannel].nDuty = 
-      Min(Max(nDuty, PWMBANG_DUTY_MIN), PWMBANG_DUTY_MAX);
+   g_Channels[nChannel].nDuty = Clamp(nDuty, PWMBANG_DUTY_MIN, PWMBANG_DUTY_MAX);
 }
 //-----------< FUNCTION: PwmBangGetDutyF >-----------------------------------
 // Purpose:    gets the duty cycle for a PWM channel

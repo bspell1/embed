@@ -57,6 +57,7 @@ void QuopterInit ()
    I2cInit();
    // hardware initialization
    PinSetOutput(PIN_D4);
+   PinSetHi(PIN_D4);
    Tlc5940Init(
       &(TLC5940_CONFIG) {
          .nPinBlank = PIN_B1,
@@ -84,6 +85,7 @@ void QuopterInit ()
    );
    // start the first async sensor read
    QuadMpuBeginRead();
+   PinSetLo(PIN_D4);
 }
 //-----------< FUNCTION: QuopterRun >----------------------------------------
 // Purpose:    quopter loop execution
@@ -108,7 +110,7 @@ void QuopterRun  ()
    // to elapse between changes, so we can only 
    // control them once every 20ms
    static UI8 g_nEscCycle = 0;
-   if (g_nEscCycle < 20)
+   if (g_nEscCycle < 40)
       g_nEscCycle += (UI8)(QUADMPU_SAMPLE_TIME * 1000);
    else
    {

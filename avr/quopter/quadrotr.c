@@ -69,8 +69,16 @@ static VOID SetDuty (UI8 nRotor, UI16 nDuty)
 static VOID SetThrust (UI8 nRotor, F32 nThrust)
 {
    // clamp the thrust value and convert to duty cycle
-   nThrust = Min(Max(nThrust, QUADROTOR_THRUST_MIN), QUADROTOR_THRUST_MAX);
-   SetDuty(nRotor, (UI16)(nThrust * PWM_RANGE + PWM_MIN));
+   SetDuty(
+      nRotor,
+      (UI16)ClampMap(
+         nThrust, 
+         QUADROTOR_THRUST_MIN, 
+         QUADROTOR_THRUST_MAX,
+         PWM_MIN,
+         PWM_MAX
+      )
+   );
 }
 //-----------< FUNCTION: QuadRotorInit >-------------------------------------
 // Purpose:    initializes the controller
