@@ -32,7 +32,25 @@
 // . TLC5940_COUNT: the number of 5940 modules in the daisy chain
 //===========================================================================
 #ifndef TLC5940_COUNT
-#  define TLC5940_COUNT    1
+#  define TLC5940_COUNT          1
+#endif
+#ifdef TLC5940_SERVO
+#  define TLC5940_FREQ           50       // 50 Hz PWM cycle
+#  define TLC5940_BLSCALE        128      // prescale at 128 for 125kHz
+#  define TLC5940_BLFREQ         1000     // 1kHz blanking base frequency
+#  define TLC5940_BLTICK         20       // blank every 20 ticks for 50Hz
+#endif
+#ifndef TLC5940_FREQ
+#  define TLC5940_FREQ           50       // 50Hz PWM cycle
+#endif
+#ifndef TLC5940_BLSCALE
+#  define TLC5940_BLSCALE        128      // prescale at 128 for 125kHz
+#endif
+#ifndef TLC5940_BLFREQ
+#  define TLC5940_BLFREQ         1000     // 1kHz blanking base frequency
+#endif
+#ifndef TLC5940_BLTICK
+#  define TLC5940_BLTICK         20       // blank at 50Hz
 #endif
 //===========================================================================
 // TLC5940 DATA STRUCTURES

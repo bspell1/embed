@@ -25,7 +25,7 @@
 #include "mpu6050.h"
 //-------------------[       Module Definitions        ]-------------------//
 // complementary filter biases
-#define COMPFILTER_GYROBIAS   (0.95f)
+#define COMPFILTER_GYROBIAS   (0.98f)
 #define COMPFILTER_ACCELBIAS  (1.0f - COMPFILTER_GYROBIAS)
 // MPU-6050 reading scales
 #define ACCEL_SCALE           (2.0f * M_PI_2)            // [-2g,2g] => radians

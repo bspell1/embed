@@ -106,18 +106,9 @@ void QuopterRun  ()
    QuadMpuEndRead(&mpu);
    QuadMpuBeginRead();
    // send the control signals to the rotors
-   // the rotor ESCs require a full PWM cycle
-   // to elapse between changes, so we can only 
-   // control them once every 20ms
-   static UI8 g_nEscCycle = 0;
-   if (g_nEscCycle < 40)
-      g_nEscCycle += (UI8)(QUADMPU_SAMPLE_TIME * 1000);
-   else
-   {
-      g_nEscCycle = 0;
-      QuadRotorControl(
-         &(QUADROTOR_CONTROL)
-         {
+   QuadRotorControl(
+      &(QUADROTOR_CONTROL)
+      {
          .nThrustInput = 0.5f,
          .nRollInput   = 0.0f,
          .nPitchInput  = 0.0f,
@@ -125,7 +116,6 @@ void QuopterRun  ()
          .nRollSensor  = mpu.nRollAngle / M_PI_2,
          .nPitchSensor = mpu.nPitchAngle / M_PI_2,
          .nYawSensor   = mpu.nYawRate
-         }
-      );
-   }
+      }
+   );
 }

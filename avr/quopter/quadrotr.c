@@ -38,9 +38,9 @@
 // . PWM_MIN: minimum ESC duty cycle (1ms min forward)
 // . PWM_MAX: maximum ESC duty cycle (1.5ms max forward, reverse is 1.5-2ms)
 // . PWM_NEGMAX: maximum negative ESC duty cycle, for calibration
-#define PWM_MIN      (F32)(1.0f * (4096.0f / 20.0f))
-#define PWM_MAX      (F32)(1.5f * (4096.0f / 20.0f))
-#define PWM_NEGMAX   (F32)(2.0f * (4096.0f / 20.0f))
+#define PWM_MIN      1600
+#define PWM_MAX      2400
+#define PWM_NEGMAX   3200
 #define PWM_RANGE    (PWM_MAX - PWM_MIN)
 //-------------------[        Module Variables         ]-------------------//
 static UI8 g_nTlc5940       = UI8_MAX;          // TLC5940 module number
@@ -71,6 +71,8 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
    // clamp the thrust value and convert to duty cycle
    SetDuty(
       nRotor,
+      (UI16)(Clamp(nThrust, QUADROTOR_THRUST_MIN, QUADROTOR_THRUST_MAX) * PWM_RANGE + PWM_MIN)
+      /*
       (UI16)ClampMap(
          nThrust, 
          QUADROTOR_THRUST_MIN, 
@@ -78,6 +80,7 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
          PWM_MIN,
          PWM_MAX
       )
+      */
    );
 }
 //-----------< FUNCTION: QuadRotorInit >-------------------------------------

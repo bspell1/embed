@@ -334,7 +334,7 @@ VOID Nrf24SetRetryCount (UI8 nCount)
 //-----------< FUNCTION: Nrf24GetRFChannel >---------------------------------
 // Purpose:    gets the RF_CH register
 // Parameters: none
-// Returns:    current RF channel, in mHz over 2.4gHz
+// Returns:    current RF channel, in MHz over 2.4gHz
 //---------------------------------------------------------------------------
 UI8 Nrf24GetRFChannel ()
 {
@@ -342,7 +342,7 @@ UI8 Nrf24GetRFChannel ()
 }
 //-----------< FUNCTION: Nrf24SetRFChannel >---------------------------------
 // Purpose:    sets the RF_CH register
-// Parameters: nChannel - current RF channel, in mHz over 2.4gHz
+// Parameters: nChannel - current RF channel, in MHz over 2.4gHz
 // Returns:    none
 //---------------------------------------------------------------------------
 VOID Nrf24SetRFChannel (UI8 nChannel)
