@@ -115,8 +115,8 @@ typedef const CHAR*           PCSTR;
 #  define Map(x, imin, imax, omin, omax)                                   \
       (((x) - (imin)) * ((omax) - (omin)) / ((imax) - (imin)) + (omin))
 #endif
-#ifndef ClampMap
-#  define ClampMap(x, imin, imax, omin, omax)                              \
+#ifndef MapClamp
+#  define MapClamp(x, imin, imax, omin, omax)                              \
       Map(Clamp(x, imin, imax), imin, imax, omin, omax)
 #endif
 //===========================================================================
@@ -273,6 +273,30 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 #define PinPulseHiLo(p)       PinSetHi(p); PinSetLo(p)
 #define PinPulseLoHi(p)       PinSetLo(p); PinSetHi(p)
 #define PinPulse(p)           PinPulseHiLo(p)
+//===========================================================================
+// AVR CLOCKS
+//===========================================================================
+#define AvrClkCtcTop(ps, freq)    (F_CPU / (ps * freq) - 1)
+#define AvrClk0Scale(x) (                                                  \
+   (x == 1) ?    (BitMask(CS00)) :                                         \
+   (x == 8) ?    (BitMask(CS01)) :                                         \
+   (x == 64) ?   (BitMask(CS01) | BitMask(CS00)) :                         \
+   (x == 256) ?  (BitMask(CS02)) :                                         \
+   (x == 1024) ? (BitMask(CS02) | BitMask(CS00)) : 0)
+#define AvrClk1Scale(x) (                                                  \
+   (x == 1) ?    (BitMask(CS10)) :                                         \
+   (x == 8) ?    (BitMask(CS11)) :                                         \
+   (x == 64) ?   (BitMask(CS11) | BitMask(CS10)) :                         \
+   (x == 256) ?  (BitMask(CS12)) :                                         \
+   (x == 1024) ? (BitMask(CS12) | BitMask(CS10)) : 0)
+#define AvrClk2Scale(x) (                                                  \
+   (x == 1) ?    (BitMask(CS20)) :                                         \
+   (x == 8) ?    (BitMask(CS21)) :                                         \
+   (x == 32) ?   (BitMask(CS21) | BitMask(CS20)) :                         \
+   (x == 64) ?   (BitMask(CS22)) :                                         \
+   (x == 128) ?  (BitMask(CS22) | BitMask(CS20)) :                         \
+   (x == 256) ?  (BitMask(CS22) | BitMask(CS21)) :                         \
+   (x == 1024) ? (BitMask(CS22) | BitMask(CS21) | BitMask(CS20)) : 0)
 //===========================================================================
 // AVR OPERATIONS
 //===========================================================================

@@ -6,10 +6,13 @@ PARAMETERS	= 	F_CPU=16000000																\
 					I2C_FREQUENCY=400000														\
 					I2C_BUFFER_SIZE=16														\
 					TLC5940_COUNT=1															\
+					TLC5940_FREQ=390.625														\
+					TLC5940_BLSCALE=256														\
+					TLC5940_BLTICK=1															\
 					QUADMPU_SAMPLE_TIME=0.010f												\
 					QUADROTOR_THRUST_MAX=0.75f												\
-					QUADROTOR_PID_PGAIN=0.1f												\
+					QUADROTOR_PID_PGAIN=0.05f												\
 					QUADROTOR_PID_IGAIN=0.0f												\
-					QUADROTOR_PID_DGAIN=\(-0.1f\)
+					QUADROTOR_PID_DGAIN=\(-0.05f\)
 
 include ../fw/base.mak

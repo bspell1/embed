@@ -71,16 +71,13 @@ static VOID SetThrust (UI8 nRotor, F32 nThrust)
    // clamp the thrust value and convert to duty cycle
    SetDuty(
       nRotor,
-      (UI16)(Clamp(nThrust, QUADROTOR_THRUST_MIN, QUADROTOR_THRUST_MAX) * PWM_RANGE + PWM_MIN)
-      /*
-      (UI16)ClampMap(
+      (UI16)MapClamp(
          nThrust, 
          QUADROTOR_THRUST_MIN, 
          QUADROTOR_THRUST_MAX,
          PWM_MIN,
          PWM_MAX
       )
-      */
    );
 }
 //-----------< FUNCTION: QuadRotorInit >-------------------------------------
@@ -130,14 +127,9 @@ VOID QuadRotorControl (PQUADROTOR_CONTROL pControl)
    F32 nRoll   = g_pid[PID_ROLL].nControl;
    F32 nPitch  = g_pid[PID_PITCH].nControl;
    F32 nYaw    = g_pid[PID_YAW].nControl;
-   // convert the control values to individual rotor thrusts
-   F32 nBow   = nThrust + nPitch / 2.0f + nYaw / 2.0f;
-   F32 nStern = nThrust - nPitch / 2.0f + nYaw / 2.0f;
-   F32 nPort  = nThrust - nRoll  / 2.0f - nYaw / 2.0f;
-   F32 nStar  = nThrust + nRoll  / 2.0f - nYaw / 2.0f;
    // send the thrust signals to the ESCs through the TLC5940
-   SetThrust(ROTOR_BOW,   nBow);
-   SetThrust(ROTOR_STERN, nStern);
-   SetThrust(ROTOR_PORT,  nPort);
-   SetThrust(ROTOR_STAR,  nStar);
+   SetThrust(ROTOR_BOW,   nThrust + nPitch + nYaw);
+   SetThrust(ROTOR_STERN, nThrust - nPitch + nYaw);
+   SetThrust(ROTOR_PORT,  nThrust - nRoll  - nYaw);
+   SetThrust(ROTOR_STAR,  nThrust + nRoll  - nYaw);
 }

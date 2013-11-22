@@ -1,6 +1,6 @@
 //===========================================================================
 // Module:  tlc5940.c
-// Purpose: TLC4950 PWM driver
+// Purpose: TLC5940 PWM driver
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -52,17 +52,24 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    Tlc5940.nPinXlat  = pConfig->nPinXlat;
    Tlc5940.nPinGSClk = pConfig->nPinGSClk;
    Tlc5940.bUpdate   = TRUE;
-   // greyscale clock 8-bit clock 0, hardware, 3.2 MHz (390.625Hz cycle * 4096 bits PWM * 2 toggles/cycle)
-   RegSetHi(TCCR0A, COM0A0);                             // toggle OC0A on tick
-   RegSetHi(TCCR0A, WGM01);                              // CTC value at OCR0A
-   RegSetHi(TCCR0B, CS00);                               // prescale = 1 (16MHz)
-   OCR0A = F_CPU / 3200000 - 1;                          // reset at 5 ticks for 3.2MHz
-   // blanking clock 8-bit clock 2, software, 390.625Hz
-   RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
-   RegSetHi(TCCR2B, CS22);                               // prescale = 256 (62.5kHz)
-   RegSetHi(TCCR2B, CS21);                               // prescale = 256 (62.5kHz)
-   RegSetHi(TIMSK2, OCIE2A);                             // enable compare interrupt A
-   OCR2A = F_CPU / 256 / 390.625 - 1;                    // reset OC2A at 160 ticks for 390.625Hz
+   // 8-bit clock 0, greyscale timer
+   TCCR0A = BitMask(COM0A0) | BitMask(WGM01);            // CTC, toggle OC0A pin on tick
+   TCCR0B = AvrClk0Scale(1);                             // no prescaler
+   OCR0A  = AvrClkCtcTop(                                // set CTC value
+      1,                                                 // . no prescaler
+      TLC5940_FREQ *                                     // . base cycle frequency
+      4096 *                                             // . 4096 values/cycle
+      2                                                  // . 2 ticks/toggle
+   );
+   // 8-bit clock 2, blanking timer
+   TCCR2A = BitMask(WGM21);                              // CTC mode
+   TCCR2B = AvrClk2Scale(TLC5940_BLSCALE);               // set configured prescaler
+   TIMSK2 = BitMask(OCIE2A);                             // enable compare interrupt A
+   OCR2A  = AvrClkCtcTop(                                // set CTC value
+      TLC5940_BLSCALE,                                   // . blanking prescaler
+      TLC5940_FREQ *                                     // . cycle frequency
+      TLC5940_BLTICK                                     // . blanking fine tuning tick counter
+   );
    // digital pin setup
    PinSetOutput(Tlc5940.nPinBlank);                           
    PinSetOutput(Tlc5940.nPinSClk);                            
@@ -118,32 +125,46 @@ VOID Tlc5940SetDuty (UI8 nModule, UI8 nChannel, UI16 nDuty)
    Tlc5940.bUpdate = TRUE;
 }
 //-----------< INTERRUPT: TIMER2_COMPA_vect >--------------------------------
-// Purpose:    responds to 390.625kHz timer events
+// Purpose:    responds to blanking timer events
+//             . the blanking timer must fire each time the greyscale clock
+//               reaches 4096 ticks, in order to pulse the BLANK pin and
+//               optionally clock in any updated greyscale values
+//             . since timer2 is an 8-bit timer, this ISR provides an 
+//               additional compare match counter, configured by 
+//               TLC5940_BLTICK, effectively turning the timer's CTC into
+//               a 16-bit value
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
 ISR(TIMER2_COMPA_vect)
 {
-   // resync GSCLK and pulse BLANK to start the next PWM cycle
-   TCNT0 = 0;
-   PinPulse(Tlc5940.nPinBlank);
-   // update the 5940's greyscale register if requested
-   if (Tlc5940.bUpdate)
+   // only generate a blanking event every TLC5940_BLTICK ticks,
+   // in order to provide an additional 8 bits of CTC
+   static volatile UI8 g_nTicks = 0;
+   if (++g_nTicks == TLC5940_BLTICK)
    {
-      Tlc5940.bUpdate = FALSE;
-      // shift in greyscale bytes, MSB first
-      for (UI8 i = 0; i < sizeof(Tlc5940.pbGsData); i++)
+      g_nTicks = 0;
+      // resync GSCLK and pulse BLANK to start the next PWM cycle
+      TCNT0 = 0;
+      PinPulse(Tlc5940.nPinBlank);
+      // update the 5940's greyscale register if requested
+      if (Tlc5940.bUpdate)
       {
-         // shift in the current greyscale byte, MSB first
-         for (I8 j = 7; j >= 0; j--)
+         Tlc5940.bUpdate = FALSE;
+         // shift in greyscale bytes, MSB first
+         for (UI8 i = 0; i < sizeof(Tlc5940.pbGsData); i++)
          {
-            // set SIN to the greyscale bit value and
-            // pulse SCLK to shift in the greyscale bit
-            PinSet(Tlc5940.nPinSIn, BitTest(Tlc5940.pbGsData[i], j));
-            PinPulse(Tlc5940.nPinSClk);
+            // shift in the current greyscale byte, MSB first
+            for (I8 j = 7; j >= 0; j--)
+            {
+               // set SIN to the greyscale bit value and
+               // pulse SCLK to shift in the greyscale bit
+               PinSet(Tlc5940.nPinSIn, BitTest(Tlc5940.pbGsData[i], j));
+               PinPulse(Tlc5940.nPinSClk);
+            }
          }
+         // pulse XLAT to latch in the greyscale data
+         PinPulse(Tlc5940.nPinXlat);
       }
-      // pulse XLAT to latch in the greyscale data
-      PinPulse(Tlc5940.nPinXlat);
    }
 }
