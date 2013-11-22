@@ -24,6 +24,9 @@
 #include "quopter.h"
 #include "tlc5940.h"
 #include "i2cmast.h"
+#include "spimast.h"
+#include "nrf24.h"
+#include "quadchuk.h"
 #include "quadmpu.h"
 #include "quadrotr.h"
 //-------------------[       Module Definitions        ]-------------------//
@@ -55,6 +58,7 @@ void QuopterInit ()
    // protocol initialization
    sei();
    I2cInit();
+   SpiInit();
    // hardware initialization
    PinSetOutput(PIN_D4);
    PinSetHi(PIN_D4);
@@ -67,7 +71,23 @@ void QuopterInit ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
+   Nrf24Init(
+      &(NRF24_CONFIG)
+      {
+         .nSsPin = PIN_SS,
+         .nCePin = PIN_B1
+      }
+   );
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24PowerOn(NRF24_MODE_RECV);
    // module initialization
+   QuadChukInit(
+      &(QUADCHUK_CONFIG)
+      {
+         .pszAddress = QUADCHUK_ADDRESS,
+         .nPipe      = 0
+      }
+   );
    QuadMpuInit(
       &(QUADMPU_CONFIG)
       {

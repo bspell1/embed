@@ -1,14 +1,17 @@
 TARGETNAME 	= 	quopter
-MODULES    	= 	quopter quadmpu quadrotr
-FWMODULES   =  pid tlc5940 i2cmast mpu6050 uart
+MODULES    	= 	quopter quadchuk quadmpu quadrotr
+FWMODULES   =  pid i2cmast spimast nrf24 mpu6050 tlc5940
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					I2C_FREQUENCY=400000														\
 					I2C_BUFFER_SIZE=16														\
+					SPI_BUFFER_SIZE=13														\
+				 	SPI_FREQUENCY=8000000													\
 					TLC5940_COUNT=1															\
 					TLC5940_FREQ=390.625														\
 					TLC5940_BLSCALE=256														\
 					TLC5940_BLTICK=1															\
+					QUADCHUK_ADDRESS=\"Wii00\"												\
 					QUADMPU_SAMPLE_TIME=0.010f												\
 					QUADROTOR_THRUST_MAX=0.75f												\
 					QUADROTOR_PID_PGAIN=0.05f												\

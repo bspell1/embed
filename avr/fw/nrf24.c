@@ -141,6 +141,17 @@ static UI8 ReadStatus ()
    SpiSendRecv(g_nSsPin, pbSendRecv, 1, pbSendRecv, 1);
    return pbSendRecv[0];
 }
+//-----------< FUNCTION: ReadWriteStatus >-----------------------------------
+// Purpose:    reads and writes the NRF24 status register
+// Parameters: fStatus - the status to assign
+// Returns:    the previous contents of the status register
+//---------------------------------------------------------------------------
+static UI8 ReadWriteStatus (UI8 fStatus)
+{
+   BYTE pbSendRecv[2] = { COMMAND_WRITEREGISTER | REGISTER_STATUS, fStatus };
+   SpiSendRecv(g_nSsPin, pbSendRecv, 2, pbSendRecv, 1);
+   return pbSendRecv[0];
+}
 //-----------< FUNCTION: Nrf24Init >----------------------------------------
 // Purpose:    NRF24 interface initialization
 // Parameters: pConfig - module configuration
@@ -630,11 +641,11 @@ VOID Nrf24SetFeatures (UI8 fFeatures)
 //-----------< FUNCTION: Nrf24ClearIrq >-------------------------------------
 // Purpose:    clears interrupts currently set
 // Parameters: fIrq - bitmask of interrupts to clear
-// Returns:    none
+// Returns:    interrupts that were previously set
 //---------------------------------------------------------------------------
-VOID Nrf24ClearIrq (UI8 fIrq)
+UI8 Nrf24ClearIrq (UI8 fIrq)
 {
-   WriteRegister8(REGISTER_STATUS, fIrq & NRF24_IRQ_ALL);
+   return ReadWriteStatus(fIrq & NRF24_IRQ_ALL) & NRF24_IRQ_ALL;
 }
 //-----------< FUNCTION: Nrf24FlushSend >------------------------------------
 // Purpose:    empties the transceiver's TX FIFO
@@ -661,6 +672,7 @@ VOID Nrf24FlushRecv ()
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOn (UI8 fMode)
 {
+   PinSetLo(g_nCePin);
    if (fMode == NRF24_MODE_SEND || fMode == NRF24_MODE_RECV)
    {
       WriteRegister8(
@@ -670,10 +682,7 @@ VOID Nrf24PowerOn (UI8 fMode)
       g_fPowerMode = fMode;
       // if receiving, set CE high to enable incoming packets
       if (fMode == NRF24_MODE_RECV)
-      {
-         SpiWait();
          PinSetHi(g_nCePin);
-      }
    }
 }
 //-----------< FUNCTION: Nrf24PowerOff >-------------------------------------

@@ -180,7 +180,7 @@ inline VOID Nrf24EnableAck ()
 //===========================================================================
 // OPERATIONS
 //===========================================================================
-VOID     Nrf24ClearIrq           (UI8 fIrq);
+UI8      Nrf24ClearIrq           (UI8 fIrq);
 VOID     Nrf24FlushSend          ();
 VOID     Nrf24FlushRecv          ();
 VOID     Nrf24PowerOn            (UI8 fMode);
