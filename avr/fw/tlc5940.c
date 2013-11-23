@@ -57,7 +57,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    TCCR0B = AvrClk0Scale(1);                             // no prescaler
    OCR0A  = AvrClkCtcTop(                                // set CTC value
       1,                                                 // . no prescaler
-      TLC5940_FREQ *                                     // . base cycle frequency
+      (UI32)TLC5940_FREQ *                               // . base cycle frequency
       4096 *                                             // . 4096 values/cycle
       2                                                  // . 2 ticks/toggle
    );
@@ -67,7 +67,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    TIMSK2 = BitMask(OCIE2A);                             // enable compare interrupt A
    OCR2A  = AvrClkCtcTop(                                // set CTC value
       TLC5940_BLSCALE,                                   // . blanking prescaler
-      TLC5940_FREQ *                                     // . cycle frequency
+      (UI32)TLC5940_FREQ *                               // . cycle frequency
       TLC5940_BLTICK                                     // . blanking fine tuning tick counter
    );
    // digital pin setup

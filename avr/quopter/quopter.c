@@ -71,6 +71,7 @@ void QuopterInit ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
+   /*
    Nrf24Init(
       &(NRF24_CONFIG)
       {
@@ -88,6 +89,7 @@ void QuopterInit ()
          .nPipe      = 0
       }
    );
+   */
    QuadMpuInit(
       &(QUADMPU_CONFIG)
       {

@@ -276,7 +276,7 @@ static __attribute__((unused)) volatile uint8_t* __ppbAvrDO[] = { &PORTB, &PORTC
 //===========================================================================
 // AVR CLOCKS
 //===========================================================================
-#define AvrClkCtcTop(ps, freq)    (F_CPU / (ps * freq) - 1)
+#define AvrClkCtcTop(ps, freq)    (F_CPU / (ps) / (freq) - 1)
 #define AvrClk0Scale(x) (                                                  \
    (x == 1) ?    (BitMask(CS00)) :                                         \
    (x == 8) ?    (BitMask(CS01)) :                                         \
