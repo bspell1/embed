@@ -78,7 +78,7 @@ VOID WiiChukInit ()
    //   - SPI slave select pin on B2
    //   - chip enable on B1
    //   - 16-bit CRC
-   //   - transciever address ffrom EEPROM
+   //   - transceiver address ffrom EEPROM
    //   - transmit mode with no acknowledgements
    I2cInit();
    SpiInit();
@@ -92,6 +92,7 @@ VOID WiiChukInit ()
    Nrf24SetCrc(NRF24_CRC_16BIT);
    Nrf24SetTXAddress(g_szAddress);
    Nrf24DisableAck();
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
    Nrf24PowerOn(NRF24_MODE_SEND);
    // initialize chuk 0
    // . set the chip select pin low to trigger the chuk 0 PNP transistor

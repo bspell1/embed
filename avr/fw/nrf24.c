@@ -195,7 +195,7 @@ VOID Nrf24Init (PNRF24_CONFIG pConfig)
    Nrf24ClearIrq(NRF24_IRQ_ALL);
    Nrf24FlushSend();
    Nrf24FlushRecv();
-}
+ }
 //-----------< FUNCTION: Nrf24GetIrqMask >-----------------------------------
 // Purpose:    gets the currently masked IRQs from the CONFIG register
 // Parameters: none
@@ -672,7 +672,17 @@ VOID Nrf24FlushRecv ()
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOn (UI8 fMode)
 {
-   PinSetLo(g_nCePin);
+   switch (g_fPowerMode)
+   {
+      case NRF24_MODE_SEND:
+         // if switching from send to receive, wait for packets to be sent
+         _delay_us(250);
+         break;
+      case NRF24_MODE_RECV:
+         // if switching from receive to send, clear CE
+         PinSetLo(g_nCePin);
+         break;
+   }
    if (fMode == NRF24_MODE_SEND || fMode == NRF24_MODE_RECV)
    {
       WriteRegister8(
@@ -711,14 +721,14 @@ VOID Nrf24BeginSend (PCVOID pvPacket, BSIZE cbPacket)
    {
       // ensure no other transfers are in progress
       SpiWait();
-      // set CE high to take the transciever out of standby
-      PinSetHi(g_nCePin);
       // clock in the command and data buffer
       UI8  cbSend = cbPacket + 1;
       BYTE pbSend[cbSend];
       pbSend[0] = g_bTXRecvAck ? COMMAND_TXWRITEPACKET : COMMAND_TXWRITENOACK;
       memcpy(pbSend + 1, pvPacket, Min(cbPacket, NRF24_PACKET_MAX));
       SpiSend(g_nSsPin, pbSend, cbSend);
+      // set CE high to take the transceiver out of standby
+      PinSetHi(g_nCePin);
    }
 }
 //-----------< FUNCTION: Nrf24EndSend >--------------------------------------
@@ -753,7 +763,7 @@ VOID Nrf24BeginRecv (BSIZE cbPacket)
          g_nSsPin, 
          pbSend, 
          cbSend, 
-         Min(cbPacket, NRF24_PACKET_MAX), 
+         Min(cbPacket, NRF24_PACKET_MAX) + 1, 
          NULL
       );
    }
@@ -769,7 +779,10 @@ PVOID Nrf24EndRecv (PVOID pvPacket, BSIZE cbPacket)
 {
    if (g_fPowerMode == NRF24_MODE_RECV)
    {
-      SpiEndSendRecv(pvPacket, cbPacket);
+      UI8  cbRecv = Min(cbPacket, NRF24_PACKET_MAX) + 1;
+      BYTE pbRecv[cbRecv];
+      SpiEndSendRecv(pbRecv, cbRecv);
+      memcpy(pvPacket, pbRecv + 1, cbPacket);
       return pvPacket;
    }
    return NULL;

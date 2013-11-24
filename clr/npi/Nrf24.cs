@@ -469,18 +469,16 @@ namespace NPi
                RegAddressRXAddress0,
                Encoding.ASCII.GetBytes(address).Reverse().ToArray()
             );
-         else
-         {
+         else if (pipe == 1)
             WriteRegister(
                RegAddressRXAddress1,
                Encoding.ASCII.GetBytes(address).Reverse().ToArray()
             );
-            if (pipe > 1)
-               WriteRegister(
-                  RegAddressRXAddress0 + pipe,
-                  Encoding.ASCII.GetBytes(new[] { address.Last() })
-               );
-         }
+         else
+            WriteRegister(
+               RegAddressRXAddress0 + pipe,
+               Encoding.ASCII.GetBytes(new[] { address.Last() })
+            );
       }
       public Int32 GetRXLength (Int32 pipe)
       {
@@ -569,6 +567,8 @@ namespace NPi
             case Mode.Transmit:
                if (this.TXAddress.Length != addrLength)
                   throw new InvalidOperationException("Invalid TX address length");
+               if (this.Features.DisableAck && this.AutoAck[0])
+                  throw new InvalidOperationException("Auto-ack must be disabled on pipe 0 if the disable ack feature is set");
                break;
             case Mode.Receive:
                var addrs = new[]
@@ -584,11 +584,13 @@ namespace NPi
                   throw new InvalidOperationException("Invalid RX0 address length");
                if (rxEnabled[1] && addrs[2].Length != addrLength)
                   throw new InvalidOperationException("Invalid RX1 address length");
+               // ensure that receive address LSB are unique for all addresses,
+               // including receive address 0 and 1 (they are not that independent)
                for (var i = 0; i < addrs.Length; i++)
                   for (var j = i + 1; j < addrs.Length; j++)
                      if (rxEnabled[i] && rxEnabled[j] && addrs[i].Last() == addrs[j].Last())
                         throw new InvalidOperationException(
-                           String.Format("Duplicate active RX address LSB: {0}", addrs[i])
+                           String.Format("Duplicate active RX address LSB: {0} {1}", addrs[i], addrs[j])
                         );
                break;
             default:

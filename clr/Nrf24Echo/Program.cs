@@ -52,8 +52,8 @@ namespace Nrf24Echo
                { "rx-len=", (Int32 v) => rxLength = v },
                { "crc-len=", (Int32 v) => crcLength = v },
                { "no-ack", v => autoAck = v == null },
-               { "data-rate", (Int32 v) => dataRate = v },
-               { "rf-channel", (Int32 v) => rfChannel = v },
+               { "data-rate=", (Int32 v) => dataRate = v },
+               { "rf-channel=", (Int32 v) => rfChannel = v },
                { "h|?|help", v => { throw new Options.OptionException(); } }
             }.Parse(options);
             addrs = unparsed.ToArray();
@@ -116,9 +116,11 @@ namespace Nrf24Echo
                   dynpld[i] = rxLength == 0;
                   nrf24.SetRXAddress(i, addrs[i]);
                   nrf24.SetRXLength(i, rxLength);
+                  addrs[i] = nrf24.GetRXAddress(i);
                }
                nrf24.Features = new Nrf24.FeatureRegister(nrf24.Features)
                {
+                  DisableAck = true,
                   DynPayload = rxLength == 0
                };
                nrf24.RXEnabled = rxEnable;

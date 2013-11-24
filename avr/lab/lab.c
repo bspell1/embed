@@ -24,35 +24,14 @@
 #include "lab.h"
 #include "uart.h"
 #include "i2cmast.h"
+#include "spimast.h"
 #include "mpu6050.h"
 #include "tlc5940.h"
+#include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-static void SetDuty (F32 nDuty)
-{
-   /*
-#define PWM_MIN (F32)1600
-#define PWM_MAX (F32)2400
-   Tlc5940SetDuty(0, 0, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 1, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 2, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 3, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   */
-   /*
-   UI16 PWM_MIN = 4096 / 20;
-   UI16 PWM_MAX = 2 * PWM_MIN;
-   Tlc5940SetDuty(0, 0, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 1, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 2, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   Tlc5940SetDuty(0, 3, 4095 - Map(nDuty, 0.0f, 1.0f, PWM_MIN, PWM_MAX));
-   */
-   Tlc5940SetDuty(0, 0, 4095 - (nDuty * 800 + 1600));
-   Tlc5940SetDuty(0, 1, 4095 - (nDuty * 800 + 1600));
-   Tlc5940SetDuty(0, 2, 4095 - (nDuty * 800 + 1600));
-   Tlc5940SetDuty(0, 3, 4095 - (nDuty * 800 + 1600));
-}
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
 // Parameters: none
@@ -62,32 +41,40 @@ static void SetDuty (F32 nDuty)
 int main ()
 {
    sei();
+   SpiInit();
    PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
-   Tlc5940Init(
-      &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_B1,
-         .nPinSClk  = PIN_D7,
-         .nPinSIn   = PIN_D5,
-         .nPinXlat  = PIN_B0,
-         .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
+   Nrf24Init(
+      &(NRF24_CONFIG)
+      {
+         .nSsPin = PIN_SS,
+         .nCePin = PIN_C0
       }
    );
-   _delay_ms(2000);
-   PinSetHi(PIN_D4);
-   SetDuty(2.0f);
-   _delay_ms(2000);
-   PinSetLo(PIN_D4);
-   SetDuty(0.0f);
-   _delay_ms(2000);
+   // TX config
+   Nrf24SetTXAddress("Qop01");
+   Nrf24DisableAck();
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
+   // RX config
+   Nrf24SetPipeRXEnabled(NRF24_PIPE1, TRUE);
+   Nrf24SetRXAddress(NRF24_PIPE1, "Wii00");
+   Nrf24SetPayloadLength(NRF24_PIPE1, 12);
+   Nrf24SetPipeAutoAck(NRF24_PIPE1, FALSE);
+   // power up the transceiver
+   Nrf24PowerOn(NRF24_MODE_RECV);
    for ( ; ; )
    {
-      SetDuty(0.4);
-      _delay_ms(5);
-      PinToggle(PIN_D4);
-      SetDuty(0.2);
-      _delay_ms(5);
-      PinToggle(PIN_D4);
+      if (Nrf24ClearIrq(NRF24_IRQ_ALL) & NRF24_IRQ_RX_DR)
+      {
+         BYTE pbBuffer[12]; memzero(pbBuffer, sizeof(pbBuffer));
+         Nrf24Recv(pbBuffer, sizeof(pbBuffer));
+         Nrf24PowerOn(NRF24_MODE_SEND);
+         Nrf24Send(pbBuffer, sizeof(pbBuffer));
+         Nrf24PowerOn(NRF24_MODE_RECV);
+         PinToggle(PIN_D4);
+      }
+      _delay_ms(50);
    }
    return 0;
 }

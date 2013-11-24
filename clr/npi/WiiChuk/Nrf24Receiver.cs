@@ -15,6 +15,9 @@ namespace NPi.WiiChuk
          this.pipe = pipe;
          this.receiver = receiver;
          this.receiver.SetRXAddress(pipe, address);
+         var ack = new Nrf24.PipeFlagRegister(this.receiver.AutoAck);
+         ack[pipe] = false;
+         this.receiver.AutoAck = ack;
          this.receiver.RXDataReady += status =>
          {
             while (status.RXReadyPipe == this.pipe)

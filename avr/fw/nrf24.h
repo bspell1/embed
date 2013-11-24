@@ -200,7 +200,7 @@ inline VOID Nrf24RecvWait ()
    { while (Nrf24IsRecvBusy()); }
 // send/receive sync helpers
 inline VOID Nrf24Send (PCVOID pvPacket, BSIZE cbPacket)
-   { Nrf24BeginSend(pvPacket, cbPacket); Nrf24EndSend(pvPacket, cbPacket); }
+   { Nrf24BeginSend(pvPacket, cbPacket); Nrf24EndSend(); }
 inline VOID Nrf24Recv (PVOID pvPacket, BSIZE cbPacket)
    { Nrf24BeginRecv(cbPacket); Nrf24EndRecv(pvPacket, cbPacket); }
 #endif // __NRF24_H  
