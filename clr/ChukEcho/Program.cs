@@ -106,14 +106,20 @@ namespace ChukEcho
                   if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                      break;
                   Console.Write(
-                     "\r   {0,8:h:mm:ss}: Lx={1,5:0.00} Ly={2,5:0.00} Lc={3} Lz={4}  |  Rx={5,5:0.00} Ry={6,5:0.00} Rc={7} Rz={8}",
+                     "\r   {0,8:h:mm:ss}: Ljx={1,5:0.00} Ljy={2,5:0.00} Lax={3,5:0.00} Lay={4,5:0.00} Laz={5,5:0.00} Lc={6} Lz={7}  |  Rjx={8,5:0.00} Rjy={9,5:0.00} Rax={10,5:0.00} Ray={11,5:0.00} Raz={12,5:0.00} Rc={13} Rz={14}",
                      updated,
                      chuks.Left.JoystickX,
                      chuks.Left.JoystickY,
+                     chuks.Left.AcceleroX,
+                     chuks.Left.AcceleroY,
+                     chuks.Left.AcceleroZ,
                      chuks.Left.CButton ? 1 : 0,
                      chuks.Left.ZButton ? 1 : 0,
                      chuks.Right.JoystickX,
                      chuks.Right.JoystickY,
+                     chuks.Right.AcceleroX,
+                     chuks.Right.AcceleroY,
+                     chuks.Right.AcceleroZ,
                      chuks.Right.CButton ? 1 : 0,
                      chuks.Right.ZButton ? 1 : 0
                   );

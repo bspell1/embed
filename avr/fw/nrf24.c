@@ -672,19 +672,24 @@ VOID Nrf24FlushRecv ()
 //---------------------------------------------------------------------------
 VOID Nrf24PowerOn (UI8 fMode)
 {
-   switch (g_fPowerMode)
+   if (fMode != g_fPowerMode)
    {
-      case NRF24_MODE_SEND:
-         // if switching from send to receive, wait for packets to be sent
-         _delay_us(250);
-         break;
-      case NRF24_MODE_RECV:
-         // if switching from receive to send, clear CE
-         PinSetLo(g_nCePin);
-         break;
-   }
-   if (fMode == NRF24_MODE_SEND || fMode == NRF24_MODE_RECV)
-   {
+      switch (g_fPowerMode)
+      {
+         case NRF24_MODE_SEND:
+            // if switching from send to receive, wait for packets to be sent
+            PinSetHi(g_nCePin);
+            while (!(Nrf24GetFifoStatus() & NRF24_FIFO_TX_EMPTY))
+               ;
+            PinSetLo(g_nCePin);
+            break;
+         case NRF24_MODE_RECV:
+            // if switching from receive to send, clear CE
+            PinSetLo(g_nCePin);
+            Nrf24FlushRecv();
+            break;
+      }
+      Nrf24ClearIrq(NRF24_IRQ_ALL);
       WriteRegister8(
          REGISTER_CONFIG,
          (ReadRegister8(REGISTER_CONFIG) & ~0x3) | (0x2) | (fMode & 0x1)

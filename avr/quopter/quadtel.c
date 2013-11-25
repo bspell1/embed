@@ -1,6 +1,6 @@
 //===========================================================================
-// Module:  lab.c
-// Purpose: AVR test program
+// Module:  quadtel.c
+// Purpose: quadcopter telemetrics transmitter
 //
 // Copyright © 2013
 // Brent M. Spell. All rights reserved.
@@ -21,61 +21,30 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "lab.h"
-#include "uart.h"
-#include "i2cmast.h"
-#include "spimast.h"
-#include "mpu6050.h"
-#include "tlc5940.h"
+#include "quadtel.h"
 #include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 //-------------------[         Implementation          ]-------------------//
-//-----------< FUNCTION: main >----------------------------------------------
-// Purpose:    program entry point
-// Parameters: none
-// Returns:    0 if successful
-//             nonzero otherwise
+//-----------< FUNCTION: QuadTelInit >---------------------------------------
+// Purpose:    module initialization
+// Parameters: pConfig - module configuration
+// Returns:    none
 //---------------------------------------------------------------------------
-int main ()
+VOID QuadTelInit (PQUADTEL_CONFIG pConfig)
 {
-   sei();
-   SpiInit();
-   PinSetLo(PIN_D4);
-   PinSetOutput(PIN_D4);
-   Nrf24Init(
-      &(NRF24_CONFIG)
-      {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_C0
-      }
-   );
-   // TX/RX config
-   Nrf24SetCrc(NRF24_CRC_16BIT);
    Nrf24DisableAck();
-   // TX config
-   Nrf24SetTXAddress("Qop01");
+   Nrf24SetTXAddress(pConfig->pszAddress);
    Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
-   // RX config
-   Nrf24SetPipeRXEnabled(NRF24_PIPE1, TRUE);
-   Nrf24SetRXAddress(NRF24_PIPE1, "Wii00");
-   Nrf24SetPayloadLength(NRF24_PIPE1, 12);
-   Nrf24SetPipeAutoAck(NRF24_PIPE1, FALSE);
-   // power up the transceiver
-   Nrf24PowerOn(NRF24_MODE_RECV);
-   for ( ; ; )
-   {
-      if (Nrf24ClearIrq(NRF24_IRQ_ALL) & NRF24_IRQ_RX_DR)
-      {
-         BYTE pbBuffer[12]; memzero(pbBuffer, sizeof(pbBuffer));
-         Nrf24Recv(pbBuffer, sizeof(pbBuffer));
-         Nrf24PowerOn(NRF24_MODE_SEND);
-         Nrf24Send(pbBuffer, sizeof(pbBuffer));
-         Nrf24PowerOn(NRF24_MODE_RECV);
-         PinToggle(PIN_D4);
-      }
-      _delay_ms(50);
-   }
-   return 0;
+}
+//-----------< FUNCTION: QuadTelSend >---------------------------------------
+// Purpose:    transmits a telemetrics packet
+// Parameters: pData - telemetrics to send
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID QuadTelSend (PQUADTEL_DATA pData)
+{
+   Nrf24PowerOn(NRF24_MODE_SEND);
+   Nrf24Send(pData, sizeof(*pData));
 }

@@ -29,8 +29,11 @@
 #include "quadchuk.h"
 #include "quadmpu.h"
 #include "quadrotr.h"
+#include "quadtel.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
+static QUADCHUK_INPUT g_Chuk;
+static QUADMPU_SENSOR g_Mpu;
 //-------------------[        Module Prototypes        ]-------------------//
 static void QuopterInit ();
 static void QuopterRun  ();
@@ -55,6 +58,9 @@ int main ()
 //---------------------------------------------------------------------------
 void QuopterInit ()
 {
+   // global initialization
+   memzero(&g_Chuk, sizeof(g_Chuk));
+   memzero(&g_Mpu, sizeof(g_Mpu));
    // protocol initialization
    sei();
    I2cInit();
@@ -62,6 +68,7 @@ void QuopterInit ()
    // hardware initialization
    PinSetOutput(PIN_D4);
    PinSetHi(PIN_D4);
+#if 0
    Tlc5940Init(
       &(TLC5940_CONFIG) {
          .nPinBlank = PIN_B1,
@@ -71,25 +78,30 @@ void QuopterInit ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
-   /*
+#endif
    Nrf24Init(
       &(NRF24_CONFIG)
       {
          .nSsPin = PIN_SS,
-         .nCePin = PIN_B1
+         .nCePin = PIN_C0
       }
    );
    Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24PowerOn(NRF24_MODE_RECV);
    // module initialization
    QuadChukInit(
       &(QUADCHUK_CONFIG)
       {
          .pszAddress = QUADCHUK_ADDRESS,
-         .nPipe      = 0
+         .nPipe      = 1
       }
    );
-   */
+   QuadTelInit(
+      &(QUADTEL_CONFIG)
+      {
+         .pszAddress = "Qop01"
+      }
+   );
+#if 0
    QuadMpuInit(
       &(QUADMPU_CONFIG)
       {
@@ -105,8 +117,10 @@ void QuopterInit ()
          .nStarChannel   = 3
       }
    );
-   // start the first async sensor read
+   // start the first async input/sensor read
    QuadMpuBeginRead();
+#endif
+   QuadChukBeginRead();
    PinSetLo(PIN_D4);
 }
 //-----------< FUNCTION: QuopterRun >----------------------------------------
@@ -118,14 +132,35 @@ void QuopterRun  ()
 {
    // toggle the LED to calibrate sample timings
    static UI16 g_nSamples  = 0;
+   static BOOL g_bChukRecv = FALSE;
+   static BOOL g_bMpuRecv  = FALSE;
    if (g_nSamples++ == 1000)
    {
       g_nSamples = 0;
-      PinToggle(PIN_D4);
+      if (g_bChukRecv)
+      {
+         PinToggle(PIN_D4);
+         g_bChukRecv = FALSE;
+      }
    }
-   // retrieve the sensor readings and start the next async read
-   QUADMPU_SENSOR mpu;
-   QuadMpuEndRead(&mpu);
+   // retrieve the sensor/input readings
+   g_bChukRecv = QuadChukEndRead(&g_Chuk) != NULL;
+   g_bMpuRecv  = QuadMpuEndRead(&g_Mpu) != NULL;
+   // publish telemetrics data
+   QuadTelSend(
+      &(QUADTEL_DATA)
+      {
+         .nRollAngle      = g_Mpu.nRollAngle / M_PI_2 * 180,
+         .nPitchAngle     = g_Mpu.nPitchAngle / M_PI_2 * 180,
+         .nYawRate        = g_Mpu.nYawRate,
+         .nLeftJoystickX  = g_Chuk.nLeftJoystickX * 100,
+         .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
+         .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
+         .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
+      }
+   );
+   // start the next input/sensor reading
+   QuadChukBeginRead();
    QuadMpuBeginRead();
    // send the control signals to the rotors
    QuadRotorControl(
@@ -135,9 +170,9 @@ void QuopterRun  ()
          .nRollInput   = 0.0f,
          .nPitchInput  = 0.0f,
          .nYawInput    = 0.0f,
-         .nRollSensor  = mpu.nRollAngle / M_PI_2,
-         .nPitchSensor = mpu.nPitchAngle / M_PI_2,
-         .nYawSensor   = mpu.nYawRate
+         .nRollSensor  = g_Mpu.nRollAngle / M_PI_2,
+         .nPitchSensor = g_Mpu.nPitchAngle / M_PI_2,
+         .nYawSensor   = g_Mpu.nYawRate
       }
    );
 }
