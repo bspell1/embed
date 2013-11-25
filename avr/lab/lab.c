@@ -44,38 +44,27 @@ int main ()
    SpiInit();
    PinSetLo(PIN_D4);
    PinSetOutput(PIN_D4);
-   Nrf24Init(
-      &(NRF24_CONFIG)
-      {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_C0
-      }
-   );
-   // TX/RX config
-   Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24DisableAck();
-   // TX config
-   Nrf24SetTXAddress("Qop01");
-   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
-   // RX config
-   Nrf24SetPipeRXEnabled(NRF24_PIPE1, TRUE);
-   Nrf24SetRXAddress(NRF24_PIPE1, "Wii00");
-   Nrf24SetPayloadLength(NRF24_PIPE1, 12);
-   Nrf24SetPipeAutoAck(NRF24_PIPE1, FALSE);
-   // power up the transceiver
-   Nrf24PowerOn(NRF24_MODE_RECV);
+
+   TCCR1A |= (1 << COM1A1) | (1 << COM1B1);     // CCR on OC1A/OC1B
+   TCCR1A |= (1 << WGM11) | (1 << WGM10);       // fast PWM, use OCR1A/OCR1B, output OC1A/OC1B
+   TCCR1B |= (1 << WGM13) | (1 << WGM12);       // fast PWM, use OCR1A/OCR1B, output OC1A/OC1B
+   TCCR1B |= AvrClk1Scale(64);                  // prescaler of 64, period = 4us
+#define PWM_MIN 250
+#define PWM_MAX 500
+
+   PinSetOutput(PIN_OC1A);
+   PinSetOutput(PIN_OC1B);
+
    for ( ; ; )
    {
-      if (Nrf24ClearIrq(NRF24_IRQ_ALL) & NRF24_IRQ_RX_DR)
-      {
-         BYTE pbBuffer[12]; memzero(pbBuffer, sizeof(pbBuffer));
-         Nrf24Recv(pbBuffer, sizeof(pbBuffer));
-         Nrf24PowerOn(NRF24_MODE_SEND);
-         Nrf24Send(pbBuffer, sizeof(pbBuffer));
-         Nrf24PowerOn(NRF24_MODE_RECV);
-         PinToggle(PIN_D4);
-      }
-      _delay_ms(50);
+      OCCR1A = PWM_MIN;
+      OCCR1B = PWM_MAX;
+      PinToggle(PIN_D4);
+      _delay_ms(2000);
+      OCCR1A = PWM_MAX;
+      OCCR1B = PWM_MIN;
+      PinToggle(PIN_D4);
+      _delay_ms(2000);
    }
    return 0;
 }
