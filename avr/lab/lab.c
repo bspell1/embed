@@ -46,9 +46,10 @@ int main ()
    PinSetOutput(PIN_D4);
 
    TCCR1A |= (1 << COM1A1) | (1 << COM1B1);     // CCR on OC1A/OC1B
-   TCCR1A |= (1 << WGM11) | (1 << WGM10);       // fast PWM, use OCR1A/OCR1B, output OC1A/OC1B
-   TCCR1B |= (1 << WGM13) | (1 << WGM12);       // fast PWM, use OCR1A/OCR1B, output OC1A/OC1B
+   TCCR1A |= (1 << WGM11) | (0 << WGM10);       // fast PWM, freq=ICR1, duty=OCR1A/OCR1B, output OC1A/OC1B
+   TCCR1B |= (1 << WGM13) | (1 << WGM12);       // fast PWM, freq=ICR1, duty=OCR1A/OCR1B, output OC1A/OC1B
    TCCR1B |= AvrClk1Scale(64);                  // prescaler of 64, period = 4us
+   ICR1    = 5000 - 1;                          // set frequency to 50Hz
 #define PWM_MIN 250
 #define PWM_MAX 500
 
@@ -57,12 +58,12 @@ int main ()
 
    for ( ; ; )
    {
-      OCCR1A = PWM_MIN;
-      OCCR1B = PWM_MAX;
+      OCR1A = PWM_MIN;
+      OCR1B = PWM_MAX;
       PinToggle(PIN_D4);
       _delay_ms(2000);
-      OCCR1A = PWM_MAX;
-      OCCR1B = PWM_MIN;
+      OCR1A = PWM_MAX;
+      OCR1B = PWM_MIN;
       PinToggle(PIN_D4);
       _delay_ms(2000);
    }
