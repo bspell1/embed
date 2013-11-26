@@ -147,8 +147,8 @@ void QuopterRun  ()
    QuadTelSend(
       &(QUADTEL_DATA)
       {
-         .nRollAngle      = g_Mpu.nRollAngle / M_PI_2 * 180,
-         .nPitchAngle     = g_Mpu.nPitchAngle / M_PI_2 * 180,
+         .nRollAngle      = g_Mpu.nRollAngle / M_PI * 180,
+         .nPitchAngle     = g_Mpu.nPitchAngle / M_PI * 180,
          .nYawRate        = g_Mpu.nYawRate * 250,
          .nLeftJoystickX  = g_Chuk.nLeftJoystickX * 100,
          .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
