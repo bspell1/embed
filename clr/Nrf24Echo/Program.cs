@@ -171,7 +171,7 @@ namespace Nrf24Echo
                      var message = String.Empty;
                      lock (data[i])
                         message = String.Format(
-                           "   {0,5}: {1,8:h:mm:ss} - {2}",
+                           "   {0,5}: {1,-8:h:mm:ss} - {2}",
                            addrs[i],
                            updated[i],
                            BitConverter.ToString(data[i]).Replace('-', ' ')

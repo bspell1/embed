@@ -128,6 +128,7 @@ void QuopterRun  ()
 {
    // toggle the LED to calibrate sample timings
    static UI16 g_nSamples  = 0;
+   static UI8  g_nCounter  = 0;
    static BOOL g_bChukRecv = FALSE;
    static BOOL g_bMpuRecv  = FALSE;
    if (g_nSamples++ == 1000)
@@ -153,6 +154,7 @@ void QuopterRun  ()
          .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
          .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
          .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
+         .nCounter        = g_nCounter++
       }
    );
    // start the next sensor/input reading
