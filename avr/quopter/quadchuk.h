@@ -41,16 +41,10 @@ typedef struct tagQuadChukInput
 {
    F32   nLeftJoystickX;            // left chuk X-axis joystick reading [-1,1]
    F32   nLeftJoystickY;            // left chuk Y-axis joystick reading [-1,1]
-   F32   nLeftAcceleroX;            // left chuk X-axis accelerometer reading [-1,1]
-   F32   nLeftAcceleroY;            // left chuk Y-axis accelerometer reading [-1,1]
-   F32   nLeftAcceleroZ;            // left chuk Z-axis accelerometer reading [-1,1]
    BOOL  bLeftButtonZ;              // left chuk Z button
    BOOL  bLeftButtonC;              // left chuk C button
    F32   nRightJoystickX;           // right chuk X-axis joystick reading [-1,1]
    F32   nRightJoystickY;           // right chuk Y-axis joystick reading [-1,1]
-   F32   nRightAcceleroX;           // right chuk X-axis accelerometer reading [-1,1]
-   F32   nRightAcceleroY;           // right chuk Y-axis accelerometer reading [-1,1]
-   F32   nRightAcceleroZ;           // right chuk Z-axis accelerometer reading [-1,1]
    BOOL  bRightButtonZ;             // right chuk Z button
    BOOL  bRightButtonC;             // right chuk C button
 } QUADCHUK_INPUT, *PQUADCHUK_INPUT;

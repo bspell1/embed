@@ -43,15 +43,15 @@ typedef int32_t               I32;
 typedef uint32_t              UI32;
 #define I8_MIN                INT8_MIN
 #define I8_MAX                INT8_MAX
-#define UI8_MIN               UINT8_MIN
+#define UI8_MIN               0
 #define UI8_MAX               UINT8_MAX
 #define I16_MIN               INT16_MIN
 #define I16_MAX               INT16_MAX
-#define UI16_MIN              UINT16_MIN
+#define UI16_MIN              0
 #define UI16_MAX              UINT16_MAX
 #define I32_MIN               INT32_MIN
 #define I32_MAX               INT32_MAX
-#define UI32_MIN              UINT32_MIN
+#define UI32_MIN              0
 #define UI32_MAX              UINT32_MAX
 //===========================================================================
 // FLOATING POINT TYPES

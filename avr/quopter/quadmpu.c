@@ -24,8 +24,9 @@
 #include "quadmpu.h"
 #include "mpu6050.h"
 //-------------------[       Module Definitions        ]-------------------//
-// complementary filter biases
-#define COMPFILTER_GYROBIAS   (0.98f)
+// complementary filter biases (assume gyro won't drift within 750ms)
+#define COMPFILTER_GYRODRIFT  (0.75f)
+#define COMPFILTER_GYROBIAS   (COMPFILTER_GYRODRIFT / (COMPFILTER_GYRODRIFT + QUADMPU_SAMPLE_TIME))
 #define COMPFILTER_ACCELBIAS  (1.0f - COMPFILTER_GYROBIAS)
 // MPU-6050 reading scales
 #define ACCEL_SCALE           (2.0f * M_PI_2)            // [-2g,2g] => radians

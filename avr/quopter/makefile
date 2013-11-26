@@ -12,7 +12,7 @@ PARAMETERS	= 	F_CPU=16000000																\
 					TLC5940_BLSCALE=256														\
 					TLC5940_BLTICK=1															\
 					QUADCHUK_ADDRESS=\"Wii00\"												\
-					QUADMPU_SAMPLE_TIME=0.010f												\
+					QUADMPU_SAMPLE_TIME=0.0084f											\
 					QUADROTOR_THRUST_MAX=0.75f												\
 					QUADROTOR_PID_PGAIN=0.05f												\
 					QUADROTOR_PID_IGAIN=0.0f												\

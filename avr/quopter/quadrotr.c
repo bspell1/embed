@@ -38,9 +38,9 @@
 // . PWM_MIN: minimum ESC duty cycle (1ms min forward)
 // . PWM_MAX: maximum ESC duty cycle (1.5ms max forward, reverse is 1.5-2ms)
 // . PWM_NEGMAX: maximum negative ESC duty cycle, for calibration
-#define PWM_MIN      1600
-#define PWM_MAX      2400
-#define PWM_NEGMAX   3200
+#define PWM_MIN      ((UI16)1600)
+#define PWM_MAX      ((UI16)2400)
+#define PWM_NEGMAX   ((UI16)3200)
 #define PWM_RANGE    (PWM_MAX - PWM_MIN)
 //-------------------[        Module Variables         ]-------------------//
 static UI8 g_nTlc5940       = UI8_MAX;          // TLC5940 module number
@@ -66,15 +66,15 @@ static VOID SetDuty (UI8 nRotor, UI16 nDuty)
 //             nThrust - rotor thrust [0,1]
 // Returns:    none
 //---------------------------------------------------------------------------
-static VOID SetThrust (UI8 nRotor, F32 nThrust)
+static VOID SetThrust (UI8 nRotor, I16 nThrust)
 {
    // clamp the thrust value and convert to duty cycle
    SetDuty(
       nRotor,
-      (UI16)MapClamp(
-         nThrust, 
-         QUADROTOR_THRUST_MIN, 
-         QUADROTOR_THRUST_MAX,
+      Map(
+         Clamp(nThrust, 0, I16_MAX), 
+         0, 
+         I16_MAX,
          PWM_MIN,
          PWM_MAX
       )
@@ -123,10 +123,11 @@ VOID QuadRotorControl (PQUADROTOR_CONTROL pControl)
    PidUpdate(&g_pid[PID_ROLL], pControl->nRollInput, pControl->nRollSensor);
    PidUpdate(&g_pid[PID_PITCH], pControl->nPitchInput, pControl->nPitchSensor);
    PidUpdate(&g_pid[PID_YAW], pControl->nYawInput, pControl->nYawSensor);
-   F32 nThrust = pControl->nThrustInput;
-   F32 nRoll   = g_pid[PID_ROLL].nControl;
-   F32 nPitch  = g_pid[PID_PITCH].nControl;
-   F32 nYaw    = g_pid[PID_YAW].nControl;
+   // convert the control values to integer
+   I16 nThrust = pControl->nThrustInput * I16_MAX;
+   I16 nRoll   = g_pid[PID_ROLL].nControl * I16_MAX;
+   I16 nPitch  = g_pid[PID_PITCH].nControl * I16_MAX;
+   I16 nYaw    = g_pid[PID_YAW].nControl * I16_MAX;
    // send the thrust signals to the ESCs through the TLC5940
    SetThrust(ROTOR_BOW,   nThrust + nPitch + nYaw);
    SetThrust(ROTOR_STERN, nThrust - nPitch + nYaw);
