@@ -68,7 +68,6 @@ void QuopterInit ()
    // hardware initialization
    PinSetOutput(PIN_D4);
    PinSetHi(PIN_D4);
-#if 0
    Tlc5940Init(
       &(TLC5940_CONFIG) {
          .nPinBlank = PIN_B1,
@@ -78,7 +77,6 @@ void QuopterInit ()
          .nPinGSClk = PIN_OC0A            // PIN_D6, greyscale clock
       }
    );
-#endif
    Nrf24Init(
       &(NRF24_CONFIG)
       {
@@ -88,6 +86,11 @@ void QuopterInit ()
    );
    Nrf24SetCrc(NRF24_CRC_16BIT);
    // module initialization
+   QuadMpuInit(
+      &(QUADMPU_CONFIG)
+      {
+      }
+   );
    QuadChukInit(
       &(QUADCHUK_CONFIG)
       {
@@ -99,12 +102,6 @@ void QuopterInit ()
       &(QUADTEL_CONFIG)
       {
          .pszAddress = "Qop01"
-      }
-   );
-#if 0
-   QuadMpuInit(
-      &(QUADMPU_CONFIG)
-      {
       }
    );
    QuadRotorInit(
@@ -119,7 +116,6 @@ void QuopterInit ()
    );
    // start the first async input/sensor read
    QuadMpuBeginRead();
-#endif
    QuadChukBeginRead();
    PinSetLo(PIN_D4);
 }
@@ -144,24 +140,24 @@ void QuopterRun  ()
       }
    }
    // retrieve the sensor/input readings
-   g_bChukRecv = QuadChukEndRead(&g_Chuk) != NULL;
    g_bMpuRecv  = QuadMpuEndRead(&g_Mpu) != NULL;
+   g_bChukRecv = QuadChukEndRead(&g_Chuk) != NULL;
    // publish telemetrics data
    QuadTelSend(
       &(QUADTEL_DATA)
       {
          .nRollAngle      = g_Mpu.nRollAngle / M_PI_2 * 180,
          .nPitchAngle     = g_Mpu.nPitchAngle / M_PI_2 * 180,
-         .nYawRate        = g_Mpu.nYawRate,
+         .nYawRate        = g_Mpu.nYawRate * 250,
          .nLeftJoystickX  = g_Chuk.nLeftJoystickX * 100,
          .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
          .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
          .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
       }
    );
-   // start the next input/sensor reading
-   QuadChukBeginRead();
+   // start the next sensor/input reading
    QuadMpuBeginRead();
+   QuadChukBeginRead();
    // send the control signals to the rotors
    QuadRotorControl(
       &(QUADROTOR_CONTROL)
