@@ -126,7 +126,12 @@ namespace QuopEcho
                   lock (data)
                   {
                      var newCount = data[7];
-                     var countDiff = newCount > oldCount ? newCount - oldCount : Byte.MaxValue - oldCount + newCount;
+                     if (counter == 0)
+                     {
+                        oldCount = newCount - 1;
+                        started = DateTime.UtcNow;
+                     }
+                     var countDiff = newCount >= oldCount ? newCount - oldCount : Byte.MaxValue - oldCount + newCount;
                      var newCounter = counter + countDiff;
                      if (newCounter >= counter)
                         counter = newCounter;
