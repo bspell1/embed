@@ -126,23 +126,13 @@ void QuopterInit ()
 //---------------------------------------------------------------------------
 void QuopterRun  ()
 {
-   // toggle the LED to calibrate sample timings
-   static UI16 g_nSamples  = 0;
-   static UI8  g_nCounter  = 0;
-   static BOOL g_bChukRecv = FALSE;
-   static BOOL g_bMpuRecv  = FALSE;
-   if (g_nSamples++ == 1000)
-   {
-      g_nSamples = 0;
-      if (g_bChukRecv)
-      {
-         PinToggle(PIN_D4);
-         g_bChukRecv = FALSE;
-      }
-   }
+   static UI8 g_nCounter = 0;
    // retrieve the sensor/input readings
-   g_bMpuRecv  = QuadMpuEndRead(&g_Mpu) != NULL;
-   g_bChukRecv = QuadChukEndRead(&g_Chuk) != NULL;
+   QuadMpuEndRead(&g_Mpu);
+   if (QuadChukEndRead(&g_Chuk) == NULL)
+      PinSetLo(PIN_D4);
+   else if (g_nCounter == 0)
+      PinToggle(PIN_D4);
    // publish telemetrics data
    QuadTelSend(
       &(QUADTEL_DATA)
@@ -154,7 +144,7 @@ void QuopterRun  ()
          .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
          .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
          .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
-         .nCounter        = g_nCounter++
+         .nCounter        = g_nCounter
       }
    );
    // start the next sensor/input reading
@@ -168,9 +158,10 @@ void QuopterRun  ()
          .nRollInput   = 0.0f,
          .nPitchInput  = 0.0f,
          .nYawInput    = 0.0f,
-         .nRollSensor  = g_Mpu.nRollAngle / M_PI_2,
-         .nPitchSensor = g_Mpu.nPitchAngle / M_PI_2,
+         .nRollSensor  = g_Mpu.nRollAngle,
+         .nPitchSensor = g_Mpu.nPitchAngle,
          .nYawSensor   = g_Mpu.nYawRate
       }
    );
+   g_nCounter++;
 }

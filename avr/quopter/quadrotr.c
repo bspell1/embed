@@ -69,16 +69,7 @@ static VOID SetDuty (UI8 nRotor, UI16 nDuty)
 static VOID SetThrust (UI8 nRotor, I16 nThrust)
 {
    // clamp the thrust value and convert to duty cycle
-   SetDuty(
-      nRotor,
-      Map(
-         Clamp(nThrust, 0, I16_MAX), 
-         0, 
-         I16_MAX,
-         PWM_MIN,
-         PWM_MAX
-      )
-   );
+   SetDuty(nRotor, MapClamp(nThrust, 0, I16_MAX, PWM_MIN, PWM_MAX));
 }
 //-----------< FUNCTION: QuadRotorInit >-------------------------------------
 // Purpose:    initializes the controller
@@ -123,10 +114,10 @@ VOID QuadRotorControl (PQUADROTOR_CONTROL pControl)
    PidUpdate(&g_pid[PID_ROLL], pControl->nRollInput, pControl->nRollSensor);
    PidUpdate(&g_pid[PID_PITCH], pControl->nPitchInput, pControl->nPitchSensor);
    PidUpdate(&g_pid[PID_YAW], pControl->nYawInput, pControl->nYawSensor);
-   // convert the control values to integer
+   // convert the control values to integral thrust values
    I16 nThrust = pControl->nThrustInput * I16_MAX;
-   I16 nRoll   = g_pid[PID_ROLL].nControl * I16_MAX;
-   I16 nPitch  = g_pid[PID_PITCH].nControl * I16_MAX;
+   I16 nRoll   = (g_pid[PID_ROLL].nControl / M_PI_2) * I16_MAX;
+   I16 nPitch  = (g_pid[PID_PITCH].nControl / M_PI_2) * I16_MAX;
    I16 nYaw    = g_pid[PID_YAW].nControl * I16_MAX;
    // send the thrust signals to the ESCs through the TLC5940
    SetThrust(ROTOR_BOW,   nThrust + nPitch + nYaw);
