@@ -29,6 +29,7 @@
 #include "quadchuk.h"
 #include "quadmpu.h"
 #include "quadrotr.h"
+#include "quadbay.h"
 #include "quadtel.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
@@ -70,7 +71,7 @@ void QuopterInit ()
    PinSetHi(PIN_D4);
    Tlc5940Init(
       &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_B1,
+         .nPinBlank = PIN_C2,
          .nPinSClk  = PIN_D7,
          .nPinSIn   = PIN_D5,
          .nPinXlat  = PIN_B0,
@@ -80,7 +81,7 @@ void QuopterInit ()
    Nrf24Init(
       &(NRF24_CONFIG)
       {
-         .nSsPin = PIN_SS,
+         .nSsPin = PIN_C1,
          .nCePin = PIN_C0
       }
    );
@@ -98,12 +99,6 @@ void QuopterInit ()
          .nPipe      = 1
       }
    );
-   QuadTelInit(
-      &(QUADTEL_CONFIG)
-      {
-         .pszAddress = "Qop01"
-      }
-   );
    QuadRotorInit(
       &(QUADROTOR_CONFIG)
       {
@@ -114,9 +109,17 @@ void QuopterInit ()
          .nStarChannel   = 3
       }
    );
-   // start the first async input/sensor read
-   QuadMpuBeginRead();
-   QuadChukBeginRead();
+   QuadBayInit(
+      &(QUADBAY_CONFIG)
+      {
+      }
+   );
+   QuadTelInit(
+      &(QUADTEL_CONFIG)
+      {
+         .pszAddress = "Qop01"
+      }
+   );
    PinSetLo(PIN_D4);
 }
 //-----------< FUNCTION: QuopterRun >----------------------------------------
@@ -127,13 +130,30 @@ void QuopterInit ()
 void QuopterRun  ()
 {
    static UI8 g_nCounter = 0;
+   // start the next sensor/input reading
+   QuadMpuBeginRead();
+   QuadChukBeginRead();
+   // send the control signals to the rotors and bomb bay
+   QuadRotorControl(
+      &(QUADROTOR_CONTROL)
+      {
+         .nThrustInput = 0.5f,
+         .nRollInput   = 0.0f,
+         .nPitchInput  = 0.0f,
+         .nYawInput    = 0.0f,
+         .nRollSensor  = g_Mpu.nRollAngle,
+         .nPitchSensor = g_Mpu.nPitchAngle,
+         .nYawSensor   = g_Mpu.nYawRate
+      }
+   );
+   QuadBayControl(g_Chuk.bRightButtonC);
    // retrieve the sensor/input readings
    QuadMpuEndRead(&g_Mpu);
    if (QuadChukEndRead(&g_Chuk) == NULL)
       PinSetLo(PIN_D4);
    else if (g_nCounter == 0)
       PinToggle(PIN_D4);
-   // publish telemetrics data
+   // broadcast telemetrics
    QuadTelSend(
       &(QUADTEL_DATA)
       {
@@ -145,22 +165,6 @@ void QuopterRun  ()
          .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
          .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
          .nCounter        = g_nCounter
-      }
-   );
-   // start the next sensor/input reading
-   QuadMpuBeginRead();
-   QuadChukBeginRead();
-   // send the control signals to the rotors
-   QuadRotorControl(
-      &(QUADROTOR_CONTROL)
-      {
-         .nThrustInput = 0.5f,
-         .nRollInput   = 0.0f,
-         .nPitchInput  = 0.0f,
-         .nYawInput    = 0.0f,
-         .nRollSensor  = g_Mpu.nRollAngle,
-         .nPitchSensor = g_Mpu.nPitchAngle,
-         .nYawSensor   = g_Mpu.nYawRate
       }
    );
    g_nCounter++;

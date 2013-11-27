@@ -1,5 +1,5 @@
 TARGETNAME 	= 	quopter
-MODULES    	= 	quopter quadchuk quadmpu quadrotr quadtel
+MODULES    	= 	quopter quadchuk quadmpu quadrotr quadbay quadtel
 FWMODULES   =  pid i2cmast spimast nrf24 mpu6050 tlc5940
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\

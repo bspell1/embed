@@ -55,7 +55,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    // 8-bit clock 0, greyscale timer
    TCCR0A = BitMask(COM0A0) | BitMask(WGM01);            // CTC, toggle OC0A pin on tick
    TCCR0B = AvrClk0Scale(1);                             // no prescaler
-   OCR0A  = AvrClkCtcTop(                                // set CTC value
+   OCR0A  = AvrClkTop(                                   // set CTC value
       1,                                                 // . no prescaler
       (UI32)TLC5940_FREQ *                               // . base cycle frequency
       4096 *                                             // . 4096 values/cycle
@@ -65,7 +65,7 @@ VOID Tlc5940Init (TLC5940_CONFIG* pConfig)
    TCCR2A = BitMask(WGM21);                              // CTC mode
    TCCR2B = AvrClk2Scale(TLC5940_BLSCALE);               // set configured prescaler
    TIMSK2 = BitMask(OCIE2A);                             // enable compare interrupt A
-   OCR2A  = AvrClkCtcTop(                                // set CTC value
+   OCR2A  = AvrClkTop(                                   // set CTC value
       TLC5940_BLSCALE,                                   // . blanking prescaler
       (UI32)TLC5940_FREQ *                               // . cycle frequency
       TLC5940_BLTICK                                     // . blanking fine tuning tick counter
