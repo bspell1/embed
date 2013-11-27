@@ -71,7 +71,7 @@ void QuopterInit ()
    PinSetHi(PIN_D4);
    Tlc5940Init(
       &(TLC5940_CONFIG) {
-         .nPinBlank = PIN_C2,
+         .nPinBlank = PIN_D3,
          .nPinSClk  = PIN_D7,
          .nPinSIn   = PIN_D5,
          .nPinXlat  = PIN_B0,
