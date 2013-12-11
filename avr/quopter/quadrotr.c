@@ -63,7 +63,7 @@ static VOID SetDuty (UI8 nRotor, UI16 nDuty)
 //-----------< FUNCTION: SetThrust >-----------------------------------------
 // Purpose:    maps a thrust to duty cycle and updates a rotor channel
 // Parameters: nRotor  - the rotor number to update (ROTOR_* above)
-//             nThrust - rotor thrust [0,1]
+//             nThrust - rotor thrust [0,I16_MAX]
 // Returns:    none
 //---------------------------------------------------------------------------
 static VOID SetThrust (UI8 nRotor, I16 nThrust)

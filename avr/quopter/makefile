@@ -14,7 +14,7 @@ PARAMETERS	= 	F_CPU=16000000																\
 					QUADCHUK_ADDRESS=\"Wii00\"												\
 					QUADMPU_SAMPLE_TIME=0.0093f											\
 					QUADROTOR_THRUST_MAX=0.75f												\
-					QUADROTOR_PID_PGAIN=0.05f												\
+					QUADROTOR_PID_PGAIN=0.1f												\
 					QUADROTOR_PID_IGAIN=0.0f												\
 					QUADROTOR_PID_DGAIN=\(-0.05f\)
 

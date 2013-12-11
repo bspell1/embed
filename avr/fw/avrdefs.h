@@ -113,7 +113,11 @@ typedef const CHAR*           PCSTR;
 #endif
 #ifndef Map
 #  define Map(x, imin, imax, omin, omax)                                   \
-      (((x) - (imin)) * ((omax) - (omin)) / ((imax) - (imin)) + (omin))
+   (                                                                       \
+      (omax) - (omin) > (imax) - (imin) ?                                  \
+      ((x) - (imin)) * (((omax) - (omin)) / ((imax) - (imin))) + (omin) :  \
+      ((x) - (imin)) / (((imax) - (imin)) / ((omax) - (omin))) + (omin)    \
+   )
 #endif
 #ifndef MapClamp
 #  define MapClamp(x, imin, imax, omin, omax)                              \

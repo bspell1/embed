@@ -33,8 +33,8 @@
 #include "quadtel.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
-static QUADCHUK_INPUT g_Chuk;
-static QUADMPU_SENSOR g_Mpu;
+static QUADROTOR_CONTROL   g_Control;
+static BOOL                g_bBayOpen = FALSE;
 //-------------------[        Module Prototypes        ]-------------------//
 static void QuopterInit ();
 static void QuopterRun  ();
@@ -60,8 +60,8 @@ int main ()
 void QuopterInit ()
 {
    // global initialization
-   memzero(&g_Chuk, sizeof(g_Chuk));
-   memzero(&g_Mpu, sizeof(g_Mpu));
+   memzero(&g_Control, sizeof(g_Control));
+   g_Control.nThrustInput = 0.25f;
    // protocol initialization
    sei();
    I2cInit();
@@ -134,36 +134,39 @@ void QuopterRun  ()
    QuadMpuBeginRead();
    QuadChukBeginRead();
    // send the control signals to the rotors and bomb bay
-   QuadRotorControl(
-      &(QUADROTOR_CONTROL)
-      {
-         .nThrustInput = 0.5f,
-         .nRollInput   = 0.0f,
-         .nPitchInput  = 0.0f,
-         .nYawInput    = 0.0f,
-         .nRollSensor  = g_Mpu.nRollAngle,
-         .nPitchSensor = g_Mpu.nPitchAngle,
-         .nYawSensor   = g_Mpu.nYawRate
-      }
-   );
-   QuadBayControl(g_Chuk.bRightButtonC);
-   // retrieve the sensor/input readings
-   QuadMpuEndRead(&g_Mpu);
-   if (QuadChukEndRead(&g_Chuk) == NULL)
+   QuadRotorControl(&g_Control);
+   QuadBayControl(g_bBayOpen);
+   // retrieve the sensor readings
+   QUADMPU_SENSOR mpu;
+   QuadMpuEndRead(&mpu);
+   g_Control.nRollSensor  = mpu.nRollAngle;
+   g_Control.nPitchSensor = mpu.nPitchAngle;
+   g_Control.nYawSensor   = mpu.nYawRate;
+   // retrieve the input readings
+   QUADCHUK_INPUT chuk;
+   if (QuadChukEndRead(&chuk) == NULL)
       PinSetLo(PIN_D4);
-   else if (g_nCounter == 0)
-      PinToggle(PIN_D4);
+   else
+   {
+      // apply inputs to rotor/bomb bay controls
+      g_Control.nThrustInput += -chuk.nLeftJoystickY * 0.08f * QUADMPU_SAMPLE_TIME; // max 8%/sec
+      g_Control.nRollInput    =  chuk.nRightJoystickX * M_PI / 18.0f;               // max 10deg
+      g_Control.nPitchInput   = -chuk.nRightJoystickY * M_PI / 18.0f;               // max 10deg
+      g_bBayOpen              =  chuk.bRightButtonC;
+      if (g_nCounter == 0)
+         PinToggle(PIN_D4);
+   }
    // broadcast telemetrics
    QuadTelSend(
       &(QUADTEL_DATA)
       {
-         .nRollAngle      = g_Mpu.nRollAngle / M_PI * 180,
-         .nPitchAngle     = g_Mpu.nPitchAngle / M_PI * 180,
-         .nYawRate        = g_Mpu.nYawRate * 250,
-         .nLeftJoystickX  = g_Chuk.nLeftJoystickX * 100,
-         .nLeftJoystickY  = g_Chuk.nLeftJoystickY * 100,
-         .nRightJoystickX = g_Chuk.nRightJoystickX * 100,
-         .nRightJoystickY = g_Chuk.nRightJoystickY * 100,
+         .nRollAngle      = mpu.nRollAngle / M_PI * 180,
+         .nPitchAngle     = mpu.nPitchAngle / M_PI * 180,
+         .nYawRate        = mpu.nYawRate * 250,
+         .nThrustInput    = g_Control.nThrustInput * 100,
+         .nRollInput      = g_Control.nRollInput / M_PI * 180,
+         .nPitchInput     = g_Control.nPitchInput / M_PI * 180,
+         .nYawInput       = g_Control.nYawInput * 10,
          .nCounter        = g_nCounter
       }
    );

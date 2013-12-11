@@ -41,12 +41,11 @@ typedef struct tagQuadTelData
    I8    nRollAngle;
    I8    nPitchAngle;
    I8    nYawRate;
-   I8    nLeftJoystickX;
-   I8    nLeftJoystickY;
-   I8    nRightJoystickX;
-   I8    nRightJoystickY;
+   UI8   nThrustInput;
+   I8    nRollInput;
+   I8    nPitchInput;
+   I8    nYawInput;
    UI8   nCounter;
-   BYTE pad[4];
 } QUADTEL_DATA, *PQUADTEL_DATA;
 //===========================================================================
 // TELEMETRICS API
