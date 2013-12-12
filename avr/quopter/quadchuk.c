@@ -92,6 +92,7 @@ PQUADCHUK_INPUT QuadChukEndRead (PQUADCHUK_INPUT pInput)
          g_zljy = ljy;
          g_zrjx = rjx;
          g_zrjy = rjy;
+         lbc = lbz = rbc = rbz = FALSE;
       }
       // calibrate and sign the readings
       I8  sljx =  (I8)(ljx - g_zljx);

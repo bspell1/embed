@@ -152,7 +152,8 @@ void QuopterRun  ()
       g_Control.nThrustInput += -chuk.nLeftJoystickY * 0.08f * QUADMPU_SAMPLE_TIME; // max 8%/sec
       g_Control.nRollInput    =  chuk.nRightJoystickX * M_PI / 18.0f;               // max 10deg
       g_Control.nPitchInput   = -chuk.nRightJoystickY * M_PI / 18.0f;               // max 10deg
-      g_bBayOpen              =  chuk.bRightButtonC;
+      g_bBayOpen              =  chuk.bRightButtonZ;
+      g_Control.nThrustInput  = Max(g_Control.nThrustInput, 0.0f);
       if (g_nCounter == 0)
          PinToggle(PIN_D4);
    }
