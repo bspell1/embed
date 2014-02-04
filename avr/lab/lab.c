@@ -41,25 +41,13 @@
 int main ()
 {
    sei();
+   SpiInit();
    PinSetOutput(PIN_D4);
-
-   PinSetOutput(PIN_D6);
-   PinSetOutput(PIN_D7);
-   PinSetOutput(PIN_B0);
-
-   UI16 delay = 50;
-   UI8 phase1 = PIN_D6;
-   UI8 phase2 = PIN_D7;
-   UI8 phase3 = PIN_B0;
 
    for ( ; ; )
    {
-      PinSet(phase1, BIT_HI); _delay_ms(delay);
-      PinSet(phase3, BIT_LO); _delay_ms(delay);
-      PinSet(phase2, BIT_HI); _delay_ms(delay);
-      PinSet(phase1, BIT_LO); _delay_ms(delay);
-      PinSet(phase3, BIT_HI); _delay_ms(delay);
-      PinSet(phase2, BIT_LO); _delay_ms(delay);
+      PinToggle(PIN_D4);
+      _delay_ms(1000);
    }
    return 0;
 }
