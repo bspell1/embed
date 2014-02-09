@@ -35,29 +35,52 @@ namespace Lab
       public void Run ()
       {
          var spiPath = Directory.GetFiles("/dev", "spidev*.0").Single();
-         using (var reactor = new Reactor())
-         using (var nrf24 = new Nrf24(spiPath, 17, 18, reactor))
-         using (var chuks = new WiiChukPair(new Nrf24Receiver(nrf24, "Wii00", 0)))
+         using (var spi = new SpiDevice(spiPath))
          {
-            var updated = DateTime.MinValue;
-            chuks.Updated += (c1, c2) => updated = DateTime.Now;
-            reactor.Start();
+            spi.LsbFirst = true;
+            spi.ClockSpeed = 100000;
+            spi.Mode = SpiMode.CPHA | SpiMode.CPOL;
+            // enter config mode
+            {
+               var buffer = new Byte[5];
+               buffer[0] = 0x01;
+               buffer[1] = 0x43;
+               buffer[2] = 0x00;
+               buffer[3] = 0x01;
+               spi.Write(buffer);
+            }
+            // switch to analog mode
+            {
+               var buffer = new Byte[6];
+               buffer[0] = 0x01;
+               buffer[1] = 0x44;
+               buffer[2] = 0x00;
+               buffer[3] = 0x01;
+               buffer[4] = 0x00;
+               spi.Write(buffer);
+            }
+            // exit config mode
+            {
+               var buffer = new Byte[5];
+               buffer[0] = 0x01;
+               buffer[1] = 0x43;
+               buffer[2] = 0x00;
+               buffer[3] = 0x00;
+               spi.Write(buffer);
+            }
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
+               var buffer = new Byte[21];
+               buffer[0] = 0x01;
+               buffer[1] = 0x42;
+               spi.ReadWrite(buffer);
                Console.Write(
-                  "\rLx: {0,5:0.00} Ly:{1,5:0.00} Lc:{2} Lz:{3}  |  Rx:{4,5:0.00} Ry:{5,5:0.00} Rc:{6} Rz:{7}", 
-                  chuks.Left.JoystickX,
-                  chuks.Left.JoystickY,
-                  chuks.Left.CButton ? 1 : 0,
-                  chuks.Left.ZButton ? 1 : 0,
-                  chuks.Right.JoystickX,
-                  chuks.Right.JoystickY,
-                  chuks.Right.CButton ? 1 : 0,
-                  chuks.Right.ZButton ? 1 : 0
+                  "\r{0}",
+                  BitConverter.ToString(buffer)
                );
-               Thread.Sleep(100);
+               Thread.Sleep(10);
             }
          }
          Console.WriteLine();
