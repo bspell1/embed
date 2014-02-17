@@ -22,12 +22,11 @@ namespace NPi.Psx
          this.receiver.AutoAck = ack;
          this.receiver.RXDataReady += status =>
          {
-            while (status.RXReadyPipe == this.pipe)
+            if (status.RXReadyPipe == this.pipe)
             {
                this.receiver.ReceivePacket(this.buffer);
                if (this.Received != null)
                   this.Received(PsxPadState.Decode(this.buffer, 0, this.buffer.Length));
-               status = this.receiver.ClearInterrupts();
             }
          };
       }
