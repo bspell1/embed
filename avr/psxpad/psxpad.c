@@ -113,9 +113,13 @@ BOOL PsxRead ()
    // send command 0x42 to read the pad state, and exchange 9 bytes
    BYTE pbBuffer[PSX_MESSAGE_LENGTH + 3] = { 0x01, 0x42, 0x00, };
    PsxSpiExchange(pbBuffer, PSX_MESSAGE_LENGTH + 3);
-   // verify the results and copy them to the output buffer
-   if (pbBuffer[2] == 0x5A)
+   // verify the results
+   if (pbBuffer[0] == 0xFF && pbBuffer[2] == 0x5A)
    {
+      // if digital-only mode, zero out joysticks
+      if (pbBuffer[1] == 0x41)
+         memset(pbBuffer + 5, 0x80, 4);
+      // transfer the results to the output buffer
       memcpy(g_pbMessage, pbBuffer + 3, PSX_MESSAGE_LENGTH);
       return TRUE;
    }
