@@ -6,7 +6,7 @@ using Tpl = System.Threading.Tasks;
 
 namespace NPi.WiiChuk
 {
-   public class I2cReceiver : IDisposable
+   public class I2cReceiver : IWiiChukReceiver, IDisposable
    {
       private I2CDevice device;
       private Gpio csPin;

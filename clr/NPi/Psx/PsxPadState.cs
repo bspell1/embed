@@ -7,6 +7,9 @@ namespace NPi.Psx
 {
    public struct PsxPadState
    {
+      // buffer lengths
+      public const Int32 EncodedSizeDigital = 2;
+      public const Int32 EncodedSizeAnalog = 6;
       // digital buttons
       public Boolean Select { get; private set; }
       public Boolean L3 { get; private set; }
@@ -32,6 +35,12 @@ namespace NPi.Psx
 
       public static PsxPadState Decode (Byte[] buffer, Int32 offset, Int32 count)
       {
+         if (buffer == null)
+            throw new ArgumentNullException("buffer");
+         if (count != EncodedSizeDigital && count != EncodedSizeAnalog)
+            throw new ArgumentException("count");
+         if (offset < 0 || offset + count > buffer.Length)
+            throw new ArgumentException("offset");
          return new PsxPadState()
          {
             // decode digital states
@@ -52,10 +61,10 @@ namespace NPi.Psx
             Cross = (buffer[offset + 1] & 0x40) == 0,
             Square = (buffer[offset + 1] & 0x80) == 0,
             // decode analog states if retrieved
-            RX = count > 2 ? ((Single)buffer[offset + 2] - 128.0f) / 128.0f : 0.0f,
-            RY = count > 2 ? ((Single)buffer[offset + 3] - 128.0f) / 128.0f : 0.0f,
-            LX = count > 2 ? ((Single)buffer[offset + 4] - 128.0f) / 128.0f : 0.0f,
-            LY = count > 2 ? ((Single)buffer[offset + 5] - 128.0f) / 128.0f : 0.0f,
+            RX = count > EncodedSizeDigital ? ((Single)buffer[offset + 2] - 128.0f) / 128.0f : 0.0f,
+            RY = count > EncodedSizeDigital ? ((Single)buffer[offset + 3] - 128.0f) / 128.0f : 0.0f,
+            LX = count > EncodedSizeDigital ? ((Single)buffer[offset + 4] - 128.0f) / 128.0f : 0.0f,
+            LY = count > EncodedSizeDigital ? ((Single)buffer[offset + 5] - 128.0f) / 128.0f : 0.0f,
          };
       }
 
