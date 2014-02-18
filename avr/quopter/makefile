@@ -1,5 +1,5 @@
 TARGETNAME 	= 	quopter
-MODULES    	= 	quopter quadchuk quadmpu quadrotr quadbay quadtel
+MODULES    	= 	quopter quadpsx quadmpu quadrotr quadbay quadtel
 FWMODULES   =  pid i2cmast spimast nrf24 mpu6050 tlc5940
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
@@ -11,7 +11,7 @@ PARAMETERS	= 	F_CPU=16000000																\
 					TLC5940_FREQ=390.625														\
 					TLC5940_BLSCALE=256														\
 					TLC5940_BLTICK=1															\
-					QUADCHUK_ADDRESS=\"Wii00\"												\
+					QUADPSX_ADDRESS=\"Psx00\"												\
 					QUADMPU_SAMPLE_TIME=0.0099f											\
 					QUADROTOR_THRUST_MAX=0.9f												\
 					QUADROTOR_PID_PGAIN=0.02f												\
