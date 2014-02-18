@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controller.cs" />
+    <Compile Include="Input\PsxPadInput.cs" />
     <Compile Include="Input\IInput.cs" />
     <Compile Include="Input\WiiChukInput.cs" />
     <Compile Include="Protocol.cs" />

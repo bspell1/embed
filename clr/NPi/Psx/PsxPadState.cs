@@ -10,6 +10,8 @@ namespace NPi.Psx
       // buffer lengths
       public const Int32 EncodedSizeDigital = 2;
       public const Int32 EncodedSizeAnalog = 6;
+      // joystick minimum move
+      public const Single JoystickEpsilon = 0.001f;
       // digital buttons
       public Boolean Select { get; private set; }
       public Boolean L3 { get; private set; }

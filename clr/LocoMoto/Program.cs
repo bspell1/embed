@@ -54,20 +54,20 @@ namespace LocoMoto
             TrikeAxleWidth = 18.4,
             TrikeWheelRadius = 2.1
          };
-         var chukConfig = new WiiChukInput.Config()
+         var inputConfig = new PsxPadInput.Config()
          {
             SpiPath = Directory.GetFiles("/dev", "spidev*.0").Single(),
             CEPin = 17,
             IrqPin = 18,
             Pipe = 0,
-            Address = "Wii00"
+            Address = "Psx00"
          };
          using (var reactor = new Reactor())
          using (var control = new Controller(controlCfg))
-         using (var chuks = new WiiChukInput(chukConfig, reactor, control))
+         using (var input = new PsxPadInput(inputConfig, reactor, control))
          {
             var lastChuk = DateTime.MinValue;
-            chuks.Changed += () => lastChuk = DateTime.UtcNow;
+            input.Changed += () => lastChuk = DateTime.UtcNow;
             reactor.Start();
             for (; ; )
             {
