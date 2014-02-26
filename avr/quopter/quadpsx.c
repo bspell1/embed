@@ -72,10 +72,10 @@ PQUADPSX_INPUT QuadPsxEndRead (PQUADPSX_INPUT pInput)
       UI8  ljx = pbPkt[4];                   // byte 4 is left joystick X
       UI8  ljy = pbPkt[5];                   // byte 5 is left joystick Y
       // convert the readings to float and translate/scale them
-      pInput->nLX = ((F32)ljx - 128.0f) / 128.0f;
-      pInput->nLY = ((F32)ljy - 128.0f) / 128.0f;
-      pInput->nRX = ((F32)rjx - 128.0f) / 128.0f;
-      pInput->nRY = ((F32)rjy - 128.0f) / 128.0f;
+      pInput->nLX = ((F32)ljx - 127.5f) / 127.5f;
+      pInput->nLY = ((F32)ljy - 127.5f) / 127.5f;
+      pInput->nRX = ((F32)rjx - 127.5f) / 127.5f;
+      pInput->nRY = ((F32)rjy - 127.5f) / 127.5f;
       pInput->bL1 = lb1;
       pInput->bL2 = lb2;
       pInput->bR1 = rb1;

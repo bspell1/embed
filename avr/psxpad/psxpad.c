@@ -28,12 +28,12 @@
 //-------------------[       Module Definitions        ]-------------------//
 #define PSX_ADDRESS_LENGTH    6                 // NRF address buffer length
 #define PSX_ADDRESS_DEFAULT   "Psx00"           // default NRF address
-#define PSX_PIN_LED           PIN_D4            // LED heartbeat pin
-#define PSX_PAD_PIN_SS        PIN_B0            // PSX pad slave select pin
+#define PSX_PIN_LED           PIN_D7            // LED heartbeat pin
+#define PSX_PAD_PIN_SS        PIN_SS            // PSX pad slave select pin
 #define PSX_MESSAGE_LENGTH    6                 // controller state buffer length
 #define PSX_CLOCK_PERIOD_2    16                // PSX pad SPI clock period / 2, in us
-#define PSX_NRF24_PIN_SS      PIN_SS            // NRF24 slave select pin
-#define PSX_NRF24_PIN_CE      PIN_B1            // NRF24 CE pin
+#define PSX_NRF24_PIN_SS      PIN_B1            // NRF24 slave select pin
+#define PSX_NRF24_PIN_CE      PIN_B0            // NRF24 CE pin
 //-------------------[        Module Variables         ]-------------------//
 // NRF address SRAM/EEPROM
 static CHAR       g_szAddress[PSX_ADDRESS_LENGTH];

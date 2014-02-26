@@ -41,13 +41,29 @@
 int main ()
 {
    sei();
+   PinSetOutput(PIN_D7);
    SpiInit();
-   PinSetOutput(PIN_D4);
+   Nrf24Init(
+      &(NRF24_CONFIG)
+      {
+         .nSsPin = PIN_B1,
+         .nCePin = PIN_B0
+      }
+   );
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24SetTXAddress("Psx00");
+   Nrf24DisableAck();
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
+   Nrf24PowerOn(NRF24_MODE_SEND);
 
    for ( ; ; )
    {
-      PinToggle(PIN_D4);
-      _delay_ms(1000);
+      PinToggle(PIN_D7);
+      Nrf24Send((BYTE[]) { 0xC0, 0x0C, 0xC0, 0x0C, 0xC0, 0x0C }, 6);
+      _delay_ms(500);
+      PinToggle(PIN_D7);
+      Nrf24Send((BYTE[]) { 0x0C, 0xC0, 0x0C, 0xC0, 0x0C, 0xC0 }, 6);
+      _delay_ms(500);
    }
    return 0;
 }

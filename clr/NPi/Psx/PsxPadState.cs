@@ -63,10 +63,10 @@ namespace NPi.Psx
             Cross = (buffer[offset + 1] & 0x40) == 0,
             Square = (buffer[offset + 1] & 0x80) == 0,
             // decode analog states if retrieved
-            RX = count > EncodedSizeDigital ? ((Single)buffer[offset + 2] - 128.0f) / 128.0f : 0.0f,
-            RY = count > EncodedSizeDigital ? ((Single)buffer[offset + 3] - 128.0f) / 128.0f : 0.0f,
-            LX = count > EncodedSizeDigital ? ((Single)buffer[offset + 4] - 128.0f) / 128.0f : 0.0f,
-            LY = count > EncodedSizeDigital ? ((Single)buffer[offset + 5] - 128.0f) / 128.0f : 0.0f,
+            RX = count > EncodedSizeDigital ? ((Single)buffer[offset + 2] - 127.5f) / 127.5f : 0.0f,
+            RY = count > EncodedSizeDigital ? ((Single)buffer[offset + 3] - 127.5f) / 127.5f : 0.0f,
+            LX = count > EncodedSizeDigital ? ((Single)buffer[offset + 4] - 127.5f) / 127.5f : 0.0f,
+            LY = count > EncodedSizeDigital ? ((Single)buffer[offset + 5] - 127.5f) / 127.5f : 0.0f,
          };
       }
 
