@@ -191,12 +191,15 @@ static VOID DispatchSetOutput ()
 //---------------------------------------------------------------------------
 static VOID DispatchSetPwm ()
 {
+// TODO
+#if 0
    // decode the PWM channel
    // decode the duty cyle
    UI8  nChannel = g_Receive.bParam0;
    UI16 nDuty    = ((UI16)g_Receive.bParam1 << 8) | g_Receive.bParam2;
    // update the PWM driver
-   Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);             
+   Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);
+#endif
 }
 //-----------< FUNCTION: DispatchStepMotor >---------------------------------
 // Purpose:    runs a stepper motor a number of steps

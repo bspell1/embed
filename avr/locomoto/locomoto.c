@@ -61,6 +61,8 @@ int main ()
          .nDataPin  = PIN_D4
       }
    );
+// TODO
+#if 0
    Tlc5940Init(
       &(TLC5940_CONFIG)
       {
@@ -71,6 +73,7 @@ int main ()
          .nPinBlank = PIN_B1
       }
    );
+#endif
    StepMotorInit(
       (STEPMOTOR_CONFIG[STEPPER_COUNT])
       {

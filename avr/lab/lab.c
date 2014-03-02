@@ -46,12 +46,12 @@ int main ()
    Nrf24Init(
       &(NRF24_CONFIG)
       {
-         .nSsPin = PIN_B1,
-         .nCePin = PIN_B0
+         .nSsPin = PIN_SS,
+         .nCePin = PIN_B1
       }
    );
    Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24SetTXAddress("Psx00");
+   Nrf24SetTXAddress("Lab00");
    Nrf24DisableAck();
    Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
    Nrf24PowerOn(NRF24_MODE_SEND);

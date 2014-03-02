@@ -34,52 +34,15 @@ namespace Lab
 
       public void Run ()
       {
-         var spiPath = Directory.GetFiles("/dev", "spidev*.0").Single();
-         using (var spi = new SpiDevice(spiPath))
+         var device = Directory.GetFiles("/dev", "ttyAMA*").Single();
+         using (var uart = new SerialPort(device, 57600, Parity.None, 8, StopBits.One))
          {
-            spi.LsbFirst = true;
-            spi.ClockSpeed = 100000;
-            spi.Mode = SpiMode.CPHA | SpiMode.CPOL;
-            // enter config mode
-            {
-               var buffer = new Byte[5];
-               buffer[0] = 0x01;
-               buffer[1] = 0x43;
-               buffer[2] = 0x00;
-               buffer[3] = 0x01;
-               spi.Write(buffer);
-            }
-            // switch to analog mode
-            {
-               var buffer = new Byte[6];
-               buffer[0] = 0x01;
-               buffer[1] = 0x44;
-               buffer[2] = 0x00;
-               buffer[3] = 0x01;
-               buffer[4] = 0x00;
-               spi.Write(buffer);
-            }
-            // exit config mode
-            {
-               var buffer = new Byte[5];
-               buffer[0] = 0x01;
-               buffer[1] = 0x43;
-               buffer[2] = 0x00;
-               buffer[3] = 0x00;
-               spi.Write(buffer);
-            }
+            uart.Open();
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               var buffer = new Byte[21];
-               buffer[0] = 0x01;
-               buffer[1] = 0x42;
-               spi.ReadWrite(buffer);
-               Console.Write(
-                  "\r{0}",
-                  BitConverter.ToString(buffer)
-               );
+               uart.Write(new Byte[] { 0xAA }, 0, 1);
                Thread.Sleep(10);
             }
          }
