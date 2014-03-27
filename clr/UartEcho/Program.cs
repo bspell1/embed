@@ -4,7 +4,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Threading;
 
-namespace UartPing
+namespace UartEcho
 {
    class Program
    {
@@ -13,17 +13,16 @@ namespace UartPing
       static Parity parityBits;
       static Int32 dataBits;
       static StopBits stopBits;
-      static Int32 message;
 
       static Int32 Main (String[] options)
       {
-         Console.WriteLine("UART Ping");
+         Console.WriteLine("UART Echo");
          if (!ParseOptions(options))
          {
             ReportUsage();
             return 1;
          }
-         ExecutePing();
+         ExecuteEcho();
          return 0;
       }
 
@@ -39,7 +38,6 @@ namespace UartPing
          parityBits = Parity.None;
          dataBits = 8;
          stopBits = StopBits.One;
-         message = 0xC0;
          // parse options
          try
          {
@@ -50,7 +48,6 @@ namespace UartPing
                { "p|parity=", v => parityBits = (Parity)Enum.Parse(typeof(Parity), v, true) },
                { "d|data=", (Int32 v) => dataBits = v },
                { "s|stop=", v => stopBits = (StopBits)Enum.Parse(typeof(StopBits), v, true) },
-               { "m|message=", (Int32 v) => message = v },
                { "?|help", v => { throw new ArgumentException(); } }
             }.Parse(options);
          }
@@ -60,35 +57,30 @@ namespace UartPing
 
       static void ReportUsage ()
       {
-         Console.WriteLine("   Usage: UartPing {options}");
+         Console.WriteLine("   Usage: UartEcho {options}");
          Console.WriteLine("      -n|-name {name} port name, default=COM5 or /dev/ttyAMA0");
          Console.WriteLine("      -b|-baud {rate} baud rate, default=57600");
          Console.WriteLine("      -p|-parity {none|even|odd|mark|space} parity bits, default=none");
          Console.WriteLine("      -d|-data {bits} data bits, default=8");
          Console.WriteLine("      -s|-stop {none|one|onepointfive|two} stop bits, default=one");
-         Console.WriteLine("      -m|-message {msg} ping message, default=0xC0");
       }
 
-      static void ExecutePing ()
+      static void ExecuteEcho ()
       {
          using (var port = new SerialPort(portName, baudRate, parityBits, dataBits, stopBits))
          {
             Console.Write("   Opening port {0}...", port.PortName);
             port.Open();
             port.DiscardInBuffer();
-            Console.WriteLine("done. Press escape to exit.");
+            Console.WriteLine("done. Now listening. Press escape to exit.");
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Console.Write("\r   {0:h:mm:ss tt}: Sending 0x{1}... ", DateTime.Now, message.ToString("X"));
-               port.Write(new[] { (Byte)message }, 0, 1);
-               while (port.BytesToRead == 0)
-                  Thread.Sleep(1);
-               Console.Write("Received: 0x{0}", port.ReadByte().ToString("X"));
-               Thread.Sleep(1000);
+               if (port.BytesToRead > 0)
+                  Console.Write(port.ReadExisting());
+               Thread.Sleep(1);
             }
-            Console.WriteLine();
          }
       }
    }

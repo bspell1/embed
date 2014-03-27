@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NPi.WiiChuk
+namespace NPi.Psx
 {
-   public class Nrf24Receiver : IWiiChukReceiver
+   public class Nrf24Receiver : IPsxPadReceiver, IDisposable
    {
       private Nrf24 receiver;
       private Int32 pipe;
@@ -12,9 +12,11 @@ namespace NPi.WiiChuk
 
       public Nrf24Receiver (Nrf24 receiver, String address, Int32 pipe = 0)
       {
+         this.buffer = new Byte[PsxPadState.EncodedSizeAnalog];
          this.pipe = pipe;
          this.receiver = receiver;
          this.receiver.SetRXAddress(pipe, address);
+         this.receiver.SetRXLength(pipe, PsxPadState.EncodedSizeAnalog);
          var ack = new Nrf24.PipeFlagRegister(this.receiver.AutoAck);
          ack[pipe] = false;
          this.receiver.AutoAck = ack;
@@ -24,32 +26,16 @@ namespace NPi.WiiChuk
             {
                this.receiver.ReceivePacket(this.buffer);
                if (this.Received != null)
-                  this.Received(this.buffer);
+                  this.Received(PsxPadState.Decode(this.buffer, 0, this.buffer.Length));
             }
          };
-         this.Count = 1;
+      }
+      public void Dispose ()
+      {
       }
 
       #region IWiiChukReceiver Implementation
-      public Int32 Count
-      {
-         get
-         {
-            return this.buffer.Length / WiiChukState.EncodedSize;
-         }
-         set
-         {
-            if (this.buffer == null || value != this.buffer.Length / WiiChukState.EncodedSize)
-            {
-               this.receiver.SetRXLength(
-                  this.pipe, 
-                  value * WiiChukState.EncodedSize
-               );
-               this.buffer = new Byte[value * WiiChukState.EncodedSize];
-            }
-         }
-      }
-      public event Action<Byte[]> Received;
+      public event Action<PsxPadState> Received;
       #endregion
    }
 }

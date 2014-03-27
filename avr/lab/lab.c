@@ -41,25 +41,29 @@
 int main ()
 {
    sei();
-   PinSetOutput(PIN_D4);
-
-   PinSetOutput(PIN_D6);
    PinSetOutput(PIN_D7);
-   PinSetOutput(PIN_B0);
-
-   UI16 delay = 50;
-   UI8 phase1 = PIN_D6;
-   UI8 phase2 = PIN_D7;
-   UI8 phase3 = PIN_B0;
+   SpiInit();
+   Nrf24Init(
+      &(NRF24_CONFIG)
+      {
+         .nSsPin = PIN_SS,
+         .nCePin = PIN_B1
+      }
+   );
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24SetTXAddress("Lab00");
+   Nrf24DisableAck();
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
+   Nrf24PowerOn(NRF24_MODE_SEND);
 
    for ( ; ; )
    {
-      PinSet(phase1, BIT_HI); _delay_ms(delay);
-      PinSet(phase3, BIT_LO); _delay_ms(delay);
-      PinSet(phase2, BIT_HI); _delay_ms(delay);
-      PinSet(phase1, BIT_LO); _delay_ms(delay);
-      PinSet(phase3, BIT_HI); _delay_ms(delay);
-      PinSet(phase2, BIT_LO); _delay_ms(delay);
+      PinToggle(PIN_D7);
+      Nrf24Send((BYTE[]) { 0xC0, 0x0C, 0xC0, 0x0C, 0xC0, 0x0C }, 6);
+      _delay_ms(500);
+      PinToggle(PIN_D7);
+      Nrf24Send((BYTE[]) { 0x0C, 0xC0, 0x0C, 0xC0, 0x0C, 0xC0 }, 6);
+      _delay_ms(500);
    }
    return 0;
 }

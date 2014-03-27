@@ -41,6 +41,10 @@
     <Compile Include="Mpu6050.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Nrf24.cs" />
+    <Compile Include="Psx\SpiReceiver.cs" />
+    <Compile Include="Psx\IPsxPadReceiver.cs" />
+    <Compile Include="Psx\Nrf24Receiver.cs" />
+    <Compile Include="Psx\PsxPadState.cs" />
     <Compile Include="Reactor.cs" />
     <Compile Include="SpiDevice.cs" />
     <Compile Include="StepMotor.cs" />

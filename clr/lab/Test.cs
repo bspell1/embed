@@ -34,30 +34,16 @@ namespace Lab
 
       public void Run ()
       {
-         var spiPath = Directory.GetFiles("/dev", "spidev*.0").Single();
-         using (var reactor = new Reactor())
-         using (var nrf24 = new Nrf24(spiPath, 17, 18, reactor))
-         using (var chuks = new WiiChukPair(new Nrf24Receiver(nrf24, "Wii00", 0)))
+         var device = Directory.GetFiles("/dev", "ttyAMA*").Single();
+         using (var uart = new SerialPort(device, 57600, Parity.None, 8, StopBits.One))
          {
-            var updated = DateTime.MinValue;
-            chuks.Updated += (c1, c2) => updated = DateTime.Now;
-            reactor.Start();
+            uart.Open();
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Console.Write(
-                  "\rLx: {0,5:0.00} Ly:{1,5:0.00} Lc:{2} Lz:{3}  |  Rx:{4,5:0.00} Ry:{5,5:0.00} Rc:{6} Rz:{7}", 
-                  chuks.Left.JoystickX,
-                  chuks.Left.JoystickY,
-                  chuks.Left.CButton ? 1 : 0,
-                  chuks.Left.ZButton ? 1 : 0,
-                  chuks.Right.JoystickX,
-                  chuks.Right.JoystickY,
-                  chuks.Right.CButton ? 1 : 0,
-                  chuks.Right.ZButton ? 1 : 0
-               );
-               Thread.Sleep(100);
+               uart.Write(new Byte[] { 0xAA }, 0, 1);
+               Thread.Sleep(10);
             }
          }
          Console.WriteLine();

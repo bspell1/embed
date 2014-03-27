@@ -9,7 +9,7 @@ PARAMETERS	= 	F_CPU=16000000																\
 					UART_SEND=1																	\
 					UART_RECV=1																	\
 					I2C_BUFFER_SIZE=16														\
-					SPI_BUFFER_SIZE=13														\
+					SPI_BUFFER_SIZE=33														\
 				 	SPI_FREQUENCY=8000000													\
 					TLC5940_FREQ=390.625														\
 					TLC5940_BLSCALE=256														\

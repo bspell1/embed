@@ -49,31 +49,31 @@ namespace LocoMoto
             UartPath = Directory.GetFiles("/dev", "ttyAMA*").Single(),
             LocoAddress = LocoMoto.Protocol.BroadcastAddress,
             TrikeStepsPerCycle = 50,
-            TrikeMinRpm = 10,
+            TrikeMinRpm = 30,
             TrikeMaxRpm = 200,
             TrikeAxleWidth = 18.4,
             TrikeWheelRadius = 2.1
          };
-         var chukConfig = new WiiChukInput.Config()
+         var inputConfig = new PsxPadInput.Config()
          {
             SpiPath = Directory.GetFiles("/dev", "spidev*.0").Single(),
             CEPin = 17,
             IrqPin = 18,
             Pipe = 0,
-            Address = "Wii00"
+            Address = "Psx00"
          };
          using (var reactor = new Reactor())
          using (var control = new Controller(controlCfg))
-         using (var chuks = new WiiChukInput(chukConfig, reactor, control))
+         using (var input = new PsxPadInput(inputConfig, reactor, control))
          {
-            var lastChuk = DateTime.MinValue;
-            chuks.Changed += () => lastChuk = DateTime.UtcNow;
+            var lastCtrl = DateTime.MinValue;
+            input.Changed += () => lastCtrl = DateTime.Now;
             reactor.Start();
             for (; ; )
             {
                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                   break;
-               Console.Write("\rLast chuk update: {0:h:mm:ss tt} {1}                  ", lastChuk, control.Trike.Left.Rpm);
+               Console.Write("\rLast controller update: {0:h:mm:ss tt} {1} {2}                  ", lastCtrl, control.Trike.Left.Rpm, control.Trike.Right.Rpm);
                Thread.Sleep(1000);
             }
             reactor.Join();

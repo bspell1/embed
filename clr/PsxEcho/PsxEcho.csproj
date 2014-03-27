@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{EF6F585B-2F35-4167-9A5D-C7BE5591F339}</ProjectGuid>
+    <ProjectGuid>{21E3FE22-A9C3-49DF-B296-572E1F93B449}</ProjectGuid>
     <Platform>AnyCPU</Platform>
     <OutputType>Exe</OutputType>
-    <RootNamespace>LocoMoto</RootNamespace>
-    <AssemblyName>LocoMoto</AssemblyName>
+    <RootNamespace>PsxEcho</RootNamespace>
+    <AssemblyName>PsxEcho</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <VisualStudioVersion>11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -35,16 +35,11 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controller.cs" />
-    <Compile Include="Input\PsxPadInput.cs" />
-    <Compile Include="Input\IInput.cs" />
-    <Compile Include="Input\WiiChukInput.cs" />
-    <Compile Include="Protocol.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="locomoto.sh">
+    <None Include="psxecho.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

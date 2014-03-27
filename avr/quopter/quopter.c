@@ -26,7 +26,7 @@
 #include "i2cmast.h"
 #include "spimast.h"
 #include "nrf24.h"
-#include "quadchuk.h"
+#include "quadpsx.h"
 #include "quadmpu.h"
 #include "quadrotr.h"
 #include "quadbay.h"
@@ -61,7 +61,7 @@ void QuopterInit ()
 {
    // global initialization
    memzero(&g_Control, sizeof(g_Control));
-   g_Control.nThrustInput = 0.25f;
+   g_Control.nThrustInput = 0.0f;
    // protocol initialization
    sei();
    I2cInit();
@@ -92,10 +92,10 @@ void QuopterInit ()
       {
       }
    );
-   QuadChukInit(
-      &(QUADCHUK_CONFIG)
+   QuadPsxInit(
+      &(QUADPSX_CONFIG)
       {
-         .pszAddress = QUADCHUK_ADDRESS,
+         .pszAddress = QUADPSX_ADDRESS,
          .nPipe      = 1
       }
    );
@@ -132,7 +132,7 @@ void QuopterRun  ()
    static UI8 g_nCounter = 0;
    // start the next sensor/input reading
    QuadMpuBeginRead();
-   QuadChukBeginRead();
+   QuadPsxBeginRead();
    // send the control signals to the rotors and bomb bay
    QuadRotorControl(&g_Control);
    QuadBayControl(g_bBayOpen);
@@ -143,16 +143,16 @@ void QuopterRun  ()
    g_Control.nPitchSensor = mpu.nPitchAngle;
    g_Control.nYawSensor   = mpu.nYawRate;
    // retrieve the input readings
-   QUADCHUK_INPUT chuk;
-   if (QuadChukEndRead(&chuk) == NULL)
+   QUADPSX_INPUT chuk;
+   if (QuadPsxEndRead(&chuk) == NULL)
       PinSetLo(PIN_D4);
    else
    {
       // apply inputs to rotor/bomb bay controls
-      g_Control.nThrustInput += -chuk.nLeftJoystickY * 0.08f * QUADMPU_SAMPLE_TIME; // max 8%/sec
-      g_Control.nRollInput    =  chuk.nRightJoystickX * M_PI / 18.0f;               // max 10deg
-      g_Control.nPitchInput   = -chuk.nRightJoystickY * M_PI / 18.0f;               // max 10deg
-      g_bBayOpen              =  chuk.bRightButtonZ;
+      g_Control.nThrustInput += -chuk.nLY * 0.1f * QUADMPU_SAMPLE_TIME; // max 10%/sec
+      g_Control.nRollInput    =  chuk.nRX * M_PI / 36.0f;               // max 20deg
+      g_Control.nPitchInput   = -chuk.nRY * M_PI / 36.0f;               // max 20deg
+      g_bBayOpen              =  chuk.bR2;
       g_Control.nThrustInput  = Max(g_Control.nThrustInput, 0.0f);
       if (g_nCounter == 0)
          PinToggle(PIN_D4);

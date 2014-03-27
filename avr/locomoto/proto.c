@@ -131,7 +131,7 @@ VOID ProtoRecvByte (BYTE bRecv)
       case 2:     // address byte
          if (g_Receive.bAddress != g_bAddress && 
              g_Receive.bAddress != PROTO_ADDRESS_BROADCAST)
-         g_Receive.cbBuffer = 0;
+            g_Receive.cbBuffer = 0;
          break;
       case 3:     // command byte
          if (g_Receive.bCommand > PROTO_COMMAND_MAX)
@@ -191,12 +191,15 @@ static VOID DispatchSetOutput ()
 //---------------------------------------------------------------------------
 static VOID DispatchSetPwm ()
 {
+// TODO
+#if 0
    // decode the PWM channel
    // decode the duty cyle
    UI8  nChannel = g_Receive.bParam0;
    UI16 nDuty    = ((UI16)g_Receive.bParam1 << 8) | g_Receive.bParam2;
    // update the PWM driver
-   Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);             
+   Tlc5940SetDuty(nChannel / 16, nChannel % 16, nDuty);
+#endif
 }
 //-----------< FUNCTION: DispatchStepMotor >---------------------------------
 // Purpose:    runs a stepper motor a number of steps
