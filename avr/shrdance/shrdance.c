@@ -44,9 +44,9 @@ int main ()
    ShiftRegInit(
       &(SHIFTREG_CONFIG)
       {
-         .nClockPin = PIN_D2,
-         .nLatchPin = PIN_D3,
-         .nDataPin  = PIN_D4
+         .nClockPin = PIN_D6,
+         .nLatchPin = PIN_D7,
+         .nDataPin  = PIN_B0
       }
    );
    // initialize the contents of the shift register,

@@ -1,6 +1,6 @@
 TARGETNAME 	= 	lab
 MODULES    	= 	lab
-FWMODULES   =	uart i2cmast spimast mpu6050 tlc5940 nrf24
+FWMODULES   =	uart i2cmast spimast mpu6050 tlc5940 nrf24 shiftreg
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					DEBUG_TRACE=UartTrace													\

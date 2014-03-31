@@ -39,14 +39,16 @@ typedef struct tagQuadPsxConfig
 // input control structure
 typedef struct tagQuadPsxInput
 {
-   F32   nLX;                       // left X-axis joystick reading [-1,1]
-   F32   nLY;                       // left Y-axis joystick reading [-1,1]
-   F32   nRX;                       // right X-axis joystick reading [-1,1]
-   F32   nRY;                       // right Y-axis joystick reading [-1,1]
+   BOOL  bSelect;                   // select button
+   BOOL  bStart;                    // start button
    BOOL  bL1;                       // left button 1
    BOOL  bL2;                       // left button 2
    BOOL  bR1;                       // right button 1
    BOOL  bR2;                       // right button 2
+   F32   nLX;                       // left X-axis joystick reading [-1,1]
+   F32   nLY;                       // left Y-axis joystick reading [-1,1]
+   F32   nRX;                       // right X-axis joystick reading [-1,1]
+   F32   nRY;                       // right Y-axis joystick reading [-1,1]
 } QUADPSX_INPUT, *PQUADPSX_INPUT;
 //===========================================================================
 // INPUT RECEIVER API

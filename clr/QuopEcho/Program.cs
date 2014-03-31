@@ -142,7 +142,7 @@ namespace QuopEcho
                   oldCount = packet.Counter;
                   var cps = (Double)counter / (DateTime.UtcNow - started).TotalSeconds;
                   message = String.Format(
-                     "\r   {0,-8:h:mm:ss}: Rs={1,-4} Ps={2,-4} Ys={3,-4} T={4,-3} Ri={5,-4} Pi={6,-4} Yi={7,-4} C={8,-4} CPS={9,-5:0.00} CL={10,-6:0.0ms}      ",
+                     "\r   {0,-8:h:mm:ss}: Rs={1,-4} Ps={2,-4} Ys={3,-4} T={4,-3} Ri={5,-4} Pi={6,-4} Yi={7,-4} Rbo={8,-4} Rst={9,-4} Rpt={10,-4} Rsb={11,-4} Rp={12,-4} Rr={13,-4} C={14,-4} CL={15,-6:0.0ms}      ",
                      updated,
                      packet.RollAngle,
                      packet.PitchAngle,
@@ -151,8 +151,13 @@ namespace QuopEcho
                      packet.RollInput,
                      packet.PitchInput,
                      packet.YawInput,
+                     packet.BowRotor,
+                     packet.SternRotor,
+                     packet.PortRotor,
+                     packet.StarboardRotor,
+                     packet.BowRotor - packet.SternRotor,
+                     packet.PortRotor - packet.StarboardRotor,
                      packet.Counter,
-                     cps,
                      1000.0 / cps
                   );
                   Console.Write(message);

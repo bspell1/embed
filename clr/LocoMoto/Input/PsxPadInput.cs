@@ -56,6 +56,10 @@ namespace LocoMoto
             OnR2(state.R2);
             changed = true;
          }
+         state.LX = (state.LX / 10.0f) * 10.0f;
+         state.LY = (state.LY / 10.0f) * 10.0f;
+         state.RX = (state.RX / 10.0f) * 10.0f;
+         state.RY = (state.RY / 10.0f) * 10.0f;
          if (Math.Abs(this.state.LX - state.LX) > PsxPadState.JoystickEpsilon ||
              Math.Abs(this.state.LY - state.LY) > PsxPadState.JoystickEpsilon ||
              Math.Abs(this.state.RX - state.RX) > PsxPadState.JoystickEpsilon ||

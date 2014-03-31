@@ -24,8 +24,8 @@
 #include "quadmpu.h"
 #include "mpu6050.h"
 //-------------------[       Module Definitions        ]-------------------//
-// complementary filter biases (assume gyro won't drift within 750ms)
-#define COMPFILTER_GYRODRIFT  (0.75f)
+// complementary filter biases (assume gyro won't drift within 250ms)
+#define COMPFILTER_GYRODRIFT  (0.25f)
 #define COMPFILTER_GYROBIAS   (COMPFILTER_GYRODRIFT / (COMPFILTER_GYRODRIFT + QUADMPU_SAMPLE_TIME))
 #define COMPFILTER_ACCELBIAS  (1.0f - COMPFILTER_GYROBIAS)
 // MPU-6050 reading scales
@@ -78,6 +78,7 @@ VOID QuadMpuInit (PQUADMPU_CONFIG pConfig)
    Mpu6050Wake();
    Mpu6050DisableTemp();
    Mpu6050SetClockSource(MPU6050_CLOCK_PLLGYROX);
+   Mpu6050SetLowPassFilter(MPU6050_DLPF_90HZ);
 }
 //-----------< FUNCTION: QuadMpuBeginRead >----------------------------------
 // Purpose:    begins an asynchronous read of the MPU sensors

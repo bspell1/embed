@@ -73,6 +73,10 @@ typedef struct tagQuadRotorControl
    F32 nRollSensor;           // roll sensor reading [-1,1]
    F32 nPitchSensor;          // pitch sensor reading [-1,1]
    F32 nYawSensor;            // yaw sensor reading [-1,1]
+   I16 nBowRotor;             // return bow rotor speed via here
+   I16 nSternRotor;           // return stern rotor speed via here
+   I16 nPortRotor;            // return port rotor speed via here
+   I16 nStarboardRotor;       // return starboard rotor speed via here
 } QUADROTOR_CONTROL, *PQUADROTOR_CONTROL;
 //===========================================================================
 // CONTROLLER API

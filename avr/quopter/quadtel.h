@@ -45,6 +45,10 @@ typedef struct tagQuadTelData
    I8    nRollInput;
    I8    nPitchInput;
    I8    nYawInput;
+   I16   nBowRotor;
+   I16   nSternRotor;
+   I16   nPortRotor;
+   I16   nStarboardRotor;
    UI8   nCounter;
 } QUADTEL_DATA, *PQUADTEL_DATA;
 //===========================================================================

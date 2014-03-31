@@ -28,6 +28,7 @@
 #include "mpu6050.h"
 #include "tlc5940.h"
 #include "nrf24.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
@@ -41,29 +42,47 @@
 int main ()
 {
    sei();
-   PinSetOutput(PIN_D7);
-   SpiInit();
-   Nrf24Init(
-      &(NRF24_CONFIG)
+
+   TCCR1A = (1 << COM1A1);
+   TCCR1B = (1 << WGM13) | AvrClk1Scale(1);
+   ICR1 = 255;// AvrClkTop(1, 50000);
+   OCR1A = 0.1f * ICR1;
+
+   PinSetOutput(PIN_D4);
+   PinSetOutput(PIN_B0);
+   PinSetOutput(PIN_B1);
+
+   ShiftRegInit(
+      &(SHIFTREG_CONFIG)
       {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_B1
+         .nClockPin = PIN_D5,
+         .nLatchPin = PIN_D6,
+         .nDataPin  = PIN_D7
       }
    );
-   Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24SetTXAddress("Lab00");
-   Nrf24DisableAck();
-   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
-   Nrf24PowerOn(NRF24_MODE_SEND);
+
+   static F32 nMsDelay = 1.1;
+
+   static BYTE pbStages[4] = {
+      0x99,    // 10011001b, 1010 stage
+      0x96,    // 10010110b, 0110 stage
+      0x66,    // 01100110b, 0101 stage
+      0x69,    // 01101001b, 1001 stage
+   };
 
    for ( ; ; )
    {
-      PinToggle(PIN_D7);
-      Nrf24Send((BYTE[]) { 0xC0, 0x0C, 0xC0, 0x0C, 0xC0, 0x0C }, 6);
-      _delay_ms(500);
-      PinToggle(PIN_D7);
-      Nrf24Send((BYTE[]) { 0x0C, 0xC0, 0x0C, 0xC0, 0x0C, 0xC0 }, 6);
-      _delay_ms(500);
+      for (UI16 j = 0; j < (UI16)100; j++)
+      {
+         for (UI8 i = 0; i < ARRAYLENGTH(pbStages); i++)
+         {
+            ShiftRegWrite8(0, pbStages[i]);
+            _delay_ms(nMsDelay); 
+         }
+      }
+      ShiftRegWrite8(0, 0);
+      PinToggle(PIN_D4);
+      _delay_ms(1000);
    }
    return 0;
 }
