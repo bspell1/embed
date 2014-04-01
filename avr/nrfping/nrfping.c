@@ -1,8 +1,8 @@
 //===========================================================================
-// Module:  lab.c
-// Purpose: AVR test program
+// Module:  nrfping.c
+// Purpose: NRF24 ping program
 //
-// Copyright © 2013
+// Copyright © 2014
 // Brent M. Spell. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
@@ -21,19 +21,17 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "lab.h"
-#include "uart.h"
-#include "i2cmast.h"
+#include "nrfping.h"
 #include "spimast.h"
-#include "mpu6050.h"
-#include "tlc5940.h"
 #include "nrf24.h"
-#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
+// AVR pin configuration   
+#define PIN_NRF24_SS          PIN_SS
+#define PIN_NRF24_CE          PIN_B1
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
-static VOID LabInit  ();
-static VOID LabRun   ();
+static VOID PingInit ();
+static VOID PingRun  ();
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -43,58 +41,43 @@ static VOID LabRun   ();
 //---------------------------------------------------------------------------
 int main ()
 {
-   LabInit();
+   PingInit();
    for ( ; ; )
-      LabRun();
+      PingRun();
    return 0;
 }
-//-----------< FUNCTION: LabInit >-------------------------------------------
-// Purpose:    lab program initialiization
+//-----------< FUNCTION: PingInit >-------------------------------------------
+// Purpose:    ping program initialiization
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID LabInit ()
+VOID PingInit ()
 {
+   // protocol initialization
    sei();
-
-   PinSetOutput(PIN_D7);
-
-   ShiftRegInit(
-      &(SHIFTREG_CONFIG)
+   SpiInit();
+   // hardware initialization
+   Nrf24Init(
+      &(NRF24_CONFIG)
       {
-         .nClockPin = PIN_D2,
-         .nLatchPin = PIN_D3,
-         .nDataPin  = PIN_D4
+         .nSsPin = PIN_NRF24_SS,
+         .nCePin = PIN_NRF24_CE
       }
    );
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24DisableAck();
+   Nrf24SetTXAddress("Nrf00");
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
+   Nrf24PowerOn(NRF24_MODE_SEND);
 }
-//-----------< FUNCTION: LabRun >--------------------------------------------
-// Purpose:    lab main loop
+//-----------< FUNCTION: PingRun >--------------------------------------------
+// Purpose:    ping main loop
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID LabRun ()
+VOID PingRun ()
 {
-   static F32 nMsDelay = 1.1;
-
-   static BYTE pbStages[4] = {
-      0x99,    // 10011001b, 1010 stage
-      0x96,    // 10010110b, 0110 stage
-      0x66,    // 01100110b, 0101 stage
-      0x69,    // 01101001b, 1001 stage
-   };
-
-   for ( ; ; )
-   {
-      for (UI16 j = 0; j < (UI16)100; j++)
-      {
-         for (UI8 i = 0; i < ARRAYLENGTH(pbStages); i++)
-         {
-            ShiftRegWrite8(0, pbStages[i]);
-            _delay_ms(nMsDelay); 
-         }
-      }
-      PinToggle(PIN_D7);
-      //_delay_ms(1000);
-   }
+   BYTE pbMessage[] = { 0x60, 0x0D, 0xF0, 0x0D };
+   Nrf24Send(pbMessage, sizeof(pbMessage));
+   _delay_ms(20);
 }
