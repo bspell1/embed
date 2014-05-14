@@ -38,6 +38,7 @@
 // . PWM_MIN: minimum ESC duty cycle (1ms min forward)
 // . PWM_MAX: maximum ESC duty cycle (1.5ms max forward, reverse is 1.5-2ms)
 // . PWM_NEGMAX: maximum negative ESC duty cycle, for calibration
+#define PWM_OFF      ((UI16)4095)
 #define PWM_MIN      ((UI16)1600)
 #define PWM_MAX      ((UI16)2400)
 #define PWM_NEGMAX   ((UI16)3200)
@@ -97,10 +98,10 @@ VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
    // . run each up to maximum (negative) duty cycle and hold
    // . run each down to minimum duty cycle and hold
    for (UI8 i = 0; i < 4; i++)
-      SetDuty(i, (UI16)PWM_NEGMAX);
+      SetDuty(i, PWM_NEGMAX);
    _delay_ms(1000);
    for (UI8 i = 0; i < 4; i++)
-      SetDuty(i, (UI16)PWM_MIN);
+      SetDuty(i, PWM_MIN);
    _delay_ms(1000);
 }
 //-----------< FUNCTION: QuadRotorControl >----------------------------------
@@ -110,18 +111,28 @@ VOID QuadRotorInit (PQUADROTOR_CONFIG pConfig)
 //---------------------------------------------------------------------------
 VOID QuadRotorControl (PQUADROTOR_CONTROL pControl)
 {
+   pControl->nThrustInput = Clamp(
+      pControl->nThrustInput, 
+      QUADROTOR_THRUST_MIN, 
+      QUADROTOR_THRUST_MAX
+   );
    // pass the input+sensor readings through the PID controllers
    PidUpdate(&g_pid[PID_ROLL], pControl->nRollInput, pControl->nRollSensor);
    PidUpdate(&g_pid[PID_PITCH], pControl->nPitchInput, pControl->nPitchSensor);
    PidUpdate(&g_pid[PID_YAW], pControl->nYawInput, pControl->nYawSensor);
-   // convert the control values to integral thrust values
+   // convert the control values to integral angle values
    I16 nThrust = pControl->nThrustInput * I16_MAX;
    I16 nRoll   = (g_pid[PID_ROLL].nControl / M_PI_2) * I16_MAX;
    I16 nPitch  = (g_pid[PID_PITCH].nControl / M_PI_2) * I16_MAX;
-   I16 nYaw    = g_pid[PID_YAW].nControl * I16_MAX;
+   I16 nYaw    = 0; //g_pid[PID_YAW].nControl * I16_MAX;
+   // convert the angle values to rotor speeds
+   pControl->nBowRotor       = nThrust + nPitch - nYaw;
+   pControl->nSternRotor     = nThrust - nPitch - nYaw;
+   pControl->nPortRotor      = nThrust - nRoll  + nYaw;
+   pControl->nStarboardRotor = nThrust + nRoll  + nYaw;
    // send the thrust signals to the ESCs through the TLC5940
-   SetThrust(ROTOR_BOW,   nThrust + nPitch + nYaw);
-   SetThrust(ROTOR_STERN, nThrust - nPitch + nYaw);
-   SetThrust(ROTOR_PORT,  nThrust - nRoll  - nYaw);
-   SetThrust(ROTOR_STAR,  nThrust + nRoll  - nYaw);
+   SetThrust(ROTOR_BOW,   pControl->nBowRotor);
+   SetThrust(ROTOR_STERN, pControl->nSternRotor);
+   SetThrust(ROTOR_PORT,  pControl->nPortRotor);
+   SetThrust(ROTOR_STAR,  pControl->nStarboardRotor);
 }

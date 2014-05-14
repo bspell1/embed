@@ -32,6 +32,7 @@
 #include "quadbay.h"
 #include "quadtel.h"
 //-------------------[       Module Definitions        ]-------------------//
+#define QUOPTER_ROLL_BIAS  0.05
 //-------------------[        Module Variables         ]-------------------//
 static QUADROTOR_CONTROL   g_Control;
 static BOOL                g_bBayOpen = FALSE;
@@ -120,6 +121,7 @@ void QuopterInit ()
          .pszAddress = "Qop01"
       }
    );
+   g_Control.nThrustInput = 0.0f;
    PinSetLo(PIN_D4);
 }
 //-----------< FUNCTION: QuopterRun >----------------------------------------
@@ -139,21 +141,25 @@ void QuopterRun  ()
    // retrieve the sensor readings
    QUADMPU_SENSOR mpu;
    QuadMpuEndRead(&mpu);
+   mpu.nRollAngle += QUOPTER_ROLL_BIAS;
    g_Control.nRollSensor  = mpu.nRollAngle;
    g_Control.nPitchSensor = mpu.nPitchAngle;
    g_Control.nYawSensor   = mpu.nYawRate;
    // retrieve the input readings
-   QUADPSX_INPUT chuk;
-   if (QuadPsxEndRead(&chuk) == NULL)
+   QUADPSX_INPUT psx;
+   if (QuadPsxEndRead(&psx) == NULL)
       PinSetLo(PIN_D4);
    else
    {
       // apply inputs to rotor/bomb bay controls
-      g_Control.nThrustInput += -chuk.nLY * 0.1f * QUADMPU_SAMPLE_TIME; // max 10%/sec
-      g_Control.nRollInput    =  chuk.nRX * M_PI / 36.0f;               // max 20deg
-      g_Control.nPitchInput   = -chuk.nRY * M_PI / 36.0f;               // max 20deg
-      g_bBayOpen              =  chuk.bR2;
-      g_Control.nThrustInput  = Max(g_Control.nThrustInput, 0.0f);
+      g_Control.nThrustInput += psx.nLY * 0.2f * QUADMPU_SAMPLE_TIME; // max 10%/sec
+      g_Control.nRollInput    = -psx.nRX * M_PI / 18.0f;              // max 10deg
+      g_Control.nPitchInput   = psx.nRY * M_PI / 18.0f;               // max 10deg
+      g_bBayOpen              = psx.bR1;
+      if (psx.bL2)
+         g_Control.nThrustInput = 0.0f;
+      else if (psx.bR2)
+         g_Control.nThrustInput = 0.5f;
       if (g_nCounter == 0)
          PinToggle(PIN_D4);
    }
@@ -168,6 +174,10 @@ void QuopterRun  ()
          .nRollInput      = g_Control.nRollInput / M_PI * 180,
          .nPitchInput     = g_Control.nPitchInput / M_PI * 180,
          .nYawInput       = g_Control.nYawInput * 10,
+         .nBowRotor       = g_Control.nBowRotor,
+         .nSternRotor     = g_Control.nSternRotor,
+         .nPortRotor      = g_Control.nPortRotor,
+         .nStarboardRotor = g_Control.nStarboardRotor,
          .nCounter        = g_nCounter
       }
    );

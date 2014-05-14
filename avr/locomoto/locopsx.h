@@ -1,8 +1,8 @@
 //===========================================================================
-// Module:  quadtel.h
-// Purpose: quadcopter telemetrics transmitter
+// Module:  locopsx.h
+// Purpose: locomoto Playstation controller input receiver
 //
-// Copyright © 2013
+// Copyright © 2014
 // Brent M. Spell. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
@@ -18,42 +18,42 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __QUADTEL_H
-#define __QUADTEL_H
+#ifndef __LOCOPSX_H
+#define __LOCOPSX_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#ifndef __QUOPTER_H
-#include "quopter.h"
+#ifndef __AVRDEFS_H
+#include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
 //===========================================================================
-// TELEMETRICS STRUCTURES
+// LOCOPSX STRUCTURES
 //===========================================================================
-// configuration structure
-typedef struct tagQuadTelConfig
+typedef struct tagLocoPsxConfig
 {
-   PCSTR pszAddress;                // Quopter NRF24 transmit address
-} QUADTEL_CONFIG, *PQUADTEL_CONFIG;
+   UI8   nPipe;                  // NRF24 receive pipe
+   PCSTR pszAddress;             // PsxPad address
+} LOCOPSX_CONFIG, *PLOCOPSX_CONFIG;
 // input control structure
-typedef struct tagQuadTelData
+typedef struct tagLocoPsxInput
 {
-   I8    nRollAngle;
-   I8    nPitchAngle;
-   I8    nYawRate;
-   UI8   nThrustInput;
-   I8    nRollInput;
-   I8    nPitchInput;
-   I8    nYawInput;
-   I16   nBowRotor;
-   I16   nSternRotor;
-   I16   nPortRotor;
-   I16   nStarboardRotor;
-   UI8   nCounter;
-} QUADTEL_DATA, *PQUADTEL_DATA;
+   BOOL  bL1;                    // left button 1
+   BOOL  bL2;                    // left button 2
+   BOOL  bR1;                    // right button 1
+   BOOL  bR2;                    // right button 2
+   F32   nLX;                    // left X-axis joystick reading [-1,1]
+   F32   nLY;                    // left Y-axis joystick reading [-1,1]
+   F32   nRX;                    // right X-axis joystick reading [-1,1]
+   F32   nRY;                    // right Y-axis joystick reading [-1,1]
+} LOCOPSX_INPUT, *PLOCOPSX_INPUT;
 //===========================================================================
-// TELEMETRICS API
+// LOCOPSX API
 //===========================================================================
-VOID  QuadTelInit (PQUADTEL_CONFIG pConfig);
-VOID  QuadTelSend (PQUADTEL_DATA pData);
-#endif // __QUADTEL_H
+VOID           LocoPsxInit       (LOCOPSX_CONFIG* pConfig);
+VOID           LocoPsxBeginRead  ();
+PLOCOPSX_INPUT LocoPsxEndRead    (PLOCOPSX_INPUT pInput);
+// receiver helpers
+inline PLOCOPSX_INPUT LocoPsxRead (PLOCOPSX_INPUT pInput)
+   { LocoPsxBeginRead(); return LocoPsxEndRead(pInput); }
+#endif // __LOCOPSX_H

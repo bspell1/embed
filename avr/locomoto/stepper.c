@@ -28,7 +28,7 @@
 // motor state data
 static volatile struct MOTOR
 {
-   UI8   nSRNibble;                       // shift register offset, in nibbles
+   UI8   nShiftReg;                       // shift register offset, in bytes
    UI8   nDelay;                          // stage delay, in 0.1ms units
    UI8   nTimer;                          // stage timer
    I16   nSteps;                          // number of steps (+/-) to run
@@ -37,10 +37,10 @@ static volatile struct MOTOR
 // motor forward step stages
 static const UI8 g_pStages[] = 
 {
-   0xA,                                   // 1010, magnet 1/magnet 3 on
-   0x6,                                   // 0110, magnet 2/magnet 3 on
-   0x5,                                   // 0101, magnet 2/magnet 4 on
-   0x9                                    // 1001, magnet 1/magnet 4 on
+   0x99,                                  // 10011001b, 1010 stage
+   0x96,                                  // 10010110b, 0110 stage
+   0x66,                                  // 01100110b, 0101 stage
+   0x69,                                  // 01101001b, 1001 stage
 };
 #define STAGE_COUNT (sizeof(g_pStages) / sizeof(*g_pStages))
 //-------------------[        Module Prototypes        ]-------------------//
@@ -53,7 +53,7 @@ static const UI8 g_pStages[] =
 //---------------------------------------------------------------------------
 static VOID SetShiftRegister (UI8 nMotor, UI8 nData)
 {
-   ShiftRegWrite4(g_pMotors[nMotor].nSRNibble, nData);
+   ShiftRegWrite8(g_pMotors[nMotor].nShiftReg, nData);
 }
 //-----------< FUNCTION: StepMotorInit >-------------------------------------
 // Purpose:    initializes the stepper motor module
@@ -65,11 +65,11 @@ VOID StepMotorInit (STEPMOTOR_CONFIG* pConfig)
    // initialize motor data
    memzero((PVOID)g_pMotors, sizeof(g_pMotors));
    for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
-      g_pMotors[nMotor].nSRNibble = pConfig[nMotor].nSRNibble;
+      g_pMotors[nMotor].nShiftReg = pConfig[nMotor].nShiftReg;
    // 8-bit clock 2, software, 10kHz
-   RegSetHi(TCCR2A, WGM21);                              // CTC mode, compare at OCR2A
-   RegSetHi(TCCR2B, CS22);                               // prescale = 64 (250kHz)
-   OCR2A = F_CPU / 64 / 10000 - 1;                       // reset OC2A at 25 ticks for 10kHz
+   RegSetHi(TCCR2A, WGM21);            // CTC mode, compare at OCR2A
+   RegSetHi(TCCR2B, CS22);             // prescale = 64 (250kHz)
+   OCR2A = F_CPU / 64 / 10000 - 1;     // reset OC2A at 25 ticks for 10kHz
 }
 //-----------< FUNCTION: StepMotorStop >-------------------------------------
 // Purpose:    stops stepper motor processing for a given motor
@@ -95,9 +95,12 @@ VOID StepMotorStop (UI8 nMotor)
 //---------------------------------------------------------------------------
 VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 {
-   g_pMotors[nMotor].nDelay = Max(nDelay, 1);
-   g_pMotors[nMotor].nSteps = nSteps;
-   RegSetHi(TIMSK2, OCIE2B);
+   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+   {
+      g_pMotors[nMotor].nDelay = Max(nDelay, 1);
+      g_pMotors[nMotor].nSteps = nSteps;
+      RegSetHi(TIMSK2, OCIE2B);
+   }
 }
 //-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
 // Purpose:    responds to 10kHz timer events

@@ -1,8 +1,8 @@
 //===========================================================================
-// Module:  proto.h
-// Purpose: locomoto driver communication protocol
+// Module:  nrfping.h
+// Purpose: NRF24 ping program
 //
-// Copyright © 2013
+// Copyright © 2014
 // Brent M. Spell. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
@@ -18,8 +18,8 @@
 //    51 Franklin Street, Fifth Floor 
 //    Boston, MA 02110-1301 USA
 //===========================================================================
-#ifndef __PROTO_H
-#define __PROTO_H
+#ifndef __NRFPING_H
+#define __NRFPING_H
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
@@ -27,9 +27,4 @@
 #include "avrdefs.h"
 #endif
 //-------------------[       Module Definitions        ]-------------------//
-//===========================================================================
-// PROTOCOL API
-//===========================================================================
-VOID  ProtoInit      ();
-VOID  ProtoRecvByte  (BYTE bRecv);
-#endif // __PROTO_H
+#endif // __NRFPING_H

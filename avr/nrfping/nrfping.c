@@ -1,10 +1,8 @@
 //===========================================================================
-// Module:  shrdance.c
-// Purpose: dancing shift register program
-//          toggles an alternating bit pattern across the chain of shift
-//          registers every two seconds
+// Module:  nrfping.c
+// Purpose: NRF24 ping program
 //
-// Copyright © 2013
+// Copyright © 2014
 // Brent M. Spell. All rights reserved.
 //
 // This library is free software; you can redistribute it and/or modify it 
@@ -23,11 +21,17 @@
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
 //-------------------[      Project Include Files      ]-------------------//
-#include "shrdance.h"
-#include "shiftreg.h"
+#include "nrfping.h"
+#include "spimast.h"
+#include "nrf24.h"
 //-------------------[       Module Definitions        ]-------------------//
+// AVR pin configuration   
+#define PIN_NRF24_SS          PIN_SS
+#define PIN_NRF24_CE          PIN_B1
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
+static VOID PingInit ();
+static VOID PingRun  ();
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -37,29 +41,43 @@
 //---------------------------------------------------------------------------
 int main ()
 {
+   PingInit();
+   for ( ; ; )
+      PingRun();
+   return 0;
+}
+//-----------< FUNCTION: PingInit >-------------------------------------------
+// Purpose:    ping program initialiization
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID PingInit ()
+{
+   // protocol initialization
    sei();
-   // initialize the module
-   PinSetOutput(PIN_ARDUINO_LED);
-   PinSetLo(PIN_ARDUINO_LED);
-   ShiftRegInit(
-      &(SHIFTREG_CONFIG)
+   SpiInit();
+   // hardware initialization
+   Nrf24Init(
+      &(NRF24_CONFIG)
       {
-         .nClockPin = PIN_D6,
-         .nLatchPin = PIN_D7,
-         .nDataPin  = PIN_B0
+         .nSsPin = PIN_NRF24_SS,
+         .nCePin = PIN_NRF24_CE
       }
    );
-   // initialize the contents of the shift register,
-   // alternating zeroes and ones
-   BYTE pbRegister[SHIFTREG_SIZE];
-   memset(pbRegister, 0xAA, SHIFTREG_SIZE);
-   // dance, monkey!
-   for ( ; ; )
-   {
-      PinToggle(PIN_ARDUINO_LED);
-      ShiftRegWrite(pbRegister);
-      memset(pbRegister, ~pbRegister[0], SHIFTREG_SIZE);
-      _delay_ms(2000);
-   }
-   return 0;
+   Nrf24SetCrc(NRF24_CRC_16BIT);
+   Nrf24DisableAck();
+   Nrf24SetTXAddress("Nrf00");
+   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
+   Nrf24PowerOn(NRF24_MODE_SEND);
+}
+//-----------< FUNCTION: PingRun >--------------------------------------------
+// Purpose:    ping main loop
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID PingRun ()
+{
+   BYTE pbMessage[] = { 0x60, 0x0D, 0xF0, 0x0D };
+   Nrf24Send(pbMessage, sizeof(pbMessage));
+   _delay_ms(20);
 }

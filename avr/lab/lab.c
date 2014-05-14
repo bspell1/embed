@@ -28,9 +28,12 @@
 #include "mpu6050.h"
 #include "tlc5940.h"
 #include "nrf24.h"
+#include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
+static VOID LabInit  ();
+static VOID LabRun   ();
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
 // Purpose:    program entry point
@@ -40,30 +43,58 @@
 //---------------------------------------------------------------------------
 int main ()
 {
+   LabInit();
+   for ( ; ; )
+      LabRun();
+   return 0;
+}
+//-----------< FUNCTION: LabInit >-------------------------------------------
+// Purpose:    lab program initialiization
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID LabInit ()
+{
    sei();
+
    PinSetOutput(PIN_D7);
-   SpiInit();
-   Nrf24Init(
-      &(NRF24_CONFIG)
+
+   ShiftRegInit(
+      &(SHIFTREG_CONFIG)
       {
-         .nSsPin = PIN_SS,
-         .nCePin = PIN_B1
+         .nClockPin = PIN_D2,
+         .nLatchPin = PIN_D3,
+         .nDataPin  = PIN_D4
       }
    );
-   Nrf24SetCrc(NRF24_CRC_16BIT);
-   Nrf24SetTXAddress("Lab00");
-   Nrf24DisableAck();
-   Nrf24SetPipeAutoAck(NRF24_PIPE0, FALSE);
-   Nrf24PowerOn(NRF24_MODE_SEND);
+}
+//-----------< FUNCTION: LabRun >--------------------------------------------
+// Purpose:    lab main loop
+// Parameters: none
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID LabRun ()
+{
+   static F32 nMsDelay = 1.1;
+
+   static BYTE pbStages[4] = {
+      0x99,    // 10011001b, 1010 stage
+      0x96,    // 10010110b, 0110 stage
+      0x66,    // 01100110b, 0101 stage
+      0x69,    // 01101001b, 1001 stage
+   };
 
    for ( ; ; )
    {
+      for (UI16 j = 0; j < (UI16)100; j++)
+      {
+         for (UI8 i = 0; i < ARRAYLENGTH(pbStages); i++)
+         {
+            ShiftRegWrite8(0, pbStages[i]);
+            _delay_ms(nMsDelay); 
+         }
+      }
       PinToggle(PIN_D7);
-      Nrf24Send((BYTE[]) { 0xC0, 0x0C, 0xC0, 0x0C, 0xC0, 0x0C }, 6);
-      _delay_ms(500);
-      PinToggle(PIN_D7);
-      Nrf24Send((BYTE[]) { 0x0C, 0xC0, 0x0C, 0xC0, 0x0C, 0xC0 }, 6);
-      _delay_ms(500);
+      //_delay_ms(1000);
    }
-   return 0;
 }

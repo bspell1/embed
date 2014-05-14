@@ -13,27 +13,27 @@ namespace NPi.Psx
       // joystick minimum move
       public const Single JoystickEpsilon = 0.001f;
       // digital buttons
-      public Boolean Select { get; private set; }
-      public Boolean L3 { get; private set; }
-      public Boolean R3 { get; private set; }
-      public Boolean Start { get; private set; }
-      public Boolean Up { get; private set; }
-      public Boolean Right { get; private set; }
-      public Boolean Down { get; private set; }
-      public Boolean Left { get; private set; }
-      public Boolean L2 { get; private set; }
-      public Boolean R2 { get; private set; }
-      public Boolean L1 { get; private set; }
-      public Boolean R1 { get; private set; }
-      public Boolean Triangle { get; private set; }
-      public Boolean Circle { get; private set; }
-      public Boolean Cross { get; private set; }
-      public Boolean Square { get; private set; }
+      public Boolean Select { get; set; }
+      public Boolean L3 { get; set; }
+      public Boolean R3 { get; set; }
+      public Boolean Start { get; set; }
+      public Boolean Up { get; set; }
+      public Boolean Right { get; set; }
+      public Boolean Down { get; set; }
+      public Boolean Left { get; set; }
+      public Boolean L2 { get; set; }
+      public Boolean R2 { get; set; }
+      public Boolean L1 { get; set; }
+      public Boolean R1 { get; set; }
+      public Boolean Triangle { get; set; }
+      public Boolean Circle { get; set; }
+      public Boolean Cross { get; set; }
+      public Boolean Square { get; set; }
       // analog joysticks
-      public Single RX { get; private set; }
-      public Single RY { get; private set; }
-      public Single LX { get; private set; }
-      public Single LY { get; private set; }
+      public Single RX { get; set; }
+      public Single RY { get; set; }
+      public Single LX { get; set; }
+      public Single LY { get; set; }
 
       public static PsxPadState Decode (Byte[] buffer, Int32 offset, Int32 count)
       {

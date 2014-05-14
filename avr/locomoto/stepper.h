@@ -32,14 +32,14 @@
 // . STEPPER_COUNT: the number of stepper motors in the circuit
 //===========================================================================
 #ifndef STEPPER_COUNT
-#  define STEPPER_COUNT      2
+#  define STEPPER_COUNT       2
 #endif
 //===========================================================================
 // STEPPER MOTOR STRUCTURES
 //===========================================================================
 typedef struct tagStepMotorConfig
 {
-   UI8   nSRNibble;                    // shift register offset, in nibbles
+   UI8   nShiftReg;           // shift register offset, in bytes
 } STEPMOTOR_CONFIG, *PSTEPMOTOR_CONFIG;
 //===========================================================================
 // STEPPER MOTOR PARAMETERS
