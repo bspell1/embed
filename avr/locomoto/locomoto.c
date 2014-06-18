@@ -32,7 +32,7 @@
 // locomoto configuration
 #define THROTTLE_ABSMIN       ((F32)0.15f)   // desensitize PSX joystick
 #define THROTTLE_ABSMAX       ((F32)1.0f)    // maximum absolute throttle
-#define DELAY_MIN             11             // 1.1ms at 50 steps/r => 272 RPM
+#define DELAY_MIN             11             // 1.1ms at 50 steps/r => 273 RPM
 #define DELAY_MAX             50             // 5.0ms at 50 steps/r => 60 RPM
 #define MOTOR_LEFT            0              // left motor shift register
 #define MOTOR_RIGHT           1              // right motor shift register
@@ -41,8 +41,8 @@
 #define PIN_SHIFTREG_CLOCK    PIN_D2
 #define PIN_SHIFTREG_LATCH    PIN_D3
 #define PIN_SHIFTREG_DATA     PIN_D4
-#define PIN_NRF24_SS          PIN_SS
-#define PIN_NRF24_CE          PIN_B1
+#define PIN_NRF24_SS          PIN_B1
+#define PIN_NRF24_CE          PIN_B0
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 static VOID LocoMotoInit      ();
@@ -116,18 +116,24 @@ VOID LocoMotoRun ()
    static UI8 g_nCounter = 0;
    // read the current PSX pad state
    LOCOPSX_INPUT psx;
-   if (LocoPsxRead(&psx) == NULL)
+   if (LocoPsxEndRead(&psx) == NULL) 
+   {
       PinSetLo(PIN_LED);
+      LocoMotoRunMotor(MOTOR_LEFT, 0);
+      LocoMotoRunMotor(MOTOR_RIGHT, 0);
+   }
    else
    {
       // flash the LED if receiving input
       if (g_nCounter == 0)
          PinToggle(PIN_LED);
       // set the throttle on each motor
-      LocoMotoRunMotor(MOTOR_LEFT, psx.nLY);
+      LocoMotoRunMotor(MOTOR_LEFT, -psx.nLY);
       LocoMotoRunMotor(MOTOR_RIGHT, psx.nRY);
    }
+   LocoPsxBeginRead();
    g_nCounter++;
+   _delay_ms(2);
 }
 //-----------< FUNCTION: LocoMotoRunMotor >----------------------------------
 // Purpose:    runs a stepper motor
@@ -149,6 +155,6 @@ VOID LocoMotoRunMotor  (UI8 nMotor, F32 nThrottle)
             DELAY_MAX, 
             DELAY_MIN
          ),
-         nThrottle < 0 ? STEPMOTOR_FORWARD : STEPMOTOR_REVERSE
+         nThrottle > 0 ? STEPMOTOR_FORWARD : STEPMOTOR_REVERSE
       );
 }

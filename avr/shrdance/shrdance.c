@@ -39,14 +39,13 @@ int main ()
 {
    sei();
    // initialize the module
-   PinSetOutput(PIN_ARDUINO_LED);
-   PinSetLo(PIN_ARDUINO_LED);
+   PinSetOutput(PIN_D7);
    ShiftRegInit(
       &(SHIFTREG_CONFIG)
       {
-         .nClockPin = PIN_D6,
-         .nLatchPin = PIN_D7,
-         .nDataPin  = PIN_B0
+         .nClockPin = PIN_D2,
+         .nLatchPin = PIN_D3,
+         .nDataPin  = PIN_D4
       }
    );
    // initialize the contents of the shift register,
@@ -56,7 +55,7 @@ int main ()
    // dance, monkey!
    for ( ; ; )
    {
-      PinToggle(PIN_ARDUINO_LED);
+      PinToggle(PIN_D7);
       ShiftRegWrite(pbRegister);
       memset(pbRegister, ~pbRegister[0], SHIFTREG_SIZE);
       _delay_ms(2000);

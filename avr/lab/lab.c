@@ -30,6 +30,7 @@
 #include "nrf24.h"
 #include "shiftreg.h"
 //-------------------[       Module Definitions        ]-------------------//
+#define PIN_LED   PIN_D7
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 static VOID LabInit  ();
@@ -57,7 +58,7 @@ VOID LabInit ()
 {
    sei();
 
-   PinSetOutput(PIN_D7);
+   PinSetOutput(PIN_LED);
 
    ShiftRegInit(
       &(SHIFTREG_CONFIG)
@@ -75,26 +76,34 @@ VOID LabInit ()
 //---------------------------------------------------------------------------
 VOID LabRun ()
 {
-   static F32 nMsDelay = 1.1;
+   static F32  nMsDelay = 2.1f;
+   static UI16 nCycles  = 400;
 
-   static BYTE pbStages[4] = {
-      0x99,    // 10011001b, 1010 stage
-      0x96,    // 10010110b, 0110 stage
-      0x66,    // 01100110b, 0101 stage
-      0x69,    // 01101001b, 1001 stage
+   static BYTE pbStages[] = {
+      /* stepper motor, dual bridge */
+      0b01010101,    // 1010 stage
+      0b01100110,    // 0110 stage
+      0b10101010,    // 0101 stage
+      0b10011001,    // 1001 stage
+      /**/
+      /* dc, pwm on shutdown, forward bridge 1, reverse bridge 2 
+//      0b00000101,
+      0b00001010,
+      /**/
    };
 
    for ( ; ; )
    {
-      for (UI16 j = 0; j < (UI16)100; j++)
+      for (UI16 j = 0; j < nCycles; j++)
       {
          for (UI8 i = 0; i < ARRAYLENGTH(pbStages); i++)
          {
-            ShiftRegWrite8(0, pbStages[i]);
+//            ShiftRegWrite8(0, pbStages[i]);
             _delay_ms(nMsDelay); 
          }
       }
-      PinToggle(PIN_D7);
-      //_delay_ms(1000);
+      ShiftRegWrite8(0, 0);
+      PinToggle(PIN_LED);
+      _delay_ms(1000);
    }
 }

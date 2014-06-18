@@ -37,10 +37,10 @@ static volatile struct MOTOR
 // motor forward step stages
 static const UI8 g_pStages[] = 
 {
-   0x99,                                  // 10011001b, 1010 stage
-   0x96,                                  // 10010110b, 0110 stage
-   0x66,                                  // 01100110b, 0101 stage
-   0x69,                                  // 01101001b, 1001 stage
+   0b0101, 
+   0b0110, 
+   0b1010, 
+   0b1001, 
 };
 #define STAGE_COUNT (sizeof(g_pStages) / sizeof(*g_pStages))
 //-------------------[        Module Prototypes        ]-------------------//
@@ -53,7 +53,7 @@ static const UI8 g_pStages[] =
 //---------------------------------------------------------------------------
 static VOID SetShiftRegister (UI8 nMotor, UI8 nData)
 {
-   ShiftRegWrite8(g_pMotors[nMotor].nShiftReg, nData);
+   ShiftRegWrite4(g_pMotors[nMotor].nShiftReg, nData);
 }
 //-----------< FUNCTION: StepMotorInit >-------------------------------------
 // Purpose:    initializes the stepper motor module
@@ -99,10 +99,10 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
    {
       g_pMotors[nMotor].nDelay = Max(nDelay, 1);
       g_pMotors[nMotor].nSteps = nSteps;
-      RegSetHi(TIMSK2, OCIE2B);
+      RegSetHi(TIMSK2, OCIE2A);
    }
 }
-//-----------< INTERRUPT: TIMER2_COMPB_vect >--------------------------------
+//-----------< INTERRUPT: TIMER2_COMPA_vect >--------------------------------
 // Purpose:    responds to 10kHz timer events
 //             . the stepper delay determines the number of interrupts per 
 //               motor that need to elapse before making a stage transition,
@@ -118,7 +118,7 @@ VOID StepMotorRun (UI8 nMotor, UI8 nDelay, I16 nSteps)
 // Parameters: none
 // Returns:    none
 //---------------------------------------------------------------------------
-ISR(TIMER2_COMPB_vect)
+ISR(TIMER2_COMPA_vect)
 {
    BOOL bIdle = TRUE;
    for (UI8 nMotor = 0; nMotor < STEPPER_COUNT; nMotor++)
@@ -169,5 +169,5 @@ ISR(TIMER2_COMPB_vect)
    }
    // if all motors are idle, disable the interrupt
    if (bIdle)
-      RegSetLo(TIMSK2, OCIE2B);
+      RegSetLo(TIMSK2, OCIE2A);
 }

@@ -26,15 +26,15 @@ dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
 write-flash:  bin bin/$(TARGETNAME).hex
-	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U flash:w:bin/$(TARGETNAME).hex -F
 read-eeprom:
 	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U eeprom:r:-:i
 write-eeprom: bin bin/$(TARGETNAME).eep
-	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U eeprom:w:bin/$(TARGETNAME).eep -F
 read-fuses:
 	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U lfuse:r:-:i -U hfuse:r:-:i -U efuse:r:-:i
 write-fuses:
-	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U lfuse:w:$(AVR_LFUSE):m -U hfuse:w:$(AVR_HFUSE):m -U efuse:w:$(AVR_EFUSE):m
+	avrdude -q -p$(DEVICE) -cusbtiny -B 1 -U lfuse:w:$(AVR_LFUSE):m -U hfuse:w:$(AVR_HFUSE):m -U efuse:w:$(AVR_EFUSE):m -F
 
 bin:
 	mkdir bin
