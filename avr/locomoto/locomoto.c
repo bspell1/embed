@@ -23,6 +23,7 @@
 #include <math.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "locomoto.h"
+#include "pid.h"
 #include "spimast.h"
 #include "shiftreg.h"
 #include "nrf24.h"
@@ -32,10 +33,14 @@
 // locomoto configuration
 #define THROTTLE_ABSMIN       ((F32)0.15f)   // desensitize PSX joystick
 #define THROTTLE_ABSMAX       ((F32)1.0f)    // maximum absolute throttle
-#define DELAY_MIN             11             // 1.1ms at 50 steps/r => 273 RPM
+#define DELAY_MIN             15             // 1.5ms at 50 steps/r => 200 RPM
 #define DELAY_MAX             50             // 5.0ms at 50 steps/r => 60 RPM
+#define CONTROL_LOCKMIN       ((F32)0.1f)    // minimum left/right wheel differential
 #define MOTOR_LEFT            0              // left motor shift register
 #define MOTOR_RIGHT           1              // right motor shift register
+#define CONTROL_PGAIN         0.02f          // PID controller P gain
+#define CONTROL_IGAIN         0.0f           // PID controller I gain
+#define CONTROL_DGAIN         0.0f           // PID controller D gain
 // AVR pin configuration   
 #define PIN_LED               PIN_D7
 #define PIN_SHIFTREG_CLOCK    PIN_D2
@@ -44,9 +49,14 @@
 #define PIN_NRF24_SS          PIN_B1
 #define PIN_NRF24_CE          PIN_B0
 //-------------------[        Module Variables         ]-------------------//
+static PID  g_LPid;
+static PID  g_RPid;
+static F32  g_nLThrottle = 0.0f;
+static F32  g_nRThrottle = 0.0f;
 //-------------------[        Module Prototypes        ]-------------------//
 static VOID LocoMotoInit      ();
 static VOID LocoMotoRun       ();
+static VOID LocoMotoControl   (F32 nLControl, F32 nRControl);
 static VOID LocoMotoRunMotor  (UI8 nMotor, F32 nThrottle);
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: main >----------------------------------------------
@@ -105,6 +115,13 @@ VOID LocoMotoInit ()
          .nPipe      = 1
       }
    );
+   // controller initialization
+   g_LPid.nControl = g_RPid.nControl = 0.0f;
+   g_LPid.nPGain   = g_RPid.nPGain   = CONTROL_PGAIN;
+   g_LPid.nIGain   = g_RPid.nIGain   = CONTROL_IGAIN;
+   g_LPid.nDGain   = g_RPid.nDGain   = CONTROL_DGAIN;
+   PidInit(&g_LPid);
+   PidInit(&g_RPid);
 }
 //-----------< FUNCTION: LocoMotoRun >---------------------------------------
 // Purpose:    locomoto main loop
@@ -115,25 +132,50 @@ VOID LocoMotoRun ()
 {
    static UI8 g_nCounter = 0;
    // read the current PSX pad state
-   LOCOPSX_INPUT psx;
+   LOCOPSX_INPUT psx; memzero(&psx, sizeof(psx));
    if (LocoPsxEndRead(&psx) == NULL) 
-   {
       PinSetLo(PIN_LED);
-      LocoMotoRunMotor(MOTOR_LEFT, 0);
-      LocoMotoRunMotor(MOTOR_RIGHT, 0);
-   }
-   else
-   {
-      // flash the LED if receiving input
-      if (g_nCounter == 0)
-         PinToggle(PIN_LED);
-      // set the throttle on each motor
-      LocoMotoRunMotor(MOTOR_LEFT, -psx.nLY);
-      LocoMotoRunMotor(MOTOR_RIGHT, psx.nRY);
-   }
+   else if (g_nCounter == 0)
+      PinToggle(PIN_LED);
+   // update the throttle
+   LocoMotoControl(psx.nLY, psx.nRY);
+   // start the next PSX read
    LocoPsxBeginRead();
    g_nCounter++;
    _delay_ms(2);
+}
+//-----------< FUNCTION: LocoMotoControl >-----------------------------------
+// Purpose:    controls the motor pair
+// Parameters: nLControl - left throttle control
+//             nRControl - right throttle control
+// Returns:    none
+//---------------------------------------------------------------------------
+VOID LocoMotoControl (F32 nLControl, F32 nRControl)
+{
+   // lock the throttle values if they are close,
+   // in order to stabilize straight steering
+   if (fabs(nLControl - nRControl) < CONTROL_LOCKMIN)
+      nLControl = nRControl = (nLControl + nRControl) / 2.0f;
+   // update the controllers using the control values
+   // . if throttling down, simply apply the control value
+   // . otherwise, smooth the control input through the PID controller
+   if (fabs(nLControl) < fabs(g_nLThrottle))
+      g_nLThrottle = nLControl;
+   else
+   {
+      PidUpdate(&g_LPid, nLControl, g_nLThrottle);
+      g_nLThrottle += g_LPid.nControl;
+   }
+   if (fabs(nRControl) < fabs(g_nRThrottle))
+      g_nRThrottle = nRControl;
+   else
+   {
+      PidUpdate(&g_RPid, nRControl, g_nRThrottle);
+      g_nRThrottle += g_RPid.nControl;
+   }
+   // set the throttle on each motor
+   LocoMotoRunMotor(MOTOR_LEFT, -g_nLThrottle);
+   LocoMotoRunMotor(MOTOR_RIGHT, g_nRThrottle);
 }
 //-----------< FUNCTION: LocoMotoRunMotor >----------------------------------
 // Purpose:    runs a stepper motor
@@ -141,7 +183,7 @@ VOID LocoMotoRun ()
 //             nThrottle - motor speed
 // Returns:    none
 //---------------------------------------------------------------------------
-VOID LocoMotoRunMotor  (UI8 nMotor, F32 nThrottle)
+VOID LocoMotoRunMotor (UI8 nMotor, F32 nThrottle)
 {
    if (fabs(nThrottle) < THROTTLE_ABSMIN)
       StepMotorStop(nMotor);

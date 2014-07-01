@@ -20,7 +20,7 @@ rebuild: clean all
 debug:
 	$(MAKE) PARAMETERS='$(PARAMETERS) DEBUG' FWMODULES='$(FWMODULES) debug'
 
-asm: $(MODULES:%=bin/%.S) $(FWMODULES:%=bin/fw%.S)
+asm: $(FWMODULES:%=bin/fw%.S) $(MODULES:%=bin/%.S)
 
 dump-size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
@@ -40,15 +40,19 @@ bin:
 	mkdir bin
 
 bin/fw%.o: ../fw/%.c makefile ../fw/%.h
+	echo $<
 	$(CC) $(CCFLAGS) -c -o $@ $<
 
 bin/%.o: %.c makefile $(MODULES:%=%.h)
+	echo $<
 	$(CC) $(CCFLAGS) -c -o $@ $<
 
 bin/fw%.S: ../fw/%.c ../fw/%.h
+	echo $<
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin/%.S: %.c makefile $(MODULES:%=%.h)
+	echo $<
 	$(CC) $(CCFLAGS) -S -o $@ $<
 
 bin/%.elf: $(FWMODULES:%=bin/fw%.o) $(MODULES:%=bin/%.o)
@@ -62,3 +66,6 @@ bin/%.eep: bin/%.elf
 
 # override make to keep intermediate files for incremental
 .SECONDARY: 
+ifndef VERBOSE
+.SILENT:
+endif

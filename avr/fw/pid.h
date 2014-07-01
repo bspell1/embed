@@ -37,8 +37,8 @@ typedef struct tagPid
    F32   nIGain;              // integral gain
    F32   nDGain;              // differential gain
    F32   nControl;            // current PID control value
+   F32   nPrevious;           // differential component previous sensor value
    F32   nISum;               // integral component sum
-   F32   nDPrev;              // differential component previous sensor value
 } PID, *PPID;
 //===========================================================================
 // PID API

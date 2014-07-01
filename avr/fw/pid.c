@@ -33,8 +33,8 @@
 //---------------------------------------------------------------------------
 VOID PidInit (PPID pPid)
 {
-   pPid->nISum  = 0.0f;
-   pPid->nDPrev = pPid->nControl;
+   pPid->nPrevious = pPid->nControl;
+   pPid->nISum = 0.0f;
 }
 //-----------< FUNCTION: PidUpdate >-----------------------------------------
 // Purpose:    updates a PID state with an input and sensor value
@@ -47,12 +47,12 @@ PPID PidUpdate (PPID pPid, F32 nInput, F32 nSensor)
 {
    F32 nError = nInput - nSensor;
    F32 nISum  = pPid->nISum + nError;
-   F32 nDVal  = nSensor - pPid->nDPrev;
+   F32 nDVal  = nSensor - pPid->nPrevious;
    pPid->nControl = 
       pPid->nPGain * nError + 
       pPid->nIGain * nISum + 
       pPid->nDGain * nDVal;
-   pPid->nISum  = nISum;
-   pPid->nDPrev = nSensor;
+   pPid->nISum = nISum;
+   pPid->nPrevious = nSensor;
    return pPid;
 }
