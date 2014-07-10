@@ -1,6 +1,6 @@
 TARGETNAME 	= 	lab
 MODULES    	= 	lab
-FWMODULES   =	uart i2cmast spimast mpu6050 tlc5940 nrf24 shiftreg
+FWMODULES   =	uart i2cmast spimast mpu6050 tlc5940 nrf24 shiftreg sevenseg
 DEVICE     	= 	atmega328p
 PARAMETERS	= 	F_CPU=16000000																\
 					DEBUG_TRACE=UartTrace													\
@@ -14,7 +14,6 @@ PARAMETERS	= 	F_CPU=16000000																\
 					TLC5940_FREQ=390.625														\
 					TLC5940_BLSCALE=256														\
 					TLC5940_BLTICK=1															\
-
-
+					SEVENSEG_DIGITS=4
 
 include ../fw/base.mak

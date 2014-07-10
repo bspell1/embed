@@ -20,6 +20,7 @@
 //===========================================================================
 //-------------------[       Pre Include Defines       ]-------------------//
 //-------------------[      Library Include Files      ]-------------------//
+#include <math.h>
 //-------------------[      Project Include Files      ]-------------------//
 #include "lab.h"
 #include "uart.h"
@@ -29,8 +30,9 @@
 #include "tlc5940.h"
 #include "nrf24.h"
 #include "shiftreg.h"
+#include "sevenseg.h"
 //-------------------[       Module Definitions        ]-------------------//
-#define PIN_LED   PIN_D7
+#define PIN_LED   PIN_D6
 //-------------------[        Module Variables         ]-------------------//
 //-------------------[        Module Prototypes        ]-------------------//
 static VOID LabInit  ();
@@ -60,6 +62,8 @@ VOID LabInit ()
 
    PinSetOutput(PIN_LED);
 
+   UartInit(&(UART_CONFIG) { 0, });
+
    ShiftRegInit(
       &(SHIFTREG_CONFIG)
       {
@@ -67,6 +71,26 @@ VOID LabInit ()
          .nLatchPin = PIN_D3,
          .nDataPin  = PIN_D4
       }
+   );
+   SevenSegInit(
+      &(SEVENSEG_CONFIG)
+      {
+         .nSROffset = 0,
+         .pnMuxPins = (UI8[])
+         {
+            PIN_D7,
+            PIN_B0
+         },
+         .fReverse = FALSE
+      }
+   );
+
+   TCCR0A = BitMask(WGM01);                              // CTC mode
+   TCCR0B = AvrClk0Scale(1024);                          // prescale at 1024 for 15.625kHz
+   TIMSK0 = BitMask(OCIE0A);                             // enable compare interrupt A
+   OCR0A  = AvrClkTop(                                   // set CTC value
+      1024,                                              // . prescalar
+      100                                                // . cycle frequency
    );
 }
 //-----------< FUNCTION: LabRun >--------------------------------------------
@@ -76,34 +100,15 @@ VOID LabInit ()
 //---------------------------------------------------------------------------
 VOID LabRun ()
 {
-   static F32  nMsDelay = 2.1f;
-   static UI16 nCycles  = 400;
-
-   static BYTE pbStages[] = {
-      /* stepper motor, dual bridge */
-      0b01010101,    // 1010 stage
-      0b01100110,    // 0110 stage
-      0b10101010,    // 0101 stage
-      0b10011001,    // 1001 stage
-      /**/
-      /* dc, pwm on shutdown, forward bridge 1, reverse bridge 2 
-//      0b00000101,
-      0b00001010,
-      /**/
-   };
-
    for ( ; ; )
    {
-      for (UI16 j = 0; j < nCycles; j++)
-      {
-         for (UI8 i = 0; i < ARRAYLENGTH(pbStages); i++)
-         {
-//            ShiftRegWrite8(0, pbStages[i]);
-            _delay_ms(nMsDelay); 
-         }
-      }
-      ShiftRegWrite8(0, 0);
-      PinToggle(PIN_LED);
-      _delay_ms(1000);
+      static F32 g_nDisplay = 0;
+      SevenSegSetFP(g_nDisplay, 2);
+      g_nDisplay += 0.1;
+      _delay_ms(100);
    }
+}
+ISR(TIMER0_COMPA_vect)
+{
+   SevenSegStrobe();
 }
