@@ -22,7 +22,7 @@ debug:
 
 asm: $(FWMODULES:%=bin/fw%.S) $(MODULES:%=bin/%.S)
 
-dump-size: bin/$(TARGETNAME).elf
+size: bin/$(TARGETNAME).elf
 	avr-size -C --mcu=$(DEVICE) $<
 
 write-flash:  bin bin/$(TARGETNAME).hex
