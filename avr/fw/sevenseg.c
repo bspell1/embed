@@ -32,7 +32,7 @@ static volatile UI8  g_nSROffset = 0;                    // shift register array
 static volatile UI8  g_MuxPins[3] = { PIN_INVALID, };    // multiplexer selection pin array
 static volatile UI8  g_nMuxPins = 0;                     // number of multiplexer pins
 static volatile BOOL g_fReverse = FALSE;                 // reverse digit order?
-static volatile UI8  g_Digits[SEVENSEG_DIGITS] = { 0, }; // segment values
+static volatile UI8  g_Digits[SEVENSEG_DIGITS] = { 0, }; // segment value buffer
 // digit-segment bit mappings
 static const UI8 g_DigitMap[] =
 { 
@@ -51,18 +51,38 @@ static const UI8 g_DigitMap[] =
 //-------------------[         Implementation          ]-------------------//
 //-----------< FUNCTION: SetDigit >------------------------------------------
 // Purpose:    sets the segment bitmap for a display position
-// Parameters: nDigit - the display position
-//             nMap   - the segment bitmap
+// Parameters: nDigit  - the display position
+//             nBitmap - the segment bitmap
 // Returns:    none
 //---------------------------------------------------------------------------
-static VOID SetDigit (UI8 nDigit, UI8 nMap)
+static VOID SetDigit (UI8 nDigit, UI8 nBitmap)
 {
    if (g_fReverse)
-      g_Digits[SEVENSEG_DIGITS - nDigit - 1] = nMap;
+      g_Digits[SEVENSEG_DIGITS - nDigit - 1] = nBitmap;
    else
-      g_Digits[nDigit] = nMap;
+      g_Digits[nDigit] = nBitmap;
    if (SEVENSEG_DIGITS == 1)
       SevenSegStrobe();
+}
+//-----------< FUNCTION: SetDigitsR >----------------------------------------
+// Purpose:    sets the segment bitmap for all positions, in reverse order
+// Parameters: pDigits - the digit bitmap to assign
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID SetDigitsR (const UI8* pDigits)
+{
+   for (UI8 i = 0; i < SEVENSEG_DIGITS; i++)
+      SetDigit(i, pDigits[SEVENSEG_DIGITS - i - 1]);
+}
+//-----------< FUNCTION: SetError >------------------------------------------
+// Purpose:    sets the display to an error value (all middle bar)
+// Parameters: pDigits - the digit bitmap to assign
+// Returns:    none
+//---------------------------------------------------------------------------
+static VOID SetError ()
+{
+   for (UI8 i = 0; i < SEVENSEG_DIGITS; i++)
+      SetDigit(i, BitMask(SEVENSEG_MIDDLE));
 }
 //-----------< FUNCTION: SevenSegInit >--------------------------------------
 // Purpose:    initializes the seven-segment array module
@@ -173,29 +193,32 @@ VOID SevenSegRShiftDigit (UI8 nValue)
 //---------------------------------------------------------------------------
 VOID SevenSegSet8 (I8 nValue)
 {
-   I8  i = SEVENSEG_DIGITS - 1;
+   UI8 Digits[SEVENSEG_DIGITS] = { 0, };
+   UI8 i = 0;
    UI8 n = nValue >= 0 ? nValue : -nValue;
    // shift the value digits into the digit buffer
    do
    {
-      SetDigit(i--, g_DigitMap[n % 10]);
+      Digits[i++] = g_DigitMap[n % 10];
       n /= 10;
-   } while (i >= 0 && n != 0);
-   // blank on overflow
+   } while (i < SEVENSEG_DIGITS && n != 0);
+   // fail on overflow
    if (n != 0)
-      i = SEVENSEG_DIGITS - 1;
+      i++;
    else if (nValue < 0)
    {
-      // blank on negative overflow (including sign)
-      // otherwise, output the minus sign
-      if (i < 0)
-         i = SEVENSEG_DIGITS - 1;
+      // fail on negative overflow (including sign)
+      // otherwise, include the minus sign
+      if (i < SEVENSEG_DIGITS)
+         Digits[i++] = BitMask(SEVENSEG_MIDDLE);
       else
-         SetDigit(i--, BitMask(SEVENSEG_MIDDLE));
+         i++;
    }
-   // pad on the left with blanks
-   while (i >= 0)
-      SetDigit(i--, 0);
+   // output the result
+   if (i <= SEVENSEG_DIGITS)
+      SetDigitsR(Digits);
+   else
+      SetError();
 }
 //-----------< FUNCTION: SevenSegSet16 >-------------------------------------
 // Purpose:    sets the entire display to a 16-bit decimal number
@@ -204,29 +227,32 @@ VOID SevenSegSet8 (I8 nValue)
 //---------------------------------------------------------------------------
 VOID SevenSegSet16 (I16 nValue)
 {
-   I8   i = SEVENSEG_DIGITS - 1;
+   UI8  Digits[SEVENSEG_DIGITS] = { 0, };
+   UI8  i = 0;
    UI16 n = nValue >= 0 ? nValue : -nValue;
    // shift the value digits into the digit buffer
    do
    {
-      SetDigit(i--, g_DigitMap[n % 10]);
+      Digits[i++] = g_DigitMap[n % 10];
       n /= 10;
-   } while (i >= 0 && n != 0);
-   // blank on overflow
+   } while (i < SEVENSEG_DIGITS && n != 0);
+   // fail on overflow
    if (n != 0)
-      i = SEVENSEG_DIGITS - 1;
+      i++;
    else if (nValue < 0)
    {
-      // blank on negative overflow (including sign)
-      // otherwise, output the minus sign
-      if (i < 0)
-         i = SEVENSEG_DIGITS - 1;
+      // fail on negative overflow (including sign)
+      // otherwise, include the minus sign
+      if (i < SEVENSEG_DIGITS)
+         Digits[i++] = BitMask(SEVENSEG_MIDDLE);
       else
-         SetDigit(i--, BitMask(SEVENSEG_MIDDLE));
+         i++;
    }
-   // pad on the left with blanks
-   while (i >= 0)
-      SetDigit(i--, 0);
+   // output the result
+   if (i <= SEVENSEG_DIGITS)
+      SetDigitsR(Digits);
+   else
+      SetError();
 }
 //-----------< FUNCTION: SevenSegSet32 >-------------------------------------
 // Purpose:    sets the entire display to a 32-bit decimal number
@@ -235,29 +261,32 @@ VOID SevenSegSet16 (I16 nValue)
 //---------------------------------------------------------------------------
 VOID SevenSegSet32 (I32 nValue)
 {
-   I8   i = SEVENSEG_DIGITS - 1;
+   UI8  Digits[SEVENSEG_DIGITS] = { 0, };
+   UI8  i = 0;
    UI32 n = nValue >= 0 ? nValue : -nValue;
    // shift the value digits into the digit buffer
    do
    {
-      SetDigit(i--, g_DigitMap[n % 10]);
+      Digits[i++] = g_DigitMap[n % 10];
       n /= 10;
-   } while (i >= 0 && n != 0);
-   // blank on overflow
+   } while (i < SEVENSEG_DIGITS && n != 0);
+   // fail on overflow
    if (n != 0)
-      i = SEVENSEG_DIGITS - 1;
+      i++;
    else if (nValue < 0)
    {
-      // blank on negative overflow (including sign)
-      // otherwise, output the minus sign
-      if (i < 0)
-         i = SEVENSEG_DIGITS - 1;
+      // fail on negative overflow (including sign)
+      // otherwise, include the minus sign
+      if (i < SEVENSEG_DIGITS)
+         Digits[i++] = BitMask(SEVENSEG_MIDDLE);
       else
-         SetDigit(i--, BitMask(SEVENSEG_MIDDLE));
+         i++;
    }
-   // pad on the left with blanks
-   while (i >= 0)
-      SetDigit(i--, 0);
+   // output the result
+   if (i <= SEVENSEG_DIGITS)
+      SetDigitsR(Digits);
+   else
+      SetError();
 }
 //-----------< FUNCTION: SevenSegSetFP >-------------------------------------
 // Purpose:    sets the entire display to a floating-point decimal number
@@ -267,9 +296,13 @@ VOID SevenSegSet32 (I32 nValue)
 //---------------------------------------------------------------------------
 VOID SevenSegSetFP (F32 nValue, UI8 nFractional)
 {
-   I8 i = SEVENSEG_DIGITS - 1;
-   I8 f = SEVENSEG_DIGITS - (I8)nFractional - 1;
-   if (nFractional < SEVENSEG_DIGITS)
+   UI8 Digits[SEVENSEG_DIGITS] = { 0, };
+   UI8 i = 0;
+   UI8 f = nFractional;
+   // check for fractional digits overflow
+   if (f >= SEVENSEG_DIGITS)
+      i = SEVENSEG_DIGITS + 1;
+   else
    {
       F32 n = nValue >= 0 ? nValue : -nValue;
       // scale the value to place fractional digits to
@@ -280,23 +313,25 @@ VOID SevenSegSetFP (F32 nValue, UI8 nFractional)
       do
       {
          UI8 p = (f == i) ? BitMask(SEVENSEG_POINT) : 0;
-         SetDigit(i--, g_DigitMap[(UI8)n % 10] | p);
+         Digits[i++] = g_DigitMap[(UI8)n % 10] | p;
          n /= 10;
-      } while (i >= 0 && (i >= f || (UI8)n != 0));
+      } while (i < SEVENSEG_DIGITS && (i <= f || (UI8)n != 0));
       // blank on overflow
       if ((UI8)n != 0)
-         i = SEVENSEG_DIGITS - 1;
+         i++;
       else if (nValue < 0)
       {
          // blank on negative overflow (including sign)
          // otherwise, output the minus sign
-         if (i < 0)
-            i = SEVENSEG_DIGITS - 1;
+         if (i < SEVENSEG_DIGITS)
+            Digits[i++] = BitMask(SEVENSEG_MIDDLE);
          else
-            SetDigit(i--, BitMask(SEVENSEG_MIDDLE));
+            i++;
       }
    }
-   // pad on the left with blanks
-   while (i >= 0)
-      SetDigit(i--, 0);
+   // output the result
+   if (i <= SEVENSEG_DIGITS)
+      SetDigitsR(Digits);
+   else
+      SetError();
 }

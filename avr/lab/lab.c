@@ -72,26 +72,7 @@ VOID LabInit ()
          .nDataPin  = PIN_D4
       }
    );
-   SevenSegInit(
-      &(SEVENSEG_CONFIG)
-      {
-         .nSROffset = 0,
-         .pnMuxPins = (UI8[])
-         {
-            PIN_D7,
-            PIN_B0
-         },
-         .fReverse = FALSE
-      }
-   );
 
-   TCCR0A = BitMask(WGM01);                              // CTC mode
-   TCCR0B = AvrClk0Scale(1024);                          // prescale at 1024 for 15.625kHz
-   TIMSK0 = BitMask(OCIE0A);                             // enable compare interrupt A
-   OCR0A  = AvrClkTop(                                   // set CTC value
-      1024,                                              // . prescalar
-      100                                                // . cycle frequency
-   );
 }
 //-----------< FUNCTION: LabRun >--------------------------------------------
 // Purpose:    lab main loop
@@ -102,13 +83,6 @@ VOID LabRun ()
 {
    for ( ; ; )
    {
-      static F32 g_nDisplay = 0;
-      SevenSegSetFP(g_nDisplay, 2);
-      g_nDisplay += 0.1;
-      _delay_ms(100);
+
    }
-}
-ISR(TIMER0_COMPA_vect)
-{
-   SevenSegStrobe();
 }
