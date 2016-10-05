@@ -7,7 +7,7 @@ CCFLAGS = -std=gnu99 -Wall -Wextra -Winline 											\
 			 -Wno-missing-field-initializers 											\
 			 -O3 -funroll-loops -fdata-sections -ffunction-sections				\
 			 -mint8 -mmcu=$(DEVICE)															\
-			 -I..\fw																				\
+			 -I../fw																				\
 			 $(PARAMETERS:%=-D% )
 LDFLAGS = -flto -Wl,--gc-sections,--relax
 
@@ -65,7 +65,7 @@ bin/%.eep: bin/%.elf
 	avr-objcopy -j .eeprom -O ihex $< $@
 
 # override make to keep intermediate files for incremental
-.SECONDARY: 
+.SECONDARY:
 ifndef VERBOSE
 .SILENT:
 endif
